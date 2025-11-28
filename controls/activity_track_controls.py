@@ -31,6 +31,8 @@ class ActionTimerComponent(ft.Text):
     def did_mount(self):
         self.running = True
         self.page.run_task(self.update_timer)
+        self.value = datetime.timedelta(seconds=self.seconds)
+        self.update()
 
     def will_unmount(self):
         self.running = False

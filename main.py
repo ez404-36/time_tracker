@@ -62,7 +62,6 @@ class DesktopApp:
 
     def window_event_handler(self, e):
         if e.data == 'close':
-            print("Приложение закрывается!")
             state['page'].window.destroy()
             if activity_track := state['selected']['activity_track']:
                 activity_track.stop = int(time.time())

@@ -4,7 +4,7 @@ from typing import TypedDict
 from peewee import *
 import time
 
-from playhouse.sqlite_ext import JSONBField, SqliteExtDatabase
+from playhouse.sqlite_ext import JSONField, SqliteExtDatabase
 
 
 db = SqliteExtDatabase('database.db')
@@ -71,13 +71,13 @@ class ActivityTrack(BaseModel):
     activity = ForeignKeyField(Activity, backref='activity_track')
     date: datetime.date = DateField(default=datetime.date.today, help_text='День')
     start: int = IntegerField(default=time.time, help_text='Начало работы (таймпстемп)')
-    stop: int = IntegerField(help_text='Окончание работы (таймпстемп)')
+    stop: int | None = IntegerField(help_text='Окончание работы (таймпстемп)', null=True)
 
     """
     Здесь будет храниться время каждого фактического действия.
     Представляет собой список объектов { action_id: ID действия | pause, timestamp: Текущий таймпстемп }
     """
-    time_track: list[ActivityTrackActionTrackData] = JSONBField(default=list, help_text='Затраченное время')
+    time_track: list[ActivityTrackActionTrackData] = JSONField(default=list, help_text='Затраченное время')
 
     class Meta:
         table_name = 'activity_track'

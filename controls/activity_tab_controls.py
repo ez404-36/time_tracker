@@ -56,16 +56,15 @@ class ActivityTabActivitySelectorControl(BaseActivityTabControl):
 
         self._global_state['selected']['activity'] = activity
 
-        # self._state['start_button'].disabled = not val
-        # self._state['start_button'].update()
-
         actions_view = self._global_state['controls']['activity']['activity_track']['actions_view']
 
         existing_activity_track = ActivityTrack.filter(
             activity=activity,
             date=datetime.date.today(),
-            stop=None,
         ).first()
+
+        # TODO: если existing_activity_track имеет stop=True, выдать какую-то инфу что ли ?
+        #   надо ли оно вообще иметь activity_track.stop ?
 
         if existing_activity_track:
             self._global_state['selected']['activity_track'] = existing_activity_track
@@ -78,90 +77,6 @@ class ActivityTabActivitySelectorControl(BaseActivityTabControl):
             actions_view.controls.append(action_control.component)
 
         actions_view.update()
-
-
-# class ActivityTabStartButtonControl(BaseActivityTabControl):
-#     """
-#     Кнопка "Начать работу".
-#     По клику создаёт объект ActivityTrack с текущим выбранным Activity
-#     """
-#
-#     @property
-#     def component(self) -> ft.IconButton:
-#         return self._state['start_button']
-#
-#     def init(self) -> Self:
-#         self._state['start_button'] = ft.IconButton(
-#             ft.Icons.PLAY_CIRCLE,
-#             on_click=self._on_click,
-#             disabled=True,
-#         )
-#
-#         return self
-#
-#     def _on_click(self, e):
-#         if not self._global_state['selected']['activity_track']:
-#             self._global_state['selected']['activity_track'] = ActivityTrack.create(
-#                 activity=self._global_state['selected']['activity'],
-#             )
-#
-#         self._state['pause_button'].disabled = False
-#         self._state['stop_button'].disabled = False
-#
-#         self._state['pause_button'].update()
-#         self._state['stop_button'].update()
-
-#
-# class ActivityTabPauseButtonControl(BaseActivityTabControl):
-#     """
-#     Кнопка "Приостановить работу".
-#     """
-#
-#     @property
-#     def component(self) -> ft.IconButton:
-#         return self._state['pause_button']
-#
-#     def init(self) -> Self:
-#         self._state['pause_button'] = ft.IconButton(
-#             ft.Icons.PAUSE_CIRCLE,
-#             on_click=self._on_click,
-#             disabled=True,
-#         )
-#
-#         return self
-#
-#     def _on_click(self, e):
-#         activity_track = self._global_state['selected']['activity_track']
-#         activity_track.change_action(CONSTS.PAUSE_ACTION_ID)
-#
-#         self._state['stop_button'].disabled = True
-#         self._state['stop_button'].update()
-
-
-class ActivityTabStopButtonControl(BaseActivityTabControl):
-    @property
-    def component(self) -> ft.IconButton:
-        return self._state['stop_button']
-
-    def init(self):
-        self._state['stop_button'] = ft.IconButton(
-            ft.Icons.STOP_CIRCLE,
-            on_click=self._on_click,
-            disabled=True,
-        )
-
-        return self
-
-    def _on_click(self, e):
-        activity_track = self._global_state['selected']['activity_track']
-        activity_track.stop = int(time.time())
-        activity_track.save(only=['stop'])
-
-        self._state['pause_button'].disabled = False
-        self._state['stop_button'].disabled = False
-
-        self._state['pause_button'].update()
-        self._state['stop_button'].update()
 
 
 class ActivityTabNewActivityButtonControl(BaseActivityTabControl):
@@ -187,9 +102,6 @@ class ActivityTabControl(BaseActivityTabControl):
     def __init__(self, state: State):
         super().__init__(state)
         self._activity_selector_control: ActivityTabActivitySelectorControl | None = None
-        # self._start_button_control: ActivityTabStartButtonControl | None = None
-        # self._pause_button_control: ActivityTabPauseButtonControl | None = None
-        # self._stop_button_control: ActivityTabStopButtonControl | None = None
         self._new_activity_button_control: ActivityTabNewActivityButtonControl | None = None
         self._activity_track_control: ActivityTrackActionsViewControl | None = None
 
@@ -203,18 +115,12 @@ class ActivityTabControl(BaseActivityTabControl):
 
     def init(self) -> Self:
         self._activity_selector_control = ActivityTabActivitySelectorControl(self._global_state).init()
-        # self._start_button_control = ActivityTabStartButtonControl(self._global_state).init()
-        # self._pause_button_control = ActivityTabPauseButtonControl(self._global_state).init()
-        # self._stop_button_control = ActivityTabStopButtonControl(self._global_state).init()
         self._new_activity_button_control = ActivityTabNewActivityButtonControl(self._global_state).init()
         self._activity_track_control = ActivityTrackActionsViewControl(self._global_state).init()
 
         target_actions_row = ft.Row(
             [
                 self._activity_selector_control.component,
-                # self._start_button_control.component,
-                # self._pause_button_control.component,
-                # self._stop_button_control.component,
                 self._new_activity_button_control.component,
             ]
         )
