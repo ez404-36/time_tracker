@@ -1,0 +1,10 @@
+[project]
+name = "time-tracker"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "flet[all]>=0.28.3",
+    "markdown>=3.10",
+    "peewee>=3.18.3",
+]
