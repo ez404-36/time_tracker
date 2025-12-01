@@ -7,7 +7,7 @@ import flet as ft
 from controls.activity_track_controls import ActivityTrackActionControl, ActivityTrackActionsViewControl
 from controls.base_control import BaseControl
 from helpers import ActivityTabHelpers, StateDBHelpers
-from models import ActivityTrack
+from models import Action, ActivityActions, ActivityTrack
 from state import ActivityTabState, State
 
 
@@ -63,16 +63,12 @@ class ActivityTabActivitySelectorControl(BaseActivityTabControl):
             date=datetime.date.today(),
         ).first()
 
-        # TODO: если existing_activity_track имеет stop=True, выдать какую-то инфу что ли ?
-        #   надо ли оно вообще иметь activity_track.stop ?
+        self._global_state['selected']['activity_track'] = existing_activity_track
 
-        if existing_activity_track:
-            self._global_state['selected']['activity_track'] = existing_activity_track
-
-        self._global_state['activity_track_actions_time'] = StateDBHelpers(self._global_state).get_activity_actions_tracked_time()
+        StateDBHelpers(self._global_state).refresh_activity_actions_tracked_time()
         self._global_state['controls']['activity']['activity_track']['actions_view'].controls.clear()
 
-        for action in activity.actions:
+        for action in activity.actions.order_by(ActivityActions.is_target.desc(), ActivityActions.is_useful.desc()):
             action_control = ActivityTrackActionControl(self._global_state, action).init()
             actions_view.controls.append(action_control.component)
 

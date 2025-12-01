@@ -6,6 +6,7 @@ from controls.activity_tab_controls import ActivityTabControl
 from controls.new_activity_modal_controls import NewActivityModalControl
 from controls.todo_tab_controls import TodoTabControl
 from helpers import StateDBHelpers
+from models import CONSTS
 from state import State, init_state
 
 state: State = init_state(State)
@@ -35,9 +36,6 @@ class DesktopApp:
 
         page.window.prevent_close = True
         page.window.on_event = self.window_event_handler
-        # # page.on_window_event = self.window_event_handler
-        # page.window.
-        # page.update()
 
         self._new_activity_modal_control = NewActivityModalControl(state).init()
         self._activity_tab_control = ActivityTabControl(state).init()
@@ -64,8 +62,7 @@ class DesktopApp:
         if e.data == 'close':
             state['page'].window.destroy()
             if activity_track := state['selected']['activity_track']:
-                activity_track.stop = int(time.time())
-                activity_track.save(only=['stop'])
+                activity_track.change_action(CONSTS.STOP_ACTION_ID)
 
 def main(page: ft.Page):
     app = DesktopApp(page)

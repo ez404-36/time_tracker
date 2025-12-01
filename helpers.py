@@ -1,6 +1,9 @@
+from collections import defaultdict
+from typing import Iterable
+
 import flet as ft
 
-from models import Action, Activity, ActivityTrackActionTrackData, CONSTS
+from models import Action, Activity, ActivityActions, ActivityTrackActionTrackData, CONSTS
 from state import NewActivityModalState, State, StateDB
 
 
@@ -8,12 +11,22 @@ class ActivityTabHelpers:
     def __init__(self, state: State):
         self._state = state
 
-    def update_activity_selector_options(self) -> None:
+    def refresh_activity_selector_options(self) -> None:
         options = self.get_activity_selector_options()
         selector = self._state['controls']['activity']['activity_tab']['activity_selector']
         if selector:
             selector.options = options
             selector.update()
+
+    def refresh_activity_actions_total_timers(self) -> None:
+        tracked_time = StateDBHelpers(self._state).refresh_activity_actions_tracked_time()
+        for action_control_row in self._state['controls']['activity']['activity_track']['actions_view'].controls:
+            total_timer_control = action_control_row.content.controls[1]
+            action = total_timer_control.action
+            action_tracked_time = tracked_time.get(action.id, 0)
+            total_timer_control.seconds = action_tracked_time
+            total_timer_control.update_value()
+
 
     def get_activity_selector_options(self) -> list[ft.DropdownOption]:
         return [
@@ -69,27 +82,27 @@ class StateDBHelpers:
             it.id: it for it in Activity.select()
         }
 
-    def get_activity_actions_tracked_time(self) -> dict[str | int, int]:
+    def refresh_activity_actions_tracked_time(self) -> dict[str | int, int]:
         activity_track = self._global_state['selected']['activity_track']
-        activity = self._global_state['selected']['activity']
-        actions_rel = activity.actions
-        actions = [it.action.id for it in actions_rel] + [CONSTS.PAUSE_ACTION_ID]
 
-        actions_counter = dict.fromkeys(actions, 0)
+        actions_counter = defaultdict(int)
 
-        if not activity_track:
-            return actions_counter
+        if activity_track:
+            prev_timestamp = None
+            prev_action_id = None
+            for action_time_data in activity_track.time_track:  # type: ActivityTrackActionTrackData
+                action_id = action_time_data['action_id']
+                timestamp = action_time_data['timestamp']
 
-        activity_start = activity_track.start
-        prev_timestamp = activity_start
-        for action_time_data in activity_track.time_track:  # type: ActivityTrackActionTrackData
-            action_id = action_time_data['action_id']
-            timestamp = action_time_data['timestamp']
+                if prev_action_id:
+                    if prev_action_id in {CONSTS.PAUSE_ACTION_ID, CONSTS.STOP_ACTION_ID}:
+                        delta = 0
+                    else:
+                        delta = timestamp - prev_timestamp
+                    actions_counter[prev_action_id] += delta
 
-            delta = timestamp - prev_timestamp
+                prev_timestamp = timestamp
+                prev_action_id = action_id
 
-            actions_counter[action_id] += delta
-
-            prev_timestamp = timestamp
-
+        self._global_state['activity_track_actions_time'] = dict(actions_counter)
         return actions_counter

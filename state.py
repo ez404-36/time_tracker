@@ -40,9 +40,6 @@ class ActivityTabState(TypedDict):
     tab: ft.Column | None
     activity_actions_row: ft.Row | None
     activity_selector: ft.Dropdown | None
-    # start_button: ft.IconButton | None
-    # pause_button: ft.IconButton | None
-    # stop_button: ft.IconButton | None
     new_activity_button: ft.ElevatedButton | None
 
 

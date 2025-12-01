@@ -11,6 +11,7 @@ db = SqliteExtDatabase('database.db')
 
 class CONSTS:
     PAUSE_ACTION_ID = 'pause'
+    STOP_ACTION_ID = 'stop'
 
 
 class BaseModel(Model):
@@ -49,6 +50,7 @@ class ActivityActions(BaseModel):
     activity = ForeignKeyField(Activity, backref='actions')
     action = ForeignKeyField(Action, backref='activities')
     is_target = BooleanField(help_text='Является ли действие целевым для данной активности')
+    is_useful = BooleanField(help_text='Является ли действие полезным для данной активности')
 
     class Meta:
         table_name = 'activity_actions'
@@ -70,8 +72,6 @@ class ActivityTrack(BaseModel):
 
     activity = ForeignKeyField(Activity, backref='activity_track')
     date: datetime.date = DateField(default=datetime.date.today, help_text='День')
-    start: int = IntegerField(default=time.time, help_text='Начало работы (таймпстемп)')
-    stop: int | None = IntegerField(help_text='Окончание работы (таймпстемп)', null=True)
 
     """
     Здесь будет храниться время каждого фактического действия.

@@ -12,6 +12,7 @@ class BaseNewActivityModalControl(BaseControl):
     def __init__(self, state: State):
         super().__init__(state)
         self._state: NewActivityModalState = state['controls']['activity']['new_activity_modal']
+        self._component: ft.Control | None = None
 
 
 class NewActivityModalActionRowControl(BaseNewActivityModalControl):
@@ -20,7 +21,7 @@ class NewActivityModalActionRowControl(BaseNewActivityModalControl):
         actions_options = self._get_actions_options(selected_action_ids)
 
         def on_click_action_remove(e):
-            self._state['actions_view'].controls.remove(action_row)
+            self._state['actions_view'].controls.remove(self._component)
             self._state['add_action_row_button'].disabled = False
 
             self._global_state['page'].update(
@@ -38,7 +39,7 @@ class NewActivityModalActionRowControl(BaseNewActivityModalControl):
         is_target_action_checkbox = ft.Checkbox(label='Полезное действие')
         other_action_delete_button = ft.IconButton(ft.Icons.REMOVE, on_click=on_click_action_remove)
 
-        action_row = ft.Row(
+        self._component = ft.Row(
             controls=[
                 action_selector,
                 is_target_action_checkbox,
@@ -46,8 +47,10 @@ class NewActivityModalActionRowControl(BaseNewActivityModalControl):
             ]
         )
 
-        self._state['actions_view'].controls.append(action_row)
+        self._state['actions_view'].controls.append(self._component)
         self._state['actions_view'].update()
+
+        return self
 
     def _on_change_action_selector(self, e):
         new_activity_title_input = self._state['activity_title_input']
@@ -178,6 +181,7 @@ class NewActivityModalControl(BaseNewActivityModalControl):
     def __init__(self, state: State):
         super().__init__(state)
         self._actions_view_control: NewActivityModalControlActionsView | None = None
+        self._main_action_row_control: NewActivityModalActionRowControl | None = None
 
     @property
     def component(self) -> ft.AlertDialog:
@@ -205,16 +209,26 @@ class NewActivityModalControl(BaseNewActivityModalControl):
 
         selected_actions_data = NewActivityModalHelpers(self._state).get_selected_action_ids_with_target_checkbox()
 
+        main_activity_action, _ = Action.get_or_create(title=activity_title)
+
         new_activity = Activity.create(
             title=activity_title,
         )
         StateDBHelpers(self._global_state).refresh_activities()
 
+        ActivityActions.create(
+            activity=new_activity,
+            action=main_activity_action,
+            is_useful=True,
+            is_target=True,
+        )
+
         for action_data in selected_actions_data:
             ActivityActions.create(
                 activity=new_activity,
                 action_id=action_data[0],
-                is_target=action_data[1],
+                is_target=False,
+                is_useful=action_data[1],
             )
 
         self._state['activity_title_input'].value = ''
@@ -226,7 +240,7 @@ class NewActivityModalControl(BaseNewActivityModalControl):
         activity_selector.disabled = False
         activity_selector.tooltip = None
         activity_selector.label = 'Чем сегодня займемся?'
-        ActivityTabHelpers(self._global_state).update_activity_selector_options()
+        ActivityTabHelpers(self._global_state).refresh_activity_selector_options()
 
         self._global_state['page'].close(self._state['modal'])
 
@@ -259,7 +273,7 @@ class NewActivityModalControl(BaseNewActivityModalControl):
                         ft.Row(
                             controls=[
                                 ft.Text(
-                                    'Укажи все действия, \nкоторыми можешь заниматься \nв момент этой активности.',
+                                    'Укажи все действия, \nкоторыми ещё можешь заниматься \nв момент этой активности.',
                                     size=14,
                                 ),
                                 self._state['add_action_row_button'],
