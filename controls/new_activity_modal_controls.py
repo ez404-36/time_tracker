@@ -126,14 +126,14 @@ class NewActivityModalControlNewActionView(BaseNewActivityModalControl):
 
     def _on_click_add_new_action_button(self, e):
         value = self._state['new_action_input'].value.strip()
-        created_action = Action.create(title=value)
+        action, is_created = Action.get_or_create(title=value)
         StateDBHelpers(self._global_state).refresh_actions()
 
         self._state['new_action_input'].value = ''
         self._state['new_action_button'].disabled = True
-        self._state['add_action_row_button'].disabled = not set(self._global_state['db']['actions'].keys()) - {created_action.id}
+        self._state['add_action_row_button'].disabled = not set(self._global_state['db']['actions'].keys()) - {action.id}
 
-        NewActivityModalActionRowControl(self._global_state).init(str(created_action.id))
+        NewActivityModalActionRowControl(self._global_state).init(str(action.id))
 
         self._global_state['page'].update(
             self._state['new_action_input'],
@@ -207,7 +207,7 @@ class NewActivityModalControl(BaseNewActivityModalControl):
     def _on_click_submit_button(self, e):
         activity_title: str = self._state['activity_title_input'].value
 
-        selected_actions_data = NewActivityModalHelpers(self._state).get_selected_action_ids_with_target_checkbox()
+        selected_actions_data = NewActivityModalHelpers(self._state).get_selected_action_ids_with_useful_checkbox()
 
         main_activity_action, _ = Action.get_or_create(title=activity_title)
 

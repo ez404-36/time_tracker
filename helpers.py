@@ -46,12 +46,14 @@ class NewActivityModalHelpers:
         self._state: NewActivityModalState = state
 
     def get_selected_action_ids(self) -> list[int]:
-        return [
-            int(it.controls[0].value)
-            for it in self.get_action_row_controls()
-        ]
+        output = []
+        for row in self.get_action_row_controls():
+            value = row.controls[0].value
+            if value:
+                output.append(int(value))
+        return output
 
-    def get_selected_action_ids_with_target_checkbox(self) -> list[tuple[int, bool]]:
+    def get_selected_action_ids_with_useful_checkbox(self) -> list[tuple[int, bool]]:
         return [
             (int(it.controls[0].value), it.controls[1].value)
             for it in self.get_action_row_controls()
