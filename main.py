@@ -3,9 +3,8 @@ import flet as ft
 from apps.time_tracker.consts import STOP_ACTION_ID
 from apps.time_tracker.controls.activity_tab_new_activity_controls.modal import NewActivityModalControl
 from apps.time_tracker.controls.activity_tab_view_controls.activity_tab import ActivityTabControl
-from apps.to_do.controls.todo_tab_controls import TodoTabControl
+from apps.to_do.controls.todo_tab import TodoTabControl
 from core.state import State, init_state
-from helpers import StateDBHelpers
 
 
 state: State = init_state(State)
@@ -14,8 +13,6 @@ state: State = init_state(State)
 class DesktopApp:
     def __init__(self, page: ft.Page):
         state['page'] = page
-        StateDBHelpers(state).refresh_actions()
-        StateDBHelpers(state).refresh_activities()
 
         self._new_activity_modal_control: NewActivityModalControl | None = None
         self._activity_tab_control: ActivityTabControl | None = None

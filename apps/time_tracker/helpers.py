@@ -55,6 +55,7 @@ class NewActivityModalHelpers:
         return self._state['actions_view'].controls
 
 
+# TODO: стейт должен быть не полный, а только для таба активности
 class StateDBHelpers:
     def __init__(self, state: State):
         self._state: ActivityTabDBState = state['tabs']['activity']['db']

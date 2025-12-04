@@ -5,8 +5,8 @@ import flet as ft
 
 from apps.time_tracker.controls.activity_tab_view_controls.activity_track_action import ActivityTrackActionControl
 from apps.time_tracker.controls.base import BaseActivityTabControl
+from apps.time_tracker.helpers import ActivityTabHelpers
 from apps.time_tracker.models import Action, ActivityTrack
-from helpers import ActivityTabHelpers
 
 
 class ActivityTabActivityDropdown(BaseActivityTabControl):

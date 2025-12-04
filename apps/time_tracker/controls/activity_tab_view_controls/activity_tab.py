@@ -8,6 +8,7 @@ from apps.time_tracker.controls.activity_tab_view_controls.activity_track_action
 from apps.time_tracker.controls.activity_tab_view_controls.new_activity_button import \
     ActivityTabNewActivityButtonControl
 from apps.time_tracker.controls.base import BaseActivityTabControl
+from apps.time_tracker.helpers import StateDBHelpers
 from core.state import State
 
 
@@ -29,6 +30,9 @@ class ActivityTabControl(BaseActivityTabControl):
         return self._activity_track_control.component
 
     def build(self) -> Self:
+        StateDBHelpers(self._global_state).refresh_actions()
+        StateDBHelpers(self._global_state).refresh_activities()
+
         self._activity_selector_control = ActivityTabActivityDropdown(self._global_state).build()
         self._new_activity_button_control = ActivityTabNewActivityButtonControl(self._global_state).build()
         self._activity_track_control = ActivityTrackActionsViewControl(self._global_state).build()

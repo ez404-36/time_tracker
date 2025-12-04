@@ -3,6 +3,7 @@ from typing import TypedDict, get_type_hints
 import flet as ft
 
 from apps.time_tracker.models import Action, Activity, ActivityTrack
+from apps.to_do.models import ToDo
 
 
 class BaseTabState(TypedDict):
@@ -58,13 +59,19 @@ class ToDoTabControlsState(TypedDict):
     tab: ft.Container | None
     view: ft.Column | None
     input: ft.TextField | None
-    submit: ft.FloatingActionButton | None
-    list: ft.Column | None
+    submit: ft.TextButton | None
+    list_active: ft.Column | None
+    list_done: ft.Column | None
+
+
+class ToDoDBState(TypedDict):
+    todos: dict[int, ToDo]
 
 
 class TodoTabState(TypedDict):
     """Состояние таба ТУ-ДУ"""
     controls: ToDoTabControlsState
+    db: ToDoDBState
 
 
 class TabsState(TypedDict):

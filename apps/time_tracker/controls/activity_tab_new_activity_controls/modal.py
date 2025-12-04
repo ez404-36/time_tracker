@@ -5,10 +5,10 @@ from apps.time_tracker.controls.activity_tab_new_activity_controls.new_action_ro
     NewActivityModalActionRowControl
 from apps.time_tracker.controls.activity_tab_new_activity_controls.new_actions_view import \
     NewActivityModalControlActionsView
+from apps.time_tracker.helpers import ActivityTabHelpers, NewActivityModalHelpers, StateDBHelpers
 from apps.time_tracker.models import Action, Activity
 from core.models import db
 from core.state import State
-from helpers import ActivityTabHelpers, NewActivityModalHelpers, StateDBHelpers
 
 
 class NewActivityModalControl(BaseNewActivityModalControl):

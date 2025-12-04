@@ -7,9 +7,9 @@ from apps.time_tracker.consts import PAUSE_ACTION_ID
 from apps.time_tracker.controls.activity_tab_view_controls.action_timer import ActionTimerComponent, \
     ActionTimerStaticComponent
 from apps.time_tracker.controls.base import BaseActivityTabControl
+from apps.time_tracker.helpers import ActivityTabHelpers, StateDBHelpers
 from apps.time_tracker.models import Action, ActivityTrack
 from core.state import State
-from helpers import ActivityTabHelpers, StateDBHelpers
 
 
 class ActivityTrackActionControl(BaseActivityTabControl):
