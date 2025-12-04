@@ -1,10 +1,8 @@
-from typing import Iterable, Self
-
 import flet as ft
 
 from controls.base_control import BaseControl
 from helpers import ActivityTabHelpers, NewActivityModalHelpers, StateDBHelpers
-from models import Action, Activity, ActivityActions, db
+from models import Action, Activity, db
 from state import NewActivityModalState, State
 
 
@@ -17,31 +15,17 @@ class BaseNewActivityModalControl(BaseControl):
 
 class NewActivityModalActionRowControl(BaseNewActivityModalControl):
     def init(self, default: str = None):
-        selected_action_ids = NewActivityModalHelpers(self._state).get_selected_action_ids()
-        actions_options = self._get_actions_options(selected_action_ids)
-
         def on_click_action_remove(e):
             self._state['actions_view'].controls.remove(self._component)
-            self._state['add_action_row_button'].disabled = False
+            self._state['actions_view'].update()
 
-            self._global_state['page'].update(
-                self._state['actions_view'],
-                self._state['add_action_row_button'],
-            )
-
-        action_selector = ft.Dropdown(
-            editable=False,
-            options=actions_options,
-            width=200,
-            value=default,
-            on_change=self._on_change_action_selector,
-        )
+        action_input = ft.TextField(width=200)
         is_target_action_checkbox = ft.Checkbox(label='Полезное действие')
         other_action_delete_button = ft.IconButton(ft.Icons.REMOVE, on_click=on_click_action_remove)
 
         self._component = ft.Row(
             controls=[
-                action_selector,
+                action_input,
                 is_target_action_checkbox,
                 other_action_delete_button,
             ]
@@ -52,95 +36,6 @@ class NewActivityModalActionRowControl(BaseNewActivityModalControl):
 
         return self
 
-    def _on_change_action_selector(self, e):
-        new_activity_title_input = self._state['activity_title_input']
-        selected_action_ids = NewActivityModalHelpers(self._state).get_selected_action_ids()
-        actions_options = self._get_actions_options(selected_action_ids)
-
-        submit_button = self._state['submit_button']
-        add_action_row_button = self._state['add_action_row_button']
-
-        submit_button.disabled = not new_activity_title_input.value
-        add_action_row_button.disabled = not actions_options
-
-        self._global_state['page'].update(
-            submit_button,
-            add_action_row_button,
-        )
-
-    def _get_actions_options(self, exclude_ids: Iterable[int]) -> list[ft.DropdownOption]:
-        return [
-            ft.DropdownOption(
-                key=it.id,
-                content=ft.Text(
-                    value=it.title
-                ),
-                text=it.title,
-            )
-            for it in self._global_state['db']['actions'].values()
-            if it.id not in exclude_ids
-        ]
-
-
-class NewActivityModalControlNewActionView(BaseNewActivityModalControl):
-    """
-    Компонент создания нового действия в модалке добавления новой активности
-    """
-
-    def init(self) -> Self:
-        self._state['new_action_view'] = ft.Row()
-
-        self._init_new_action_input()
-        self._init_new_action_button()
-
-    def _init_new_action_input(self):
-        self._state['new_action_input'] = ft.TextField(
-            label='Новое действие',
-            on_change=self._on_change_new_action_input,
-        )
-
-        self._state['new_action_view'].controls.append(self._state['new_action_input'])
-
-    def _on_change_new_action_input(self, e):
-        value = e.control.value.strip()
-
-        all_action_titles = [
-            action.title.lower()
-            for action in self._global_state['db']['actions'].values()
-        ]
-
-        if value.lower() in all_action_titles:
-            self._state['new_action_input'].error = 'Такое действие уже существует'
-            self._state['new_action_input'].update()
-        else:
-            self._state['new_action_button'].disabled = False
-            self._state['new_action_button'].update()
-
-    def _init_new_action_button(self):
-        self._state['new_action_button'] = ft.TextButton(
-            'Добавить',
-            disabled=True,
-            on_click=self._on_click_add_new_action_button,
-        )
-        self._state['new_action_view'].controls.append(self._state['new_action_button'])
-
-    def _on_click_add_new_action_button(self, e):
-        value = self._state['new_action_input'].value.strip()
-        action, is_created = Action.get_or_create(title=value)
-        StateDBHelpers(self._global_state).refresh_actions()
-
-        self._state['new_action_input'].value = ''
-        self._state['new_action_button'].disabled = True
-        self._state['add_action_row_button'].disabled = not set(self._global_state['db']['actions'].keys()) - {action.id}
-
-        NewActivityModalActionRowControl(self._global_state).init(str(action.id))
-
-        self._global_state['page'].update(
-            self._state['new_action_input'],
-            self._state['new_action_button'],
-            self._state['add_action_row_button'],
-        )
-
 
 class NewActivityModalControlActionsView(BaseNewActivityModalControl):
     """
@@ -149,7 +44,6 @@ class NewActivityModalControlActionsView(BaseNewActivityModalControl):
 
     def __init__(self, state: State):
         super().__init__(state)
-        self._new_action_view: NewActivityModalControlNewActionView | None = None
 
     @property
     def component(self) -> ft.Column:
@@ -158,15 +52,11 @@ class NewActivityModalControlActionsView(BaseNewActivityModalControl):
     def init(self):
         self._state['actions_view'] = ft.Column()
         self._init_add_action_row_button()
-        self._new_action_view = NewActivityModalControlNewActionView(self._global_state).init()
 
     def _init_add_action_row_button(self):
-        actions_keys = self._global_state['db']['actions'].keys()
-
         self._state['add_action_row_button'] = ft.IconButton(
             ft.Icons.ADD,
             on_click=self._on_click_add_action_row_button,
-            disabled=not actions_keys,
         )
 
     def _on_click_add_action_row_button(self, e):
@@ -207,26 +97,24 @@ class NewActivityModalControl(BaseNewActivityModalControl):
     def _on_click_submit_button(self, e):
         activity_title: str = self._state['activity_title_input'].value
 
-        selected_actions_data = NewActivityModalHelpers(self._state).get_selected_action_ids_with_useful_checkbox()
-
-        main_activity_action, _ = Action.get_or_create(title=activity_title)
+        selected_actions_data = NewActivityModalHelpers(self._state).get_actions_with_useful_checkbox()
 
         new_activity = Activity.create(
             title=activity_title,
         )
         StateDBHelpers(self._global_state).refresh_activities()
 
-        ActivityActions.create(
+        Action.create(
             activity=new_activity,
-            action=main_activity_action,
+            title=activity_title,
             is_useful=True,
             is_target=True,
         )
 
         for action_data in selected_actions_data:
-            ActivityActions.create(
+            Action.create(
                 activity=new_activity,
-                action_id=action_data[0],
+                title=action_data[0],
                 is_target=False,
                 is_useful=action_data[1],
             )
@@ -280,9 +168,6 @@ class NewActivityModalControl(BaseNewActivityModalControl):
                             ]
                         ),
                         self._state['actions_view'],
-                        ft.Divider(),
-                        ft.Text('*Если действия нет в списке, добавь новое через форму ниже', size=12),
-                        self._state['new_action_view'],
                         ft.Divider(),
                     ]
                 )

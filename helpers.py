@@ -1,9 +1,8 @@
 from collections import defaultdict
-from typing import Iterable
 
 import flet as ft
 
-from models import Action, Activity, ActivityActions, ActivityTrackActionTrackData, CONSTS
+from models import Action, Activity, ActivityTrackActionTrackData, CONSTS
 from state import NewActivityModalState, State, StateDB
 
 
@@ -45,17 +44,9 @@ class NewActivityModalHelpers:
     def __init__(self, state: NewActivityModalState):
         self._state: NewActivityModalState = state
 
-    def get_selected_action_ids(self) -> list[int]:
-        output = []
-        for row in self.get_action_row_controls():
-            value = row.controls[0].value
-            if value:
-                output.append(int(value))
-        return output
-
-    def get_selected_action_ids_with_useful_checkbox(self) -> list[tuple[int, bool]]:
+    def get_actions_with_useful_checkbox(self) -> list[tuple[str, bool]]:
         return [
-            (int(it.controls[0].value), it.controls[1].value)
+            (it.controls[0].value, it.controls[1].value)
             for it in self.get_action_row_controls()
         ]
 

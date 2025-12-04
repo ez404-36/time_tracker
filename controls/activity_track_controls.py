@@ -7,7 +7,7 @@ from flet.core.border import Border, BorderSide
 
 from controls.base_control import BaseControl
 from helpers import ActivityTabHelpers
-from models import Action, ActivityActions, ActivityTrack, CONSTS
+from models import Action, ActivityTrack, CONSTS
 from state import ActivityTabActivityTrackState, State
 
 
@@ -17,18 +17,17 @@ class BaseActivityTabActivityTrackControl(BaseControl):
         self._state: ActivityTabActivityTrackState = state['controls']['activity']['activity_track']
 
 
-
 class ActionTimerComponent(ft.Text):
-    def __init__(self, action_relation: ActivityActions, seconds: int, **kwargs):
+    def __init__(self, action: Action, seconds: int, **kwargs):
         super().__init__(**kwargs)
         self.running = False
         self.disabled = True
         self.seconds = seconds
-        self._action_relation = action_relation
+        self._action = action
 
     @property
     def action(self) -> Action:
-        return self._action_relation.action
+        return self._action
 
     def did_mount(self):
         self.running = True
@@ -69,9 +68,9 @@ class ActionTimerStaticComponent(ActionTimerComponent):
         self.update_value()
 
 class ActivityTrackActionControl(BaseActivityTabActivityTrackControl):
-    def __init__(self, state: State, action_relation: ActivityActions):
+    def __init__(self, state: State, action: Action):
         super().__init__(state)
-        self._action_relation = action_relation
+        self._action = action
         self._component: ft.Container | None = None
         self._action_timer_total_component: ActionTimerStaticComponent | None = None
         self._action_timer_component: ActionTimerComponent | None = None
@@ -92,10 +91,10 @@ class ActivityTrackActionControl(BaseActivityTabActivityTrackControl):
 
     @property
     def action(self) -> Action:
-        return self._action_relation.action
+        return self._action
 
     def get_color(self) -> ft.Colors:
-        return ft.Colors.GREEN_300 if self._action_relation.is_useful else ft.Colors.RED_300
+        return ft.Colors.GREEN_300 if self._action.is_useful else ft.Colors.RED_300
 
     def init(self) -> Self:
         color = self.get_color()
@@ -107,10 +106,10 @@ class ActivityTrackActionControl(BaseActivityTabActivityTrackControl):
             icon_color=color,
             on_click=self.on_click_start_stop,
         )
-        self._action_timer_total_component = ActionTimerStaticComponent(self._action_relation, action_tracked_time)
-        self._action_timer_component = ActionTimerComponent(self._action_relation, 0)
+        self._action_timer_total_component = ActionTimerStaticComponent(self._action, action_tracked_time)
+        self._action_timer_component = ActionTimerComponent(self._action, 0)
 
-        if self._action_relation.is_target:
+        if self._action.is_target:
             font_weight = ft.FontWeight.W_500
         else:
             font_weight = ft.FontWeight.W_400
@@ -174,8 +173,8 @@ class ActivityTrackActionControl(BaseActivityTabActivityTrackControl):
                     action_control_row.border = None
                 to_update_controls.append(action_control_row)
 
-            action_id = self.action.id
-            self._global_state['selected']['action'] = self.action
+            action_id = self._action.id
+            self._global_state['selected']['action'] = self._action
         else:
             action_id = CONSTS.PAUSE_ACTION_ID
             self.action_timer.disabled = True

@@ -1,4 +1,3 @@
-import time
 import datetime
 from typing import Self
 
@@ -7,7 +6,7 @@ import flet as ft
 from controls.activity_track_controls import ActivityTrackActionControl, ActivityTrackActionsViewControl
 from controls.base_control import BaseControl
 from helpers import ActivityTabHelpers, StateDBHelpers
-from models import Action, ActivityActions, ActivityTrack
+from models import Action, ActivityTrack
 from state import ActivityTabState, State
 
 
@@ -68,7 +67,7 @@ class ActivityTabActivitySelectorControl(BaseActivityTabControl):
         StateDBHelpers(self._global_state).refresh_activity_actions_tracked_time()
         self._global_state['controls']['activity']['activity_track']['actions_view'].controls.clear()
 
-        for action in activity.actions.order_by(ActivityActions.is_target.desc(), ActivityActions.is_useful.desc()):
+        for action in activity.actions.order_by(Action.is_target.desc(), Action.is_useful.desc()):
             action_control = ActivityTrackActionControl(self._global_state, action).init()
             actions_view.controls.append(action_control.component)
 

@@ -19,17 +19,6 @@ class BaseModel(Model):
         database = db
 
 
-class Action(BaseModel):
-    """
-    Любое действие
-    """
-
-    title = CharField(unique=True, max_length=50)
-
-    class Meta:
-        table_name = 'action'
-
-
 class Activity(BaseModel):
     """
     Активность / Целевое действие (работа, учёба)
@@ -41,22 +30,18 @@ class Activity(BaseModel):
         table_name = 'activity'
 
 
-class ActivityActions(BaseModel):
+class Action(BaseModel):
     """
-    Связь активности с остальными действиями.
-    Определяет, какими действиями может заниматься пользователем во время выполнения целевого действия.
+    Действие, которое может быть выполнено во время активности
     """
 
     activity = ForeignKeyField(Activity, backref='actions')
-    action = ForeignKeyField(Action, backref='activities')
+    title = CharField(max_length=50)
     is_target = BooleanField(help_text='Является ли действие целевым для данной активности')
     is_useful = BooleanField(help_text='Является ли действие полезным для данной активности')
 
     class Meta:
-        table_name = 'activity_actions'
-        indexes = (
-            (('activity', 'action'), True),  # уникальный индекс
-        )
+        table_name = 'action'
 
 
 class ActivityTrackActionTrackData(TypedDict):
@@ -96,8 +81,7 @@ class ActivityTrack(BaseModel):
 
 if __name__ == '__main__':
     db.create_tables([
-        Action,
         Activity,
-        ActivityActions,
+        Action,
         ActivityTrack,
     ])

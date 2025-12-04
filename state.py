@@ -21,7 +21,6 @@ class NewActivityModalState(TypedDict):
     modal: ft.AlertDialog | None
     activity_title_input: ft.TextField | None
     actions_view: ft.Column | None
-    new_action_view: ft.Row | None
     add_action_row_button: ft.IconButton | None
     new_action_input: ft.TextField | None
     new_action_button: ft.TextButton | None
