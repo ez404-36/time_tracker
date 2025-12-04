@@ -4,19 +4,9 @@ from typing import TypedDict
 from peewee import *
 import time
 
-from playhouse.sqlite_ext import JSONField, SqliteExtDatabase
+from playhouse.sqlite_ext import JSONField
 
-
-db = SqliteExtDatabase('database.db')
-
-class CONSTS:
-    PAUSE_ACTION_ID = 'pause'
-    STOP_ACTION_ID = 'stop'
-
-
-class BaseModel(Model):
-    class Meta:
-        database = db
+from core.models import BaseModel
 
 
 class Activity(BaseModel):
@@ -77,11 +67,3 @@ class ActivityTrack(BaseModel):
             )
         )
         self.save(only=['time_track'])
-
-
-if __name__ == '__main__':
-    db.create_tables([
-        Activity,
-        Action,
-        ActivityTrack,
-    ])

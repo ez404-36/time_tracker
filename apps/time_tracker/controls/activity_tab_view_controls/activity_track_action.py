@@ -1,73 +1,18 @@
-import asyncio
-import datetime
 from typing import Self
 
 import flet as ft
 from flet.core.border import Border, BorderSide
 
-from controls.base_control import BaseControl
-from helpers import ActivityTabHelpers
-from models import Action, ActivityTrack, CONSTS
-from state import ActivityTabActivityTrackState, State
+from apps.time_tracker.consts import PAUSE_ACTION_ID
+from apps.time_tracker.controls.activity_tab_view_controls.action_timer import ActionTimerComponent, \
+    ActionTimerStaticComponent
+from apps.time_tracker.controls.base import BaseActivityTabControl
+from apps.time_tracker.models import Action, ActivityTrack
+from core.state import State
+from helpers import ActivityTabHelpers, StateDBHelpers
 
 
-class BaseActivityTabActivityTrackControl(BaseControl):
-    def __init__(self, state: State):
-        super().__init__(state)
-        self._state: ActivityTabActivityTrackState = state['controls']['activity']['activity_track']
-
-
-class ActionTimerComponent(ft.Text):
-    def __init__(self, action: Action, seconds: int, **kwargs):
-        super().__init__(**kwargs)
-        self.running = False
-        self.disabled = True
-        self.seconds = seconds
-        self._action = action
-
-    @property
-    def action(self) -> Action:
-        return self._action
-
-    def did_mount(self):
-        self.running = True
-        self.page.run_task(self.update_timer)
-        self.update_value()
-
-    def will_unmount(self):
-        self.running = False
-
-    def update_value(self, with_refresh=True):
-        if self.seconds:
-            self.value = datetime.timedelta(seconds=self.seconds)
-        else:
-            self.value = None
-
-        if with_refresh:
-            self.update()
-
-    def reset_timer(self, with_refresh=True):
-        self.disabled = True
-        self.seconds = 0
-        self.update_value(with_refresh)
-
-    async def update_timer(self):
-        while self.running:
-            if not self.disabled:
-                self.update_value()
-                self.seconds += 1
-            await asyncio.sleep(1)
-
-
-class ActionTimerStaticComponent(ActionTimerComponent):
-    def update_value(self, with_refresh=True):
-        self.value = f'(Всего сегодня: {datetime.timedelta(seconds=self.seconds)})'
-        self.update()
-
-    def did_mount(self):
-        self.update_value()
-
-class ActivityTrackActionControl(BaseActivityTabActivityTrackControl):
+class ActivityTrackActionControl(BaseActivityTabControl):
     def __init__(self, state: State, action: Action):
         super().__init__(state)
         self._action = action
@@ -96,10 +41,10 @@ class ActivityTrackActionControl(BaseActivityTabActivityTrackControl):
     def get_color(self) -> ft.Colors:
         return ft.Colors.GREEN_300 if self._action.is_useful else ft.Colors.RED_300
 
-    def init(self) -> Self:
+    def build(self) -> Self:
         color = self.get_color()
 
-        action_tracked_time = self._global_state['activity_track_actions_time'].get(self.action.id, 0)
+        action_tracked_time = StateDBHelpers(self._global_state).get_activity_actions_tracked_time().get(self.action.id, 0)
 
         self._start_stop_button = ft.IconButton(
             ft.Icons.PLAY_CIRCLE_OUTLINE,
@@ -135,18 +80,18 @@ class ActivityTrackActionControl(BaseActivityTabActivityTrackControl):
         return self
 
     def on_click_start_stop(self, e):
-        if not self._global_state['selected']['activity_track']:
-            activity = self._global_state['selected']['activity']
-            self._global_state['selected']['activity_track'] = ActivityTrack.create(
+        if not self._state['selected']['activity_track']:
+            activity = self._state['selected']['activity']
+            self._state['selected']['activity_track'] = ActivityTrack.create(
                 activity=activity
             )
 
-        activity_track = self._global_state['selected']['activity_track']
+        activity_track = self._state['selected']['activity_track']
 
         to_update_controls = []
 
         if not self._is_started:
-            for action_control_row in self._global_state['controls']['activity']['activity_track']['actions_view'].controls:
+            for action_control_row in self._state['controls']['view']['actions_view'].controls:
                 timer_control: ActionTimerComponent = action_control_row.content.controls[3]
                 row_action: Action = timer_control.action
                 is_current_row = row_action == self.action
@@ -174,9 +119,9 @@ class ActivityTrackActionControl(BaseActivityTabActivityTrackControl):
                 to_update_controls.append(action_control_row)
 
             action_id = self._action.id
-            self._global_state['selected']['action'] = self._action
+            self._state['selected']['action'] = self._action
         else:
-            action_id = CONSTS.PAUSE_ACTION_ID
+            action_id = PAUSE_ACTION_ID
             self.action_timer.disabled = True
             self.action_timer.reset_timer()
             self._component.border = None
@@ -194,14 +139,3 @@ class ActivityTrackActionControl(BaseActivityTabActivityTrackControl):
         self._is_started = not self._is_started
 
         ActivityTabHelpers(self._global_state).refresh_activity_actions_total_timers()
-
-
-class ActivityTrackActionsViewControl(BaseActivityTabActivityTrackControl):
-    @property
-    def component(self) -> ft.Column:
-        return self._state['actions_view']
-
-    def init(self) -> Self:
-        self._state['actions_view'] = ft.Column()
-
-        return self

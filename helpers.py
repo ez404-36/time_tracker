@@ -2,8 +2,9 @@ from collections import defaultdict
 
 import flet as ft
 
-from models import Action, Activity, ActivityTrackActionTrackData, CONSTS
-from state import NewActivityModalState, State, StateDB
+from apps.time_tracker.consts import PAUSE_ACTION_ID, STOP_ACTION_ID
+from apps.time_tracker.models import Action, Activity, ActivityTrackActionTrackData
+from core.state import ActivityTabDBState, ActivityTabNewActivityModalState, State
 
 
 class ActivityTabHelpers:
@@ -12,14 +13,14 @@ class ActivityTabHelpers:
 
     def refresh_activity_selector_options(self) -> None:
         options = self.get_activity_selector_options()
-        selector = self._state['controls']['activity']['activity_tab']['activity_selector']
+        selector = self._state['tabs']['activity']['controls']['view']['activity_selector']
         if selector:
             selector.options = options
             selector.update()
 
     def refresh_activity_actions_total_timers(self) -> None:
-        tracked_time = StateDBHelpers(self._state).refresh_activity_actions_tracked_time()
-        for action_control_row in self._state['controls']['activity']['activity_track']['actions_view'].controls:
+        tracked_time = StateDBHelpers(self._state).get_activity_actions_tracked_time()
+        for action_control_row in self._state['tabs']['activity']['controls']['view']['actions_view'].controls:
             total_timer_control = action_control_row.content.controls[1]
             action = total_timer_control.action
             action_tracked_time = tracked_time.get(action.id, 0)
@@ -36,13 +37,13 @@ class ActivityTabHelpers:
                 ),
                 text=it.title,
             )
-            for it in self._state['db']['activities'].values()
+            for it in self._state['tabs']['activity']['db']['activities'].values()
         ]
 
 
 class NewActivityModalHelpers:
-    def __init__(self, state: NewActivityModalState):
-        self._state: NewActivityModalState = state
+    def __init__(self, state: ActivityTabNewActivityModalState):
+        self._state: ActivityTabNewActivityModalState = state
 
     def get_actions_with_useful_checkbox(self) -> list[tuple[str, bool]]:
         return [
@@ -56,7 +57,7 @@ class NewActivityModalHelpers:
 
 class StateDBHelpers:
     def __init__(self, state: State):
-        self._state: StateDB = state['db']
+        self._state: ActivityTabDBState = state['tabs']['activity']['db']
         self._global_state = state
 
     def get_action_ids(self) -> list[int]:
@@ -75,8 +76,8 @@ class StateDBHelpers:
             it.id: it for it in Activity.select()
         }
 
-    def refresh_activity_actions_tracked_time(self) -> dict[str | int, int]:
-        activity_track = self._global_state['selected']['activity_track']
+    def get_activity_actions_tracked_time(self) -> dict[str | int, int]:
+        activity_track = self._global_state['tabs']['activity']['selected']['activity_track']
 
         actions_counter = defaultdict(int)
 
@@ -88,7 +89,7 @@ class StateDBHelpers:
                 timestamp = action_time_data['timestamp']
 
                 if prev_action_id:
-                    if prev_action_id in {CONSTS.PAUSE_ACTION_ID, CONSTS.STOP_ACTION_ID}:
+                    if prev_action_id in {PAUSE_ACTION_ID, STOP_ACTION_ID}:
                         delta = 0
                     else:
                         delta = timestamp - prev_timestamp
@@ -97,5 +98,4 @@ class StateDBHelpers:
                 prev_timestamp = timestamp
                 prev_action_id = action_id
 
-        self._global_state['activity_track_actions_time'] = dict(actions_counter)
         return actions_counter

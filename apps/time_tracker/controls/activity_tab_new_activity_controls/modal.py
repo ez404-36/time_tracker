@@ -1,66 +1,14 @@
 import flet as ft
 
-from controls.base_control import BaseControl
+from apps.time_tracker.controls.activity_tab_new_activity_controls.base import BaseNewActivityModalControl
+from apps.time_tracker.controls.activity_tab_new_activity_controls.new_action_row import \
+    NewActivityModalActionRowControl
+from apps.time_tracker.controls.activity_tab_new_activity_controls.new_actions_view import \
+    NewActivityModalControlActionsView
+from apps.time_tracker.models import Action, Activity
+from core.models import db
+from core.state import State
 from helpers import ActivityTabHelpers, NewActivityModalHelpers, StateDBHelpers
-from models import Action, Activity, db
-from state import NewActivityModalState, State
-
-
-class BaseNewActivityModalControl(BaseControl):
-    def __init__(self, state: State):
-        super().__init__(state)
-        self._state: NewActivityModalState = state['controls']['activity']['new_activity_modal']
-        self._component: ft.Control | None = None
-
-
-class NewActivityModalActionRowControl(BaseNewActivityModalControl):
-    def init(self, default: str = None):
-        def on_click_action_remove(e):
-            self._state['actions_view'].controls.remove(self._component)
-            self._state['actions_view'].update()
-
-        action_input = ft.TextField(width=200)
-        is_target_action_checkbox = ft.Checkbox(label='Полезное действие')
-        other_action_delete_button = ft.IconButton(ft.Icons.REMOVE, on_click=on_click_action_remove)
-
-        self._component = ft.Row(
-            controls=[
-                action_input,
-                is_target_action_checkbox,
-                other_action_delete_button,
-            ]
-        )
-
-        self._state['actions_view'].controls.append(self._component)
-        self._state['actions_view'].update()
-
-        return self
-
-
-class NewActivityModalControlActionsView(BaseNewActivityModalControl):
-    """
-    Компонент действий в модалке создания активности
-    """
-
-    def __init__(self, state: State):
-        super().__init__(state)
-
-    @property
-    def component(self) -> ft.Column:
-        return self._state['actions_view']
-
-    def init(self):
-        self._state['actions_view'] = ft.Column()
-        self._init_add_action_row_button()
-
-    def _init_add_action_row_button(self):
-        self._state['add_action_row_button'] = ft.IconButton(
-            ft.Icons.ADD,
-            on_click=self._on_click_add_action_row_button,
-        )
-
-    def _on_click_add_action_row_button(self, e):
-        NewActivityModalActionRowControl(self._global_state).init()
 
 
 class NewActivityModalControl(BaseNewActivityModalControl):
@@ -77,10 +25,10 @@ class NewActivityModalControl(BaseNewActivityModalControl):
     def component(self) -> ft.AlertDialog:
         return self._state['modal']
 
-    def init(self):
+    def build(self):
         self._init_submit_button()
         self._init_activity_title_input()
-        self._actions_view_control = NewActivityModalControlActionsView(self._global_state).init()
+        self._actions_view_control = NewActivityModalControlActionsView(self._global_state).build()
 
         self._init_modal()
 
@@ -123,7 +71,7 @@ class NewActivityModalControl(BaseNewActivityModalControl):
         self._state['actions_view'].controls = []
         self._state['actions_view'].update()
 
-        activity_selector = self._global_state['controls']['activity']['activity_tab']['activity_selector']
+        activity_selector = self._global_state['tabs']['activity']['controls']['view']['activity_selector']
 
         activity_selector.disabled = False
         activity_selector.tooltip = None

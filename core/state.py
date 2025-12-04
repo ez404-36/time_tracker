@@ -2,21 +2,36 @@ from typing import TypedDict, get_type_hints
 
 import flet as ft
 
-from models import Action, Activity, ActivityTrack
+from apps.time_tracker.models import Action, Activity, ActivityTrack
 
 
-class StateDB(TypedDict):
+class BaseTabState(TypedDict):
+    db: dict
+    controls: dict
+    selected: dict
+
+
+class ActivityTabDBState(TypedDict):
     actions: dict[int, Action]
     activities: dict[int, Activity]
 
 
-class StateSelected(TypedDict):
+class ActivityTabSelectedState(TypedDict):
     activity: Activity | None   # выбранная активность
     activity_track: ActivityTrack | None    # текущий объект отслеживания активности за день
     action: Action | None   # текущее активное действие
 
 
-class NewActivityModalState(TypedDict):
+class ActivityTabActivityViewState(TypedDict):
+    tab: ft.Container | None
+    activity_actions_row: ft.Row | None
+    activity_selector: ft.Dropdown | None
+    new_activity_button: ft.ElevatedButton | None
+    actions_view: ft.Column | None
+    active_action_timer: ft.Text | None
+
+
+class ActivityTabNewActivityModalState(TypedDict):
     """Состояние модалки добавления новой активности"""
     modal: ft.AlertDialog | None
     activity_title_input: ft.TextField | None
@@ -27,48 +42,39 @@ class NewActivityModalState(TypedDict):
     submit_button: ft.TextButton | None
 
 
-class ActivityTabActivityTrackState(TypedDict):
-    """
-    Состояние компонентов отслеживания активности
-    """
-    actions_view: ft.Column | None
-    active_action_timer: ft.Text | None
+class ActivityTabControlsState(TypedDict):
+    new_activity: ActivityTabNewActivityModalState
+    view: ActivityTabActivityViewState
 
 
 class ActivityTabState(TypedDict):
-    tab: ft.Column | None
-    activity_actions_row: ft.Row | None
-    activity_selector: ft.Dropdown | None
-    new_activity_button: ft.ElevatedButton | None
-
-
-class ActivityTabControlsState(TypedDict):
     """Состояние таба Активности"""
-    activity_tab: ActivityTabState
-    new_activity_modal: NewActivityModalState
-    activity_track: ActivityTabActivityTrackState
+    db: ActivityTabDBState
+    selected: ActivityTabSelectedState
+    controls: ActivityTabControlsState
 
 
 class ToDoTabControlsState(TypedDict):
-    """Состояние ТУ-ДУ таба"""
-    todo_tab: ft.Column | None
-    todo_view: ft.Column | None
-    todo_input: ft.TextField | None
-    todo_submit: ft.FloatingActionButton | None
-    todo_list: ft.Column | None
+    tab: ft.Container | None
+    view: ft.Column | None
+    input: ft.TextField | None
+    submit: ft.FloatingActionButton | None
+    list: ft.Column | None
 
 
-class ControlsState(TypedDict):
-    activity: ActivityTabControlsState
-    todo: ToDoTabControlsState
+class TodoTabState(TypedDict):
+    """Состояние таба ТУ-ДУ"""
+    controls: ToDoTabControlsState
+
+
+class TabsState(TypedDict):
+    activity: ActivityTabState
+    todo: TodoTabState
 
 
 class State(TypedDict):
     page: ft.Page | None
-    selected: StateSelected  # выбранные значения в инпутах/селекторах
-    controls: ControlsState  # flet компоненты
-    db: StateDB    # данные из БД
-    activity_track_actions_time: dict[str | int, int]
+    tabs: TabsState
 
 
 def init_state(typed_dict_class) -> State:

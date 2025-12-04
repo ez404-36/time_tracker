@@ -1,13 +1,12 @@
-import time
-
 import flet as ft
 
-from controls.activity_tab_controls import ActivityTabControl
-from controls.new_activity_modal_controls import NewActivityModalControl
-from controls.todo_tab_controls import TodoTabControl
+from apps.time_tracker.consts import STOP_ACTION_ID
+from apps.time_tracker.controls.activity_tab_new_activity_controls.modal import NewActivityModalControl
+from apps.time_tracker.controls.activity_tab_view_controls.activity_tab import ActivityTabControl
+from apps.to_do.controls.todo_tab_controls import TodoTabControl
+from core.state import State, init_state
 from helpers import StateDBHelpers
-from models import CONSTS
-from state import State, init_state
+
 
 state: State = init_state(State)
 
@@ -37,32 +36,33 @@ class DesktopApp:
         page.window.prevent_close = True
         page.window.on_event = self.window_event_handler
 
-        self._new_activity_modal_control = NewActivityModalControl(state).init()
-        self._activity_tab_control = ActivityTabControl(state).init()
-        self._todo_tab_control = TodoTabControl(state).init()
+        self._new_activity_modal_control = NewActivityModalControl(state).build()
+        self._activity_tab_control = ActivityTabControl(state).build()
+        self._todo_tab_control = TodoTabControl(state).build()
 
-        row = ft.Row(
-            controls=[
-                self._activity_tab_control.component,
-                ft.VerticalDivider(width=10),
-                self._todo_tab_control.component,
+        tabs = ft.Tabs(
+            selected_index=0,
+            animation_duration=300,
+            expand=1,
+            tabs=[
+                ft.Tab(
+                    text='Трекер активности',
+                    content=self._activity_tab_control.component,
+                ),
+                ft.Tab(
+                    text='TODO',
+                    content=self._todo_tab_control.component,
+                )
             ]
         )
 
-        activity_track_row = ft.Row(
-            controls=[
-                self._activity_tab_control.activity_track_component,
-            ]
-        )
-
-        page.add(row)
-        page.add(activity_track_row)
+        page.add(tabs)
 
     def window_event_handler(self, e):
         if e.data == 'close':
             state['page'].window.destroy()
-            if activity_track := state['selected']['activity_track']:
-                activity_track.change_action(CONSTS.STOP_ACTION_ID)
+            if activity_track := state['tabs']['activity']['selected']['activity_track']:
+                activity_track.change_action(STOP_ACTION_ID)
 
 def main(page: ft.Page):
     app = DesktopApp(page)
