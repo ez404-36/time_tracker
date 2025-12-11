@@ -2,6 +2,8 @@ from typing import Self
 
 import flet as ft
 
+from apps.to_do.controls.todo_add_input import ToDoAddInput
+from apps.to_do.controls.todo_add_submit_button import ToDoAddSubmitButton
 from apps.to_do.controls.todo_row import ToDoTabToDoRowControl
 from apps.to_do.helpers import refresh_todo_list
 from apps.to_do.models import ToDo
@@ -32,29 +34,8 @@ class TodoTabControl(BaseControl):
 
         refresh_todo_list(self._state, ToDoTabToDoRowControl, with_update_controls=False)
 
-        def todo_add_clicked(e):
-            todo_title = self._state['controls']['input'].value
-
-            ToDo.create(title=todo_title)
-            refresh_todo_list(self._state, ToDoTabToDoRowControl)
-
-            self._state['controls']['input'].value = ""
-            self._state['controls']['view'].update()
-
-        self._state['controls']['submit'] = ft.TextButton(
-            text='Добавить',
-            disabled=True,
-            on_click=todo_add_clicked,
-        )
-
-        def on_todo_input_change(e):
-            self._state['controls']['submit'].disabled = not e.control.value
-            self._state['controls']['submit'].update()
-
-        self._state['controls']['input'] = ft.TextField(
-            hint_text='Не забыть сделать',
-            on_change=on_todo_input_change,
-        )
+        self._state['controls']['submit'] = ToDoAddSubmitButton(self._state)
+        self._state['controls']['input'] = ToDoAddInput(self._state)
 
         self._state['controls']['view'] = ft.Column(
             controls=[
@@ -64,6 +45,7 @@ class TodoTabControl(BaseControl):
                         self._state['controls']['submit'],
                     ]
                 ),
+                ft.Container(padding=10),
                 self._state['controls']['list_active'],
                 ft.Divider(),
                 ft.Text('Завершено'),

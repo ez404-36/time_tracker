@@ -16,3 +16,12 @@ def create_tables():
         Action,
         ActivityTrack,
     ])
+
+
+def run_migration():
+    migrator = SqliteMigrator(db)
+
+    # Код для миграций
+    migrate(
+
+    )

@@ -2,6 +2,7 @@ from typing import Any
 
 import flet as ft
 
+from apps.to_do.controls.todo_mutate_container import ToDoMutateContainer
 from apps.to_do.helpers import refresh_todo_list
 from apps.to_do.models import ToDo
 from core.state import TodoTabState
@@ -18,32 +19,34 @@ class ToDoTabToDoRowControl(ft.Row):
         self._is_editing = False
 
         self._checkbox: ft.Checkbox | None = None
-        self._edit_field: ft.TextField | None = None
+        self._edit_container: ft.Container | None = None
         self._edit_icon: ft.IconButton | None = None
         self._add_children_icon: ft.IconButton | None = None
         self._delete_icon: ft.IconButton | None = None
-
-        self.build()
 
     def build(self):
         is_done = self._instance.is_done
 
         self.build_checkbox()
+        self.build_edit_container()
 
         self._edit_icon = ft.IconButton(
             icon=ft.Icons.EDIT,
             on_click=self.on_click_edit,
-            disabled=is_done,
+            visible=not is_done,
+            tooltip='Редактировать',
         )
         self._add_children_icon = ft.IconButton(
             icon=ft.Icons.ADD,
             on_click=self.on_click_add_children,
-            disabled=is_done,
+            visible=not is_done,
+            tooltip='Добавить вложенную задачу',
         )
         self._delete_icon = ft.IconButton(
             icon=ft.Icons.DELETE,
             on_click=self.on_click_remove,
             icon_color=ft.Colors.RED_300,
+            tooltip='Удалить',
         )
 
         controls: list[Any] = [self._checkbox]
@@ -52,6 +55,7 @@ class ToDoTabToDoRowControl(ft.Row):
             controls.append(self._edit_icon)
             controls.append(self._add_children_icon)
 
+        controls.append(self._edit_container)
         controls.append(self._delete_icon)
 
         self.controls = controls
@@ -59,16 +63,37 @@ class ToDoTabToDoRowControl(ft.Row):
     def build_checkbox(self):
         is_done = self._instance.is_done
         color = ft.Colors.GREY if is_done else None
+        label = self.get_checkbox_label()
 
-        self._checkbox = ft.Checkbox(
-            label=self._instance.title,
-            value=is_done,
-            on_change=self.on_change_checkbox,
-            fill_color=color,
-        )
+        if not self._checkbox:
+            self._checkbox = ft.Checkbox(
+                label=label,
+                value=is_done,
+                on_change=self.on_change_checkbox,
+                fill_color=color,
+            )
+        else:
+            self._checkbox.label = label
 
-    def build_text_field(self):
-        self._edit_field = ft.TextField(value=self._instance.title)
+    def get_checkbox_label(self) -> ft.Row:
+        instance = self._instance
+        text = ft.Text(instance.title)
+
+        controls = []
+
+        if deadline_str := instance.deadline_str:
+            deadline = ft.Text(
+                f'[{deadline_str}]',
+                weight=ft.FontWeight.W_500
+            )
+            controls.append(deadline)
+
+        controls.append(text)
+
+        return ft.Row(controls=controls)
+
+    def build_edit_container(self):
+        self._edit_container = ToDoMutateContainer(self._instance)
 
     def on_change_checkbox(self, e):
         is_done = e.control.value
@@ -77,27 +102,23 @@ class ToDoTabToDoRowControl(ft.Row):
         refresh_todo_list(self._state, self.__class__)
 
     def on_click_edit(self, e):
-        if not self._is_editing:
-            # start editing
-            self.controls.remove(self._checkbox)
-            self.build_text_field()
-            self.controls.insert(0, self._edit_field)
-            self._edit_icon.icon = ft.Icons.CHECK
-        else:
-            # submit
-            value = self._edit_field.value
-            self._instance.title = value
-            self._instance.save(only=['title'])
-            self.controls.remove(self._edit_field)
-            self.build_checkbox()
-            self.controls.insert(0, self._checkbox)
-            self._edit_icon.icon = ft.Icons.EDIT
+        self._is_editing = True
 
-        self._is_editing = not self._is_editing
+        self._add_children_icon.visible = False
+        self._checkbox.visible = False
+        self._delete_icon.visible = False
+        self._edit_icon.visible = False
+        self._edit_container.visible = True
 
-        self._add_children_icon.disabled = self._is_editing
-        self._delete_icon.disabled = self._is_editing
+        self.update()
 
+    def on_stop_editing(self):
+        self._instance = ToDo.get(id=self._instance.id)
+
+        for control in self.controls:
+            control.visible = not control == self._edit_container
+
+        self.build_checkbox()
         self.update()
 
     def on_click_add_children(self, e):

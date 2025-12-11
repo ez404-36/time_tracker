@@ -59,6 +59,8 @@ class ToDoTabControlsState(TypedDict):
     tab: ft.Container | None
     view: ft.Column | None
     input: ft.TextField | None
+    deadline_date: ft.DatePicker | None
+    deadline_time: ft.TimePicker | None
     submit: ft.TextButton | None
     list_active: ft.Column | None
     list_done: ft.Column | None
