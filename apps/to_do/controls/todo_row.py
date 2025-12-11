@@ -93,7 +93,7 @@ class ToDoTabToDoRowControl(ft.Row):
         return ft.Row(controls=controls)
 
     def build_edit_container(self):
-        self._edit_container = ToDoMutateContainer(self._instance)
+        self._edit_container = ToDoMutateContainer(self._state, self._instance)
 
     def on_change_checkbox(self, e):
         is_done = e.control.value

@@ -1,17 +1,15 @@
-import flet as ft
-
 from apps.to_do.models import ToDo
 from core.state import TodoTabState
 
 
 def refresh_todo_list(
         state: TodoTabState,
-        todo_row_control: type[ft.Row],
         with_update_controls=True,
 ):
     """
     :return: список активных и список завершенных дел
     """
+    from apps.to_do.controls.todo_row import ToDoTabToDoRowControl
 
     todos = ToDo.select().order_by(ToDo.created_at.desc(), ToDo.is_done)
 
@@ -24,7 +22,7 @@ def refresh_todo_list(
     for todo in todos:
         controls = done_todo_controls if todo.is_done else active_todo_controls
         controls.append(
-            todo_row_control(instance=todo, state=state)
+            ToDoTabToDoRowControl(instance=todo, state=state)
         )
 
     todo_list_active.controls = active_todo_controls

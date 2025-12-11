@@ -2,9 +2,7 @@ from typing import Self
 
 import flet as ft
 
-from apps.to_do.controls.todo_add_input import ToDoAddInput
-from apps.to_do.controls.todo_add_submit_button import ToDoAddSubmitButton
-from apps.to_do.controls.todo_row import ToDoTabToDoRowControl
+from apps.to_do.controls.todo_mutate_container import ToDoMutateContainer
 from apps.to_do.helpers import refresh_todo_list
 from apps.to_do.models import ToDo
 from core.controls.base_control import BaseControl
@@ -32,20 +30,11 @@ class TodoTabControl(BaseControl):
         self._state['controls']['list_active'] = ft.Column()
         self._state['controls']['list_done'] = ft.Column()
 
-        refresh_todo_list(self._state, ToDoTabToDoRowControl, with_update_controls=False)
-
-        self._state['controls']['submit'] = ToDoAddSubmitButton(self._state)
-        self._state['controls']['input'] = ToDoAddInput(self._state)
+        refresh_todo_list(self._state, with_update_controls=False)
 
         self._state['controls']['view'] = ft.Column(
             controls=[
-                ft.Row(
-                    controls=[
-                        self._state['controls']['input'],
-                        self._state['controls']['submit'],
-                    ]
-                ),
-                ft.Container(padding=10),
+                ToDoMutateContainer(self._state),
                 self._state['controls']['list_active'],
                 ft.Divider(),
                 ft.Text('Завершено'),

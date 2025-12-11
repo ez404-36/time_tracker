@@ -4,7 +4,9 @@ from typing import Optional
 import flet as ft
 from flet.core.border import Border, BorderSide
 
+from apps.to_do.helpers import refresh_todo_list
 from apps.to_do.models import ToDo
+from core.state import TodoTabState
 
 
 class ToDoMutateContainer(ft.Container):
@@ -12,58 +14,92 @@ class ToDoMutateContainer(ft.Container):
     Контейнер создания/изменения объекта ТУДУ
     """
 
-    def __init__(self, instance: Optional[ToDo] = None, **kwargs):
-        bs = BorderSide(2, color=ft.Colors.BLUE)
-        border = Border(left=bs, top=bs, right=bs, bottom=bs)
-
+    def __init__(self, state: TodoTabState, instance: Optional[ToDo] = None, **kwargs):
         kwargs.setdefault('padding', 10)
-        kwargs.setdefault('visible', False)
-        kwargs.setdefault('border', border)
+
+        if instance:
+            bs = BorderSide(2, color=ft.Colors.BLUE)
+            border = Border(left=bs, top=bs, right=bs, bottom=bs)
+            kwargs.setdefault('visible', False)
+            kwargs.setdefault('border', border)
+
         super().__init__(**kwargs)
 
         self._instance = instance
+        self._state = state
         self._new_deadline_date: datetime.date | None = None
         self._new_deadline_time: datetime.time | None = None
 
-        self._edit_field: ft.TextField | None = None
+        self._title_field: ft.TextField | None = None
         self._edit_date_button: ft.TextButton | None = None
         self._edit_time_button: ft.TextButton | None = None
-        self._submit_icon: ft.IconButton | None = None
+        self._submit_button: ft.IconButton | ft.TextButton | None = None
 
     def build(self):
-        self._build_edit_field()
+        self._build_title_field()
         self._build_edit_date_button()
         self._build_edit_time_button()
         self._build_submit_button()
 
-        self.content = ft.Row(
-            controls=[
-                self._edit_field,
-                ft.Column(
-                    controls=[
-                        self._edit_date_button,
-                        self._edit_time_button,
-                    ]
-                ),
-                self._submit_icon,
-            ]
-        )
+        if self._instance:
+            self.content = ft.Row(
+                controls=[
+                    self._title_field,
+                    ft.Column(
+                        controls=[
+                            self._edit_date_button,
+                            self._edit_time_button,
+                        ]
+                    ),
+                    self._submit_button,
+                ]
+            )
+        else:
+            self.content = ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            self._title_field,
+                            self._submit_button,
+                        ]
+                    ),
+                    ft.Row(
+                        controls=[
+                            self._edit_date_button,
+                            self._edit_time_button,
+                        ]
+                    ),
+                ]
+            )
 
-    def _build_edit_field(self):
-        self._edit_field = ft.TextField(value=self._instance.title)
+    def _build_title_field(self):
+        if self._instance:
+            self._title_field = ft.TextField(value=self._instance.title)
+        else:
+            def on_change(e):
+                value = e.control.value
+                self._submit_button.disabled = not value
+                self._edit_date_button.visible = bool(value)
+                self._edit_time_button.visible = bool(value)
+
+                self.parent.update()
+
+            self._title_field = ft.TextField(
+                hint_text='Не забыть сделать',
+                on_change=on_change
+            )
 
     def _build_edit_date_button(self):
-        deadline_date = self._instance.deadline_date
-
         self._edit_date_button = ft.TextButton(
-            f'Дата: ({self._instance.deadline_date_str or "Не выбрана"})',
+            f'Дата: ({getattr(self._instance, 'deadline_date_str', None) or "Не выбрана"})',
             on_click=lambda e: self.page.open(
                 ft.DatePicker(
                     first_date=datetime.datetime.now().date(),
-                    value=deadline_date,
+                    value=getattr(self._instance, 'deadline_date', None),
                     on_change=self._on_change_deadline_date,
                 )
-            )
+            ),
+            visible=self._instance is not None,
         )
 
     def _on_change_deadline_date(self, e):
@@ -73,16 +109,15 @@ class ToDoMutateContainer(ft.Container):
         self._edit_date_button.update()
 
     def _build_edit_time_button(self):
-        deadline_time = self._instance.deadline_time
-
         self._edit_time_button = ft.TextButton(
-            f'Время: ({self._instance.deadline_time_str or "Не выбрано"})',
+            f'Время: ({getattr(self._instance, 'deadline_time_str', None) or "Не выбрано"})',
             on_click=lambda e: self.page.open(
                 ft.TimePicker(
-                    value=deadline_time or datetime.datetime.now().time(),
+                    value=getattr(self._instance, 'deadline_time', None) or datetime.datetime.now().time(),
                     on_change=self._on_change_deadline_time,
                 )
-            )
+            ),
+            visible=self._instance is not None,
         )
 
     def _on_change_deadline_time(self, e):
@@ -92,14 +127,35 @@ class ToDoMutateContainer(ft.Container):
         self._edit_time_button.update()
 
     def _build_submit_button(self):
-        self._submit_icon = ft.IconButton(
-            icon=ft.Icons.CHECK,
-            on_click=self._on_click_submit,
-            tooltip='Сохранить',
-        )
+        if self._instance:
+            self._submit_button = ft.IconButton(
+                icon=ft.Icons.CHECK,
+                on_click=self._on_click_submit,
+                tooltip='Сохранить',
+            )
+        else:
+            def on_click(e):
+                ToDo.create(
+                    title=self._title_field.value,
+                    deadline_date=self._new_deadline_date,
+                    deadline_time=self._new_deadline_time,
+                )
+                refresh_todo_list(self._state)
+
+                self._title_field.value = ''
+                self._submit_button.disabled = True
+                self._edit_date_button.visible = False
+                self._edit_time_button.visible = False
+                self.parent.update()
+
+            self._submit_button = ft.TextButton(
+                text='Добавить',
+                disabled=True,
+                on_click=on_click
+            )
 
     def _on_click_submit(self, e):
-        value = self._edit_field.value
+        value = self._title_field.value
         deadline_date = self._new_deadline_date
         deadline_time = self._new_deadline_time
 
@@ -113,4 +169,5 @@ class ToDoMutateContainer(ft.Container):
         self._new_deadline_date = None
         self._new_deadline_time = None
 
-        self.parent.on_stop_editing()
+        if self._instance:
+            self.parent.on_stop_editing()
