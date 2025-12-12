@@ -8,9 +8,19 @@ from apps.to_do.models import ToDo
 from core.state import TodoTabState
 
 
-class ToDoTabToDoRowControl(ft.Row):
+class ToDoViewRow(ft.Row):
     """
-    Компонент одной строчки ТУДУ
+    Компонент отображения одного ТУДУ
+    """
+    def __init__(self, instance: ToDo, state: TodoTabState, **kwargs):
+        super().__init__(**kwargs)
+        self._instance = instance
+        self._state = state
+
+
+class ToDoTabToDoViewControl(ft.Column):
+    """
+    Компонент отображения одного ТУДУ вместе с вложенными задачами
     """
     def __init__(self, instance: ToDo, state: TodoTabState, **kwargs):
         super().__init__(**kwargs)
@@ -122,7 +132,15 @@ class ToDoTabToDoRowControl(ft.Row):
         self.update()
 
     def on_click_add_children(self, e):
-        print('Добавить вложенный TODO')
+        children = ToDoMutateContainer(self._state, parent=self._instance)
+        idx = None
+        for i, control in enumerate(self.parent.controls):
+            if control == self:
+                idx = i + 1
+                break
+
+        self.parent.controls.insert(idx, children)
+        self.parent.update()
 
     def on_click_remove(self, e):
         self._instance.delete_instance()

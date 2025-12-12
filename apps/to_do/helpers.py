@@ -1,3 +1,5 @@
+from peewee import JOIN
+
 from apps.to_do.models import ToDo
 from core.state import TodoTabState
 
@@ -9,9 +11,16 @@ def refresh_todo_list(
     """
     :return: список активных и список завершенных дел
     """
-    from apps.to_do.controls.todo_row import ToDoTabToDoRowControl
+    from apps.to_do.controls.todo_row import ToDoTabToDoViewControl
 
-    todos = ToDo.select().order_by(ToDo.created_at.desc(), ToDo.is_done)
+    ChildrenToDo = ToDo.alias()
+
+    todos = (
+        ToDo.select()
+        .where(ToDo.parent == None)
+        .join(ChildrenToDo, JOIN.LEFT_OUTER, on=(ChildrenToDo.parent_id == ToDo.id))
+        .order_by(ToDo.created_at.desc(), ToDo.is_done)
+    )
 
     todo_list_active = state['controls']['list_active']
     todo_list_done = state['controls']['list_done']
@@ -22,7 +31,7 @@ def refresh_todo_list(
     for todo in todos:
         controls = done_todo_controls if todo.is_done else active_todo_controls
         controls.append(
-            ToDoTabToDoRowControl(instance=todo, state=state)
+            ToDoTabToDoViewControl(instance=todo, state=state)
         )
 
     todo_list_active.controls = active_todo_controls

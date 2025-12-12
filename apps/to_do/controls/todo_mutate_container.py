@@ -3,6 +3,8 @@ from typing import Optional
 
 import flet as ft
 from flet.core.border import Border, BorderSide
+from flet.core.control import Control
+from flet.core.padding import Padding
 
 from apps.to_do.helpers import refresh_todo_list
 from apps.to_do.models import ToDo
@@ -14,18 +16,31 @@ class ToDoMutateContainer(ft.Container):
     Контейнер создания/изменения объекта ТУДУ
     """
 
-    def __init__(self, state: TodoTabState, instance: Optional[ToDo] = None, **kwargs):
-        kwargs.setdefault('padding', 10)
+    def __init__(
+            self,
+            state: TodoTabState,
+            instance: Optional[ToDo] = None,
+            parent: Optional[ToDo] = None,
+            **kwargs
+    ):
 
-        if instance:
+        if not parent:
+            padding = Padding(left=10, top=10, right=10, bottom=10)
+        else:
+            padding = Padding(left=50, top=10, right=10, bottom=10)
+
+        kwargs.setdefault('padding', padding)
+
+        if instance or parent:
             bs = BorderSide(2, color=ft.Colors.BLUE)
             border = Border(left=bs, top=bs, right=bs, bottom=bs)
-            kwargs.setdefault('visible', False)
+            kwargs.setdefault('visible', parent is not None)
             kwargs.setdefault('border', border)
 
         super().__init__(**kwargs)
 
         self._instance = instance
+        self._parent = parent
         self._state = state
         self._new_deadline_date: datetime.date | None = None
         self._new_deadline_time: datetime.time | None = None
@@ -41,18 +56,23 @@ class ToDoMutateContainer(ft.Container):
         self._build_edit_time_button()
         self._build_submit_button()
 
-        if self._instance:
+        if self._instance or self._parent:
+            controls: list[Control] = [
+                self._title_field,
+                ft.Column(
+                    controls=[
+                        self._edit_date_button,
+                        self._edit_time_button,
+                    ]
+                ),
+                self._submit_button,
+            ]
+
+            if self._parent:
+                controls.insert(0, ft.Icon(ft.Icons.ARROW_FORWARD))
+
             self.content = ft.Row(
-                controls=[
-                    self._title_field,
-                    ft.Column(
-                        controls=[
-                            self._edit_date_button,
-                            self._edit_time_button,
-                        ]
-                    ),
-                    self._submit_button,
-                ]
+                controls=controls
             )
         else:
             self.content = ft.Column(
@@ -99,7 +119,7 @@ class ToDoMutateContainer(ft.Container):
                     on_change=self._on_change_deadline_date,
                 )
             ),
-            visible=self._instance is not None,
+            visible=self._instance is not None or self._parent is not None,
         )
 
     def _on_change_deadline_date(self, e):
@@ -117,7 +137,7 @@ class ToDoMutateContainer(ft.Container):
                     on_change=self._on_change_deadline_time,
                 )
             ),
-            visible=self._instance is not None,
+            visible=self._instance is not None or self._parent is not None,
         )
 
     def _on_change_deadline_time(self, e):
@@ -139,13 +159,17 @@ class ToDoMutateContainer(ft.Container):
                     title=self._title_field.value,
                     deadline_date=self._new_deadline_date,
                     deadline_time=self._new_deadline_time,
+                    parent=self._parent,
                 )
                 refresh_todo_list(self._state)
 
-                self._title_field.value = ''
-                self._submit_button.disabled = True
-                self._edit_date_button.visible = False
-                self._edit_time_button.visible = False
+                if not self._parent:
+                    self._title_field.value = ''
+                    self._submit_button.disabled = True
+                    self._edit_date_button.visible = False
+                    self._edit_time_button.visible = False
+                elif self.parent:
+                    self.parent.controls.remove(self)
                 self.parent.update()
 
             self._submit_button = ft.TextButton(
