@@ -20,6 +20,7 @@ def refresh_todo_list(
         .where(ToDo.parent == None)
         .join(ChildrenToDo, JOIN.LEFT_OUTER, on=(ChildrenToDo.parent_id == ToDo.id))
         .order_by(ToDo.created_at.desc(), ToDo.is_done)
+        .group_by(ToDo.id)
     )
 
     todo_list_active = state['controls']['list_active']

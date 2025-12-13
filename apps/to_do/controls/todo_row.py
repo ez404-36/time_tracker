@@ -1,6 +1,7 @@
 from typing import Any
 
 import flet as ft
+from flet.core.margin import Margin
 
 from apps.to_do.controls.todo_mutate_container import ToDoMutateContainer
 from apps.to_do.helpers import refresh_todo_list
@@ -8,36 +9,39 @@ from apps.to_do.models import ToDo
 from core.state import TodoTabState
 
 
-class ToDoViewRow(ft.Row):
+class ToDoRowViewControl(ft.Container):
     """
     Компонент отображения одного ТУДУ
     """
+
     def __init__(self, instance: ToDo, state: TodoTabState, **kwargs):
+        has_parent = instance.parent_id is not None
+        if has_parent:
+            kwargs.setdefault('margin', Margin(left=50, top=0, bottom=0, right=0))
+        kwargs.setdefault('visible', not has_parent or instance.parent_id in state['expanded'])
         super().__init__(**kwargs)
         self._instance = instance
         self._state = state
-
-
-class ToDoTabToDoViewControl(ft.Column):
-    """
-    Компонент отображения одного ТУДУ вместе с вложенными задачами
-    """
-    def __init__(self, instance: ToDo, state: TodoTabState, **kwargs):
-        super().__init__(**kwargs)
-        self._instance = instance
-        self._state = state
-        self._is_editing = False
+        self._has_children = self._instance.children.exists()
 
         self._checkbox: ft.Checkbox | None = None
+        self._text: ft.Row | None = None
+        self._expand_children_icon: ft.IconButton | None = None
         self._edit_container: ft.Container | None = None
         self._edit_icon: ft.IconButton | None = None
         self._add_children_icon: ft.IconButton | None = None
         self._delete_icon: ft.IconButton | None = None
 
+    @property
+    def is_expanded(self) -> bool:
+        return self._instance.id in  self._state['expanded']
+
     def build(self):
         is_done = self._instance.is_done
 
         self.build_checkbox()
+        self.build_expand_children_icon()
+        self.build_text()
         self.build_edit_container()
 
         self._edit_icon = ft.IconButton(
@@ -61,31 +65,76 @@ class ToDoTabToDoViewControl(ft.Column):
 
         controls: list[Any] = [self._checkbox]
 
+        if self._has_children:
+            controls.append(self._expand_children_icon)
+
+        controls.append(self._text)
+
         if not is_done:
             controls.append(self._edit_icon)
-            controls.append(self._add_children_icon)
+            if not self._instance.parent_id:
+                controls.append(self._add_children_icon)
 
         controls.append(self._edit_container)
         controls.append(self._delete_icon)
 
-        self.controls = controls
+        self.content = ft.Row(controls)
 
     def build_checkbox(self):
         is_done = self._instance.is_done
         color = ft.Colors.GREY if is_done else None
-        label = self.get_checkbox_label()
+        self._checkbox = ft.Checkbox(
+            label=None,
+            value=is_done,
+            on_change=self.on_change_checkbox,
+            fill_color=color,
+        )
 
-        if not self._checkbox:
-            self._checkbox = ft.Checkbox(
-                label=label,
-                value=is_done,
-                on_change=self.on_change_checkbox,
-                fill_color=color,
-            )
+    def build_text(self):
+        label = self.get_text_label()
+        if not self._text:
+            self._text = label
         else:
-            self._checkbox.label = label
+            self._text.controls = label.controls
 
-    def get_checkbox_label(self) -> ft.Row:
+    def build_expand_children_icon(self):
+        has_children = self._instance.children.exists()
+
+        if self.is_expanded:
+            icon = ft.Icons.KEYBOARD_ARROW_DOWN
+            tooltip = 'Скрыть вложенные задачи'
+        else:
+            icon = ft.Icons.KEYBOARD_ARROW_RIGHT
+            tooltip = 'Показать вложенные задачи'
+
+        if self._expand_children_icon:
+            self._expand_children_icon.icon = icon
+            self._expand_children_icon.tooltip = tooltip
+            self._expand_children_icon.visible = has_children
+        else:
+            self._expand_children_icon = ft.IconButton(
+                icon=icon,
+                tooltip=tooltip,
+                visible=has_children,
+                on_click=self.on_click_expand_children_icon,
+            )
+
+    def on_click_expand_children_icon(self, e):
+        if self.is_expanded:
+            self._state['expanded'].discard(self._instance.id)
+        else:
+            self._state['expanded'].add(self._instance.id)
+
+        self.build_expand_children_icon()
+
+        show_children = self.is_expanded
+        for control in self.parent.controls:
+            control.visible = show_children or control == self
+
+        self.parent.update()
+
+
+    def get_text_label(self) -> ft.Row:
         instance = self._instance
         text = ft.Text(instance.title)
 
@@ -99,7 +148,6 @@ class ToDoTabToDoViewControl(ft.Column):
             controls.append(deadline)
 
         controls.append(text)
-
         return ft.Row(controls=controls)
 
     def build_edit_container(self):
@@ -112,23 +160,24 @@ class ToDoTabToDoViewControl(ft.Column):
         refresh_todo_list(self._state, self.__class__)
 
     def on_click_edit(self, e):
-        self._is_editing = True
-
-        self._add_children_icon.visible = False
-        self._checkbox.visible = False
-        self._delete_icon.visible = False
-        self._edit_icon.visible = False
-        self._edit_container.visible = True
+        for control in self.content.controls:
+            is_edit_container = control == self._edit_container
+            control.visible = is_edit_container
 
         self.update()
 
     def on_stop_editing(self):
         self._instance = ToDo.get(id=self._instance.id)
 
-        for control in self.controls:
-            control.visible = not control == self._edit_container
+        for control in self.content.controls:
+            if control == self._edit_container:
+                control.visible = False
+            elif control == self._expand_children_icon:
+                control.visible = self._instance.children.exists()
+            else:
+                control.visible = True
 
-        self.build_checkbox()
+        self.build_text()
         self.update()
 
     def on_click_add_children(self, e):
@@ -145,3 +194,25 @@ class ToDoTabToDoViewControl(ft.Column):
     def on_click_remove(self, e):
         self._instance.delete_instance()
         refresh_todo_list(self._state, self.__class__)
+
+
+class ToDoTabToDoViewControl(ft.Column):
+    """
+    Компонент отображения одного ТУДУ вместе с вложенными задачами
+    """
+    def __init__(self, instance: ToDo, state: TodoTabState, **kwargs):
+        super().__init__(**kwargs)
+        self._instance = instance
+        self._state = state
+
+        self._view_row: ft.Row | None = None
+
+    def build(self):
+        self._view_row = ToDoRowViewControl(self._instance, self._state)
+
+        controls: list[Any] = [self._view_row]
+
+        for children in self._instance.children:
+            controls.append(ToDoRowViewControl(children, self._state))
+
+        self.controls = controls

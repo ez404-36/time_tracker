@@ -27,7 +27,7 @@ class ToDoMutateContainer(ft.Container):
         if not parent:
             padding = Padding(left=10, top=10, right=10, bottom=10)
         else:
-            padding = Padding(left=50, top=10, right=10, bottom=10)
+            padding = Padding(left=60, top=10, right=10, bottom=10)
 
         kwargs.setdefault('padding', padding)
 
@@ -67,9 +67,6 @@ class ToDoMutateContainer(ft.Container):
                 ),
                 self._submit_button,
             ]
-
-            if self._parent:
-                controls.insert(0, ft.Icon(ft.Icons.ARROW_FORWARD))
 
             self.content = ft.Row(
                 controls=controls
@@ -170,7 +167,7 @@ class ToDoMutateContainer(ft.Container):
                     self._edit_time_button.visible = False
                 elif self.parent:
                     self.parent.controls.remove(self)
-                self.parent.update()
+                    self.parent.update()
 
             self._submit_button = ft.TextButton(
                 text='Добавить',
@@ -194,4 +191,4 @@ class ToDoMutateContainer(ft.Container):
         self._new_deadline_time = None
 
         if self._instance:
-            self.parent.on_stop_editing()
+            self.parent.parent.on_stop_editing()

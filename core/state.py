@@ -72,6 +72,7 @@ class TodoTabState(TypedDict):
     """Состояние таба ТУ-ДУ"""
     controls: ToDoTabControlsState
     db: ToDoDBState
+    expanded: set[int]
 
 
 class TabsState(TypedDict):
@@ -94,6 +95,8 @@ def init_state(typed_dict_class) -> State:
         if hasattr(type_hint, '__annotations__'):
             # Рекурсивно инициализируем вложенный TypedDict
             result[key] = init_state(type_hint)
+        elif type_hint == set[int]:
+            result[key] = set()
         else:
             # Для обычных типов ставим None
             result[key] = None
