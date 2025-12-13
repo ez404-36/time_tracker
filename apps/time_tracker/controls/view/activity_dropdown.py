@@ -3,21 +3,24 @@ from typing import Self
 
 import flet as ft
 
-from apps.time_tracker.controls.activity_tab_view_controls.activity_track_action import ActivityTrackActionControl
-from apps.time_tracker.controls.base import BaseActivityTabControl
+from apps.time_tracker.controls.view.activity_track_action import ActivityTrackActionControl
 from apps.time_tracker.helpers import ActivityTabHelpers
 from apps.time_tracker.models import Action, ActivityTrack
+from core.state import ActivityTabState
 
 
-class ActivityTabActivityDropdown(BaseActivityTabControl):
+class ActivityTabActivityDropdown(ft.Dropdown):
     """Селектор выбора активности"""
 
-    @property
-    def component(self) -> ft.Dropdown:
-        return self._state['controls']['view']['activity_selector']
+    def __init__(self, state: ActivityTabState, edit_activity_button: ft.IconButton, **kwargs):
+        kwargs.setdefault('editable', True)
+        kwargs.setdefault('width', 300)
+        super().__init__(**kwargs)
+        self._state = state
+        self._edit_activity_button = edit_activity_button
 
     def build(self) -> Self:
-        options = ActivityTabHelpers(self._global_state).get_activity_selector_options()
+        options = ActivityTabHelpers(self._state).get_activity_selector_options()
         disabled = not options
 
         if disabled:
@@ -27,28 +30,23 @@ class ActivityTabActivityDropdown(BaseActivityTabControl):
             label = 'Чем сегодня займемся?'
             tooltip = None
 
-        self._state['controls']['view']['activity_selector'] = ft.Dropdown(
-                editable=True,
-                disabled=disabled,
-                label=label,
-                options=options,
-                width=300,
-                tooltip=tooltip,
-                on_change=self._on_change,
-            )
-
-        return self
+        self.label = label
+        self.options = options
+        self.disabled = disabled
+        self.tooltip = tooltip
+        self.on_change = self._on_change
 
     def _on_change(self, e):
-        val = int(e.control.value)
+        val = int(self.value)
         activity = self._state['db']['activities'].get(val)
 
         if activity == self._state['selected']['activity']:
             return
 
         self._state['selected']['activity'] = activity
+        self._edit_activity_button.visible = True
 
-        actions_view = self._state['controls']['view']['actions_view']
+        actions_view = self.parent.parent.controls[1]
 
         existing_activity_track = ActivityTrack.filter(
             activity=activity,
@@ -57,11 +55,11 @@ class ActivityTabActivityDropdown(BaseActivityTabControl):
 
         self._state['selected']['activity_track'] = existing_activity_track
 
-        # StateDBHelpers(self._global_state).get_activity_actions_tracked_time()
-        self._state['controls']['view']['actions_view'].controls.clear()
+        actions_view.controls.clear()
 
         for action in activity.actions.order_by(Action.is_target.desc(), Action.is_useful.desc()):
-            action_control = ActivityTrackActionControl(self._global_state, action).build()
-            actions_view.controls.append(action_control.component)
+            action_control = ActivityTrackActionControl(self._state, action)
+            actions_view.controls.append(action_control)
 
         actions_view.update()
+        self._edit_activity_button.update()

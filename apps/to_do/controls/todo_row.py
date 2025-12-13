@@ -157,7 +157,7 @@ class ToDoRowViewControl(ft.Container):
         is_done = e.control.value
         self._instance.is_done = is_done
         self._instance.save(only=['is_done'])
-        refresh_todo_list(self._state, self.__class__)
+        refresh_todo_list(self._state)
 
     def on_click_edit(self, e):
         for control in self.content.controls:
@@ -193,7 +193,7 @@ class ToDoRowViewControl(ft.Container):
 
     def on_click_remove(self, e):
         self._instance.delete_instance()
-        refresh_todo_list(self._state, self.__class__)
+        refresh_todo_list(self._state)
 
 
 class ToDoTabToDoViewControl(ft.Column):

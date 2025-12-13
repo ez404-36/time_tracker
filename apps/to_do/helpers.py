@@ -15,6 +15,9 @@ def refresh_todo_list(
 
     ChildrenToDo = ToDo.alias()
 
+    todo_list_active = state['controls']['list_active']
+    todo_list_done = state['controls']['list_done']
+
     todos = (
         ToDo.select()
         .where(ToDo.parent == None)
@@ -22,9 +25,6 @@ def refresh_todo_list(
         .order_by(ToDo.created_at.desc(), ToDo.is_done)
         .group_by(ToDo.id)
     )
-
-    todo_list_active = state['controls']['list_active']
-    todo_list_done = state['controls']['list_done']
 
     active_todo_controls = []
     done_todo_controls = []

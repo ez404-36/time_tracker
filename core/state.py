@@ -56,10 +56,6 @@ class ActivityTabState(TypedDict):
 
 
 class ToDoTabControlsState(TypedDict):
-    tab: ft.Container | None
-    view: ft.Column | None
-    deadline_date: ft.DatePicker | None
-    deadline_time: ft.TimePicker | None
     list_active: ft.Column | None
     list_done: ft.Column | None
 

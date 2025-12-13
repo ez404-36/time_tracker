@@ -1,9 +1,8 @@
 import flet as ft
 
 from apps.time_tracker.consts import STOP_ACTION_ID
-from apps.time_tracker.controls.activity_tab_new_activity_controls.modal import NewActivityModalControl
-from apps.time_tracker.controls.activity_tab_view_controls.activity_tab import ActivityTabControl
-from apps.to_do.controls.todo_tab import TodoTabControl
+from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
+from apps.to_do.controls.todo_tab import TodoTabViewControl
 from core.state import State, init_state
 
 
@@ -14,9 +13,8 @@ class DesktopApp:
     def __init__(self, page: ft.Page):
         state['page'] = page
 
-        self._new_activity_modal_control: NewActivityModalControl | None = None
-        self._activity_tab_control: ActivityTabControl | None = None
-        self._todo_tab_control: TodoTabControl | None = None
+        self._activity_tab_control: ActivityTabViewControl | None = None
+        self._todo_tab_control: TodoTabViewControl | None = None
 
     def init(self):
         """
@@ -33,9 +31,8 @@ class DesktopApp:
         page.window.prevent_close = True
         page.window.on_event = self.window_event_handler
 
-        self._new_activity_modal_control = NewActivityModalControl(state).build()
-        self._activity_tab_control = ActivityTabControl(state).build()
-        self._todo_tab_control = TodoTabControl(state).build()
+        self._activity_tab_control = ActivityTabViewControl(state)
+        self._todo_tab_control = TodoTabViewControl(state)
 
         tabs = ft.Tabs(
             selected_index=0,
@@ -44,11 +41,11 @@ class DesktopApp:
             tabs=[
                 ft.Tab(
                     text='Трекер активности',
-                    content=self._activity_tab_control.component,
+                    content=self._activity_tab_control,
                 ),
                 ft.Tab(
                     text='TODO',
-                    content=self._todo_tab_control.component,
+                    content=self._todo_tab_control,
                 )
             ]
         )

@@ -4,35 +4,32 @@ import flet as ft
 from flet.core.border import Border, BorderSide
 
 from apps.time_tracker.consts import PAUSE_ACTION_ID
-from apps.time_tracker.controls.activity_tab_view_controls.action_timer import ActionTimerComponent, \
+from apps.time_tracker.controls.view.action_timer import ActionTimerComponent, \
     ActionTimerStaticComponent
-from apps.time_tracker.controls.base import BaseActivityTabControl
-from apps.time_tracker.helpers import ActivityTabHelpers, StateDBHelpers
+from apps.time_tracker.helpers import ActivityTabHelpers, TimeTrackDBHelpers
 from apps.time_tracker.models import Action, ActivityTrack
-from core.state import State
+from core.state import ActivityTabState
 
 
-class ActivityTrackActionControl(BaseActivityTabControl):
-    def __init__(self, state: State, action: Action):
-        super().__init__(state)
+class ActivityTrackActionControl(ft.Container):
+    def __init__(self, state: ActivityTabState, action: Action, **kwargs):
+        kwargs.setdefault('padding', 10)
+        super().__init__(**kwargs)
+        self._state = state
         self._action = action
-        self._component: ft.Container | None = None
+
         self._action_timer_total_component: ActionTimerStaticComponent | None = None
         self._action_timer_component: ActionTimerComponent | None = None
         self._start_stop_button: ft.IconButton | None = None
         self._is_started = False
 
     @property
-    def component(self) -> ft.Container:
-        return self._component
-
-    @property
     def action_timer_total(self) -> ActionTimerComponent:
-        return self.component.content.controls[1]
+        return self.content.controls[1]
 
     @property
     def action_timer(self) -> ActionTimerComponent:
-        return self.component.content.controls[3]
+        return self.content.controls[3]
 
     @property
     def action(self) -> Action:
@@ -44,7 +41,7 @@ class ActivityTrackActionControl(BaseActivityTabControl):
     def build(self) -> Self:
         color = self.get_color()
 
-        action_tracked_time = StateDBHelpers(self._global_state).get_activity_actions_tracked_time().get(self.action.id, 0)
+        action_tracked_time = TimeTrackDBHelpers(self._state).get_activity_actions_tracked_time().get(self.action.id, 0)
 
         self._start_stop_button = ft.IconButton(
             ft.Icons.PLAY_CIRCLE_OUTLINE,
@@ -59,25 +56,20 @@ class ActivityTrackActionControl(BaseActivityTabControl):
         else:
             font_weight = ft.FontWeight.W_400
 
-        self._component = ft.Container(
-            padding=10,
-            content=ft.Row(
-                controls=[
-                    ft.Text(
-                        self.action.title,
-                        size=14,
-                        weight=font_weight,
-                        color=color,
-                        width=120,
-                    ),
-                    self._action_timer_total_component,
-                    self._start_stop_button,
-                    self._action_timer_component,
-                ],
-            )
+        self.content = ft.Row(
+            controls=[
+                ft.Text(
+                    self.action.title,
+                    size=14,
+                    weight=font_weight,
+                    color=color,
+                    width=120,
+                ),
+                self._action_timer_total_component,
+                self._start_stop_button,
+                self._action_timer_component,
+            ],
         )
-
-        return self
 
     def on_click_start_stop(self, e):
         if not self._state['selected']['activity_track']:
@@ -91,7 +83,7 @@ class ActivityTrackActionControl(BaseActivityTabControl):
         to_update_controls = []
 
         if not self._is_started:
-            for action_control_row in self._state['controls']['view']['actions_view'].controls:
+            for action_control_row in self.parent.controls:
                 timer_control: ActionTimerComponent = action_control_row.content.controls[3]
                 row_action: Action = timer_control.action
                 is_current_row = row_action == self.action
@@ -124,18 +116,18 @@ class ActivityTrackActionControl(BaseActivityTabControl):
             action_id = PAUSE_ACTION_ID
             self.action_timer.disabled = True
             self.action_timer.reset_timer()
-            self._component.border = None
+            self.border = None
 
             self._start_stop_button.icon = ft.Icons.PLAY_CIRCLE_OUTLINE
 
             to_update_controls.extend([
-                self._component,
+                self,
                 self._start_stop_button,
             ])
 
-        self._global_state['page'].update(*to_update_controls)
+        self.page.update(*to_update_controls)
 
         activity_track.change_action(action_id)
         self._is_started = not self._is_started
 
-        ActivityTabHelpers(self._global_state).refresh_activity_actions_total_timers()
+        ActivityTabHelpers(self._state).refresh_activity_actions_total_timers(self.parent)
