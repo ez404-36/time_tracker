@@ -165,6 +165,7 @@ class ToDoMutateContainer(ft.Container):
                     self._submit_button.disabled = True
                     self._edit_date_button.visible = False
                     self._edit_time_button.visible = False
+                    self.update()
                 elif self.parent:
                     self.parent.controls.remove(self)
                     self.parent.update()

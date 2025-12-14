@@ -18,16 +18,6 @@ class ActivityTabHelpers:
             selector.options = options
             selector.update()
 
-    def refresh_activity_actions_total_timers(self, component: ft.Column) -> None:
-        tracked_time = TimeTrackDBHelpers(self._state).get_activity_actions_tracked_time()
-        for action_control_row in component.controls:
-            total_timer_control = action_control_row.content.controls[1]
-            action = total_timer_control.action
-            action_tracked_time = tracked_time.get(action.id, 0)
-            total_timer_control.seconds = action_tracked_time
-            total_timer_control.update_value()
-
-
     def get_activity_selector_options(self) -> list[ft.DropdownOption]:
         return [
             ft.DropdownOption(
