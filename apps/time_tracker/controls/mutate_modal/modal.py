@@ -2,8 +2,8 @@ from typing import Optional
 
 import flet as ft
 
-from apps.time_tracker.controls.mutate_modal.new_action_row import \
-    NewActivityModalActionRowControl
+from apps.time_tracker.controls.mutate_modal.action_row import \
+    MutateActivityModalActionRowControl
 from apps.time_tracker.helpers import ActivityTabHelpers, TimeTrackDBHelpers
 from apps.time_tracker.models import Action, Activity
 from core.models import db
@@ -30,7 +30,7 @@ class MutateActivityModalControl(ft.AlertDialog):
         self._title_input: ft.TextField | None = None
         self._add_action_button: ft.IconButton | None = None
         self._actions_view_control: ft.Column | None = None
-        self._main_action_row_control: NewActivityModalActionRowControl | None = None
+        self._main_action_row_control: MutateActivityModalActionRowControl | None = None
         self._submit: ft.TextButton | None = None
 
     def build(self):
@@ -66,7 +66,7 @@ class MutateActivityModalControl(ft.AlertDialog):
 
         if self._instance:
             for action in self._instance.actions:
-                action_row = NewActivityModalActionRowControl(self._state, action)
+                action_row = MutateActivityModalActionRowControl(self._state, action)
                 self._actions_view_control.controls.append(action_row)
 
     def _init_add_action_button(self):
@@ -129,7 +129,7 @@ class MutateActivityModalControl(ft.AlertDialog):
                     action.title = title
                     action.is_useful = is_useful
                     to_update.append(action)
-                else:
+                elif title:
                     to_create.append(
                         Action(
                             activity=self._instance,
@@ -157,8 +157,9 @@ class MutateActivityModalControl(ft.AlertDialog):
         self.page.close(self)
 
     def _on_click_add_action_row_button(self, e):
-        new_action_row = NewActivityModalActionRowControl(self._state)
+        new_action_row = MutateActivityModalActionRowControl(self._state)
         self._actions_view_control.controls.append(new_action_row)
+        self._actions_view_control.update()
 
     def _init_activity_title_input(self):
         self._title_input = ft.TextField(

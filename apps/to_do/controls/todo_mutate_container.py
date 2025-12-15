@@ -49,12 +49,14 @@ class ToDoMutateContainer(ft.Container):
         self._edit_date_button: ft.TextButton | None = None
         self._edit_time_button: ft.TextButton | None = None
         self._submit_button: ft.IconButton | ft.TextButton | None = None
+        self._cancel_button: ft.IconButton | None = None
 
     def build(self):
         self._build_title_field()
         self._build_edit_date_button()
         self._build_edit_time_button()
         self._build_submit_button()
+        self._build_cancel_button()
 
         if self._instance or self._parent:
             controls: list[Control] = [
@@ -66,6 +68,7 @@ class ToDoMutateContainer(ft.Container):
                     ]
                 ),
                 self._submit_button,
+                self._cancel_button,
             ]
 
             self.content = ft.Row(
@@ -175,6 +178,24 @@ class ToDoMutateContainer(ft.Container):
                 disabled=True,
                 on_click=on_click
             )
+
+    def _build_cancel_button(self):
+        visible = self._instance is not None or self._parent is not None
+        self._cancel_button = ft.IconButton(
+            icon=ft.Icons.CANCEL,
+            icon_color=ft.Colors.RED_300,
+            visible=visible,
+            tooltip='Отменить',
+            on_click=self._on_click_cancel,
+        )
+
+    def _on_click_cancel(self, e):
+        parent = self.parent.parent
+        if hasattr(parent, 'on_stop_editing'):
+            parent.on_stop_editing()
+        else:
+            self.parent.controls.remove(self)
+            self.parent.update()
 
     def _on_click_submit(self, e):
         value = self._title_field.value

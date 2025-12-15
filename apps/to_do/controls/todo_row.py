@@ -9,7 +9,7 @@ from apps.to_do.models import ToDo
 from core.state import TodoTabState
 
 
-class ToDoRowViewControl(ft.Container):
+class ToDoRowControl(ft.Container):
     """
     Компонент отображения одного ТУДУ
     """
@@ -31,6 +31,10 @@ class ToDoRowViewControl(ft.Container):
         self._edit_icon: ft.IconButton | None = None
         self._add_children_icon: ft.IconButton | None = None
         self._delete_icon: ft.IconButton | None = None
+
+    @property
+    def controls(self) -> list[ft.Control]:
+        return self.content.controls
 
     @property
     def is_expanded(self) -> bool:
@@ -160,7 +164,7 @@ class ToDoRowViewControl(ft.Container):
         refresh_todo_list(self._state)
 
     def on_click_edit(self, e):
-        for control in self.content.controls:
+        for control in self.controls:
             is_edit_container = control == self._edit_container
             control.visible = is_edit_container
 
@@ -169,7 +173,7 @@ class ToDoRowViewControl(ft.Container):
     def on_stop_editing(self):
         self._instance = ToDo.get(id=self._instance.id)
 
-        for control in self.content.controls:
+        for control in self.controls:
             if control == self._edit_container:
                 control.visible = False
             elif control == self._expand_children_icon:
@@ -208,11 +212,11 @@ class ToDoTabToDoViewControl(ft.Column):
         self._view_row: ft.Row | None = None
 
     def build(self):
-        self._view_row = ToDoRowViewControl(self._instance, self._state)
+        self._view_row = ToDoRowControl(self._instance, self._state)
 
         controls: list[Any] = [self._view_row]
 
         for children in self._instance.children:
-            controls.append(ToDoRowViewControl(children, self._state))
+            controls.append(ToDoRowControl(children, self._state))
 
         self.controls = controls

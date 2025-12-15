@@ -6,7 +6,7 @@ from apps.time_tracker.models import Action
 from core.state import ActivityTabState
 
 
-class NewActivityModalActionRowControl(ft.Row):
+class MutateActivityModalActionRowControl(ft.Row):
     def __init__(self, state: ActivityTabState, instance: Optional[Action] = None, **kwargs):
         super().__init__(**kwargs)
         self._state = state
