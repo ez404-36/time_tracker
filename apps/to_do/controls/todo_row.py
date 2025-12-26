@@ -13,6 +13,8 @@ class ToDoRowControl(ft.Container):
     """
     Компонент отображения одного ТУДУ
     """
+    parent: ft.Column
+    content: ft.Row
 
     def __init__(self, instance: ToDo, state: TodoTabState, **kwargs):
         has_parent = instance.parent_id is not None
@@ -187,13 +189,15 @@ class ToDoRowControl(ft.Container):
     def on_click_add_children(self, e):
         children = ToDoMutateContainer(self._state, parent=self._instance)
         idx = None
-        for i, control in enumerate(self.parent.controls):
-            if control == self:
-                idx = i + 1
-                break
 
-        self.parent.controls.insert(idx, children)
-        self.parent.update()
+        if parent := self.parent:
+            for i, control in enumerate(parent.controls):
+                if control == self:
+                    idx = i + 1
+                    break
+
+            parent.controls.insert(idx, children)
+            parent.update()
 
     def on_click_remove(self, e):
         self._instance.delete_instance()

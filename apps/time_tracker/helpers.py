@@ -2,8 +2,8 @@ from collections import defaultdict
 
 import flet as ft
 
-from apps.time_tracker.consts import PAUSE_ACTION_ID, STOP_ACTION_ID
-from apps.time_tracker.models import Action, Activity, ActivityTrackActionTrackData
+from apps.time_tracker.consts import ActionIds
+from apps.time_tracker.models import Activity, ActivityDayTrack, ActivityTrackActionTrackData
 from core.state import ActivityTabState
 
 
@@ -35,24 +35,26 @@ class TimeTrackDBHelpers:
     def __init__(self, state: ActivityTabState):
         self._state = state
 
-    def get_action_ids(self) -> list[int]:
-        return list(self._state['db']['actions'].keys())
-
     def get_activity_ids(self) -> list[int]:
         return list(self._state['db']['activities'].keys())
-
-    def refresh_actions(self):
-        self._state['db']['actions'] = {
-            it.id: it for it in Action.select()
-        }
 
     def refresh_activities(self):
         self._state['db']['activities'] = {
             it.id: it for it in Activity.select()
         }
 
+    def get_or_create_activity_track(self) -> ActivityDayTrack:
+        day_track = self._state['selected']['day_track']
+        if not day_track:
+            activity = self._state['selected']['activity']
+            day_track = ActivityDayTrack.create(
+                activity=activity
+            )
+            self._state['selected']['day_track'] = day_track
+        return day_track
+
     def get_activity_actions_tracked_time(self) -> dict[str | int, int]:
-        activity_track = self._state['selected']['activity_track']
+        activity_track = self._state['selected']['day_track']
 
         actions_counter = defaultdict(int)
 
@@ -60,17 +62,17 @@ class TimeTrackDBHelpers:
             prev_timestamp = None
             prev_action_id = None
             for action_time_data in activity_track.time_track:  # type: ActivityTrackActionTrackData
-                action_id = action_time_data['action_id']
+                application_id = action_time_data['application_id']
                 timestamp = action_time_data['timestamp']
 
                 if prev_action_id:
-                    if prev_action_id in {PAUSE_ACTION_ID, STOP_ACTION_ID}:
+                    if prev_action_id in {ActionIds.PAUSE, ActionIds.STOP}:
                         delta = 0
                     else:
                         delta = timestamp - prev_timestamp
                     actions_counter[prev_action_id] += delta
 
                 prev_timestamp = timestamp
-                prev_action_id = action_id
+                prev_action_id = application_id
 
         return actions_counter

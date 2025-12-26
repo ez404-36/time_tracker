@@ -2,7 +2,7 @@ from typing import TypedDict, get_type_hints
 
 import flet as ft
 
-from apps.time_tracker.models import Action, Activity, ActivityTrack
+from apps.time_tracker.models import Activity, ActivityDayTrack
 from apps.to_do.models import ToDo
 
 
@@ -13,14 +13,13 @@ class BaseTabState(TypedDict):
 
 
 class ActivityTabDBState(TypedDict):
-    actions: dict[int, Action]
     activities: dict[int, Activity]
 
 
 class ActivityTabSelectedState(TypedDict):
     activity: Activity | None   # выбранная активность
-    activity_track: ActivityTrack | None    # текущий объект отслеживания активности за день
-    action: Action | None   # текущее активное действие
+    day_track: ActivityDayTrack | None    # текущий объект отслеживания активности за день
+    application_id: str | None
 
 
 class ActivityTabActivityViewState(TypedDict):
@@ -32,19 +31,15 @@ class ActivityTabActivityViewState(TypedDict):
     active_action_timer: ft.Text | None
 
 
-class ActivityTabNewActivityModalState(TypedDict):
-    """Состояние модалки добавления новой активности"""
+class ActivityTabMutateActivityModalState(TypedDict):
+    """Состояние модалки добавления/редактирования активности"""
     modal: ft.AlertDialog | None
     activity_title_input: ft.TextField | None
-    actions_view: ft.Column | None
-    add_action_row_button: ft.IconButton | None
-    new_action_input: ft.TextField | None
-    new_action_button: ft.TextButton | None
     submit_button: ft.TextButton | None
 
 
 class ActivityTabControlsState(TypedDict):
-    new_activity: ActivityTabNewActivityModalState
+    new_activity: ActivityTabMutateActivityModalState
     view: ActivityTabActivityViewState
 
 
@@ -77,7 +72,6 @@ class TabsState(TypedDict):
 
 
 class State(TypedDict):
-    page: ft.Page | None
     tabs: TabsState
 
 
@@ -97,4 +91,4 @@ def init_state(typed_dict_class) -> State:
             # Для обычных типов ставим None
             result[key] = None
 
-    return result
+    return State(**result)  # noqa

@@ -4,7 +4,11 @@ import datetime
 import flet as ft
 
 
-class ActionTimerComponent(ft.Text):
+class TimerComponent(ft.Text):
+    """
+    Счетчик времени
+    """
+
     def __init__(self, seconds: int = 0, **kwargs):
         super().__init__(**kwargs)
         self.running = False
@@ -28,7 +32,19 @@ class ActionTimerComponent(ft.Text):
             await asyncio.sleep(1)
 
 
-class ActionTimerStaticComponent(ActionTimerComponent):
+class CountdownComponent(TimerComponent):
+    """
+    Обратный отсчёт
+    """
+
+    async def update_timer(self):
+        while self.running:
+            self.update_value()
+            self.seconds -= 1
+            await asyncio.sleep(1)
+
+
+class TimerStaticComponent(TimerComponent):
     def update_value(self, with_refresh=True):
         self.value = f'(Всего сегодня: {datetime.timedelta(seconds=self.seconds)})'
         self.update()

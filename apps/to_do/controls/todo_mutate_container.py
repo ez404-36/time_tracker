@@ -15,6 +15,9 @@ class ToDoMutateContainer(ft.Container):
     """
     Контейнер создания/изменения объекта ТУДУ
     """
+    parent: ft.Row
+    content: ft.Row | ft.Column
+    page: ft.Page
 
     def __init__(
             self,
@@ -120,13 +123,14 @@ class ToDoMutateContainer(ft.Container):
                 )
             ),
             visible=self._instance is not None or self._parent is not None,
-        )
+        )`1
 
     def _on_change_deadline_date(self, e):
         value: datetime.date = e.control.value.date()
         self._new_deadline_date = value
-        self._edit_date_button.text = f'Дата: ({value.strftime("%d.%m.%Y")})'
-        self._edit_date_button.update()
+        if edit_date_button := self._edit_date_button:
+            edit_date_button.text = f'Дата: ({value.strftime("%d.%m.%Y")})'
+            edit_date_button.update()
 
     def _build_edit_time_button(self):
         self._edit_time_button = ft.TextButton(
@@ -143,8 +147,9 @@ class ToDoMutateContainer(ft.Container):
     def _on_change_deadline_time(self, e):
         value = e.control.value
         self._new_deadline_time = value
-        self._edit_time_button.text = f'Время: ({value.strftime('%H:%M')})'
-        self._edit_time_button.update()
+        if edit_time_button := self._edit_time_button:
+            edit_time_button.text = f'Время: ({value.strftime('%H:%M')})'
+            edit_time_button.update()
 
     def _build_submit_button(self):
         if self._instance:
@@ -155,8 +160,9 @@ class ToDoMutateContainer(ft.Container):
             )
         else:
             def on_click(e):
+                value = self._title_field and self._title_field.value
                 ToDo.create(
-                    title=self._title_field.value,
+                    title=value,
                     deadline_date=self._new_deadline_date,
                     deadline_time=self._new_deadline_time,
                     parent=self._parent,
@@ -190,7 +196,10 @@ class ToDoMutateContainer(ft.Container):
         )
 
     def _on_click_cancel(self, e):
-        parent = self.parent.parent
+        parent = self.parent
+        if hasattr(parent, 'parent'):
+            parent = parent.parent
+
         if hasattr(parent, 'on_stop_editing'):
             parent.on_stop_editing()
         else:
@@ -198,19 +207,21 @@ class ToDoMutateContainer(ft.Container):
             self.parent.update()
 
     def _on_click_submit(self, e):
-        value = self._title_field.value
+        value = self._title_field and self._title_field.value
         deadline_date = self._new_deadline_date
         deadline_time = self._new_deadline_time
 
-        self._instance.title = value
-        if deadline_date:
-            self._instance.deadline_date = deadline_date
-        if deadline_time:
-            self._instance.deadline_time = deadline_time
-        self._instance.save()
-
-        self._new_deadline_date = None
-        self._new_deadline_time = None
-
         if self._instance:
-            self.parent.parent.on_stop_editing()
+            self._instance.title = value
+            if deadline_date:
+                self._instance.deadline_date = deadline_date
+            if deadline_time:
+                self._instance.deadline_time = deadline_time
+            self._instance.save()
+
+            self._new_deadline_date = None
+            self._new_deadline_time = None
+
+            parent = getattr(self.parent, 'parent', None)
+            if parent and hasattr(parent, 'on_stop_editing'):
+                parent.on_stop_editing()

@@ -2,10 +2,8 @@ from typing import Optional
 
 import flet as ft
 
-from apps.time_tracker.controls.mutate_modal.action_row import \
-    MutateActivityModalActionRowControl
 from apps.time_tracker.helpers import ActivityTabHelpers, TimeTrackDBHelpers
-from apps.time_tracker.models import Action, Activity
+from apps.time_tracker.models import Activity
 from core.models import db
 from core.state import ActivityTabState
 
@@ -28,16 +26,17 @@ class MutateActivityModalControl(ft.AlertDialog):
         self._instance = instance
 
         self._title_input: ft.TextField | None = None
-        self._add_action_button: ft.IconButton | None = None
-        self._actions_view_control: ft.Column | None = None
-        self._main_action_row_control: MutateActivityModalActionRowControl | None = None
+        self._pomodoro_checkbox: ft.Checkbox | None = None
+        self._set_work_time_input: ft.TextField | None = None
+        self._set_rest_time_input: ft.TextField | None = None
         self._submit: ft.TextButton | None = None
 
     def build(self):
         self._init_submit_button()
         self._init_activity_title_input()
-        self._init_add_action_button()
-        self._init_actions_view()
+        self._init_pomodoro_checkbox()
+        self._init_set_work_time_input()
+        self._init_set_rest_time_input()
 
         controls = self.get_controls()
 
@@ -54,6 +53,24 @@ class MutateActivityModalControl(ft.AlertDialog):
             self._submit,
         ]
 
+    def _init_pomodoro_checkbox(self):
+        self._pomodoro_checkbox = ft.Checkbox(
+            label='Работаю с интервалами работы/отдыха',
+            on_change=self._on_change_pomodoro_checkbox,
+            value=getattr(self._instance, 'work_time', None) is not None,
+        )
+
+    def _on_change_pomodoro_checkbox(self, e):
+        value = e.control.value
+
+        for time_input in [
+            self._set_work_time_input,
+            self._set_rest_time_input,
+        ]:
+            time_input.visible = value
+
+        self.update()
+
     def _init_submit_button(self):
         self._submit = ft.TextButton(
             "Сохранить",
@@ -61,91 +78,34 @@ class MutateActivityModalControl(ft.AlertDialog):
             disabled=not self._instance,
         )
 
-    def _init_actions_view(self):
-        self._actions_view_control = ft.Column()
-
-        if self._instance:
-            for action in self._instance.actions:
-                action_row = MutateActivityModalActionRowControl(self._state, action)
-                self._actions_view_control.controls.append(action_row)
-
-    def _init_add_action_button(self):
-        self._add_action_button = ft.IconButton(
-            ft.Icons.ADD,
-            on_click=self._on_click_add_action_row_button,
-        )
-
     @db.atomic()
     def _on_click_submit_button(self, e):
         activity_title: str = self._title_input.value
+        if self._pomodoro_checkbox.value:
+            work_time = self._set_work_time_input.value
+            rest_time = self._set_rest_time_input.value
+        else:
+            work_time = None
+            rest_time = None
 
         if not self._instance:
-            selected_actions_data = [
-                (it.controls[0].value, it.controls[1].value)
-                for it in self._actions_view_control.controls
-            ]
-
-            activity = Activity.create(
+            Activity.create(
                 title=activity_title,
+                work_time=work_time,
+                rest_time=rest_time,
             )
             TimeTrackDBHelpers(self._state).refresh_activities()
 
-            to_create_actions = []
-
-            to_create_actions.append(
-                Action(
-                    activity=activity,
-                    title=activity_title,
-                    is_useful=True,
-                    is_target=True,
-                )
-            )
-
-            for action_data in selected_actions_data:
-                to_create_actions.append(
-                    Action(
-                        activity=activity,
-                        title=action_data[0],
-                        is_target=False,
-                        is_useful=action_data[1],
-                    )
-                )
-
-            Action.bulk_create(to_create_actions)
         else:
             self._instance.title = activity_title
+            self._instance.work_time = work_time
+            self._instance.rest_time = rest_time
             self._instance.save(only=['title'])
             TimeTrackDBHelpers(self._state).refresh_activities()
 
-            to_delete = set([it.id for it in self._instance.actions])
-            to_create = []
-            to_update = []
-
-            for control in self._actions_view_control.controls:
-                title, is_useful = control.controls[0].value, control.controls[1].value
-
-                if action := control._instance:
-                    to_delete.discard(action.id)
-                    action.title = title
-                    action.is_useful = is_useful
-                    to_update.append(action)
-                elif title:
-                    to_create.append(
-                        Action(
-                            activity=self._instance,
-                            title=title,
-                            is_useful=is_useful,
-                            is_target=False,
-                        )
-                    )
-
-            Action.bulk_update(to_update, fields=['title', 'is_useful'])
-            Action.bulk_create(to_create)
-            Action.delete().where(Action.id.in_(to_delete)).execute()
-
         self._title_input.value = ''
-        self._actions_view_control.controls = []
-        self._actions_view_control.update()
+        self._new_work_time = None
+        self._new_rest_time = None
 
         activity_selector = self._state['controls']['view']['activity_selector']
 
@@ -155,11 +115,6 @@ class MutateActivityModalControl(ft.AlertDialog):
         ActivityTabHelpers(self._state).refresh_activity_selector_options()
 
         self.page.close(self)
-
-    def _on_click_add_action_row_button(self, e):
-        new_action_row = MutateActivityModalActionRowControl(self._state)
-        self._actions_view_control.controls.append(new_action_row)
-        self._actions_view_control.update()
 
     def _init_activity_title_input(self):
         self._title_input = ft.TextField(
@@ -175,19 +130,28 @@ class MutateActivityModalControl(ft.AlertDialog):
         submit_button.disabled = not e.control.value
         submit_button.update()
 
+    def _init_set_work_time_input(self):
+        current_work_time = getattr(self._instance, 'work_time', None)
+        self._set_work_time_input = ft.TextField(
+            label='Интервал работы (минут)',
+            value=current_work_time,
+            visible=current_work_time is not None,
+        )
+
+    def _init_set_rest_time_input(self):
+        current_rest_time = getattr(self._instance, 'rest_time', None)
+        self._set_rest_time_input = ft.TextField(
+            label='Интервал отдыха (минут)',
+            value=current_rest_time,
+            visible=current_rest_time is not None,
+        )
+
     def get_controls(self) -> list[ft.Control]:
         return [
             self._title_input,
             ft.Divider(),
-            ft.Row(
-                controls=[
-                    ft.Text(
-                        'Укажи все действия, \nкоторыми ещё можешь заниматься \nв момент этой активности.',
-                        size=14,
-                    ),
-                    self._add_action_button,
-                ]
-            ),
-            self._actions_view_control,
-            ft.Divider(),
+            self._pomodoro_checkbox,
+            ft.Container(padding=6),
+            self._set_work_time_input,
+            self._set_rest_time_input,
         ]
