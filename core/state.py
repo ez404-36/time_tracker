@@ -2,7 +2,7 @@ from typing import TypedDict, get_type_hints
 
 import flet as ft
 
-from apps.time_tracker.models import Action, Activity, ActivityTrack
+from apps.time_tracker.models import IdleSession, PomodoroTimer, WindowSession
 from apps.to_do.models import ToDo
 
 
@@ -13,39 +13,27 @@ class BaseTabState(TypedDict):
 
 
 class ActivityTabDBState(TypedDict):
-    actions: dict[int, Action]
-    activities: dict[int, Activity]
+    pomodoro_timers: dict[int, PomodoroTimer]
 
 
 class ActivityTabSelectedState(TypedDict):
-    activity: Activity | None   # выбранная активность
-    activity_track: ActivityTrack | None    # текущий объект отслеживания активности за день
-    action: Action | None   # текущее активное действие
+    pomodoro_timer: PomodoroTimer | None   # выбранный таймер помидора
+    window_session: WindowSession | None
+    idle_session: IdleSession | None
 
 
-class ActivityTabActivityViewState(TypedDict):
-    tab: ft.Container | None
-    activity_actions_row: ft.Row | None
-    activity_selector: ft.Dropdown | None
-    new_activity_button: ft.ElevatedButton | None
-    actions_view: ft.Column | None
-    active_action_timer: ft.Text | None
-
-
-class ActivityTabNewActivityModalState(TypedDict):
-    """Состояние модалки добавления новой активности"""
+class ActivityTabMutateActivityModalState(TypedDict):
+    """Состояние модалки добавления/редактирования активности"""
     modal: ft.AlertDialog | None
     activity_title_input: ft.TextField | None
-    actions_view: ft.Column | None
-    add_action_row_button: ft.IconButton | None
-    new_action_input: ft.TextField | None
-    new_action_button: ft.TextButton | None
     submit_button: ft.TextButton | None
 
 
 class ActivityTabControlsState(TypedDict):
-    new_activity: ActivityTabNewActivityModalState
-    view: ActivityTabActivityViewState
+    new_activity: ActivityTabMutateActivityModalState
+    window_session: ft.Column | None
+    idle_session: ft.Column | None
+    all_window_sessions: ft.Column | None
 
 
 class ActivityTabState(TypedDict):
@@ -77,7 +65,6 @@ class TabsState(TypedDict):
 
 
 class State(TypedDict):
-    page: ft.Page | None
     tabs: TabsState
 
 
@@ -97,4 +84,4 @@ def init_state(typed_dict_class) -> State:
             # Для обычных типов ставим None
             result[key] = None
 
-    return result
+    return State(**result)  # noqa

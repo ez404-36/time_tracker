@@ -4,17 +4,21 @@ from core.models import db
 
 def drop_tables():
     db.drop_tables([
-        Activity,
-        Action,
-        ActivityTrack,
+        PomodoroTimer,
+        Event,
+        IdleSession,
+        WindowSession,
+        # ToDo,
     ])
 
 
 def create_tables():
     db.create_tables([
-        Activity,
-        Action,
-        ActivityTrack,
+        PomodoroTimer,
+        Event,
+        IdleSession,
+        WindowSession,
+        # ToDo,
     ])
 
 
