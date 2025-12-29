@@ -18,8 +18,11 @@ class ActivityTabViewControl(ft.Container):
         self._status: ft.Text | None = None
         self._start_button: ft.IconButton | None = None
         self._stop_button: ft.IconButton | None = None
+        self._opened_windows_text: ft.Text | None = None
 
-        self._all_window_sessions: ft.Column | None = None
+        self.window_session: ft.Column | None = None
+        self.idle_session: ft.Column | None = None
+        self.all_window_sessions: ft.Column | None = None
 
         self.tracker = ActivityTracker(self._state)
 
@@ -39,9 +42,16 @@ class ActivityTabViewControl(ft.Container):
             on_click=self._on_click_stop,
             tooltip='Выключить',
         )
+        self._opened_windows_text = ft.Text('Открытые окна', visible=False)
 
-        self._all_window_sessions = ft.Column()
-        self._state['controls']['all_window_sessions'] = self._all_window_sessions
+        self.all_window_sessions = ft.Column()
+        self._state['controls']['all_window_sessions'] = self.all_window_sessions
+
+        self.window_session = ft.Column(visible=False)
+        self._state['controls']['window_session'] = self.window_session
+
+        self.idle_session = ft.Column(visible=False)
+        self._state['controls']['idle_session'] = self.idle_session
 
         self.content = ft.Column(
             controls=[
@@ -50,20 +60,27 @@ class ActivityTabViewControl(ft.Container):
                     self._stop_button,
                     self._status,
                 ]),
-                self._all_window_sessions,
+                self.window_session,
+                self.idle_session,
+                self._opened_windows_text,
+                self.all_window_sessions,
             ]
         )
 
     async def _on_click_start(self, e):
         await self.tracker.start()
-        self._start_button.visible = False
-        self._stop_button.visible = True
-        self._status.value = 'Отслеживание активности...'
-        self.update()
+        self._toggle_affected_on_start_stop(True)
 
     async def _on_click_stop(self, e):
         await self.tracker.stop()
-        self._start_button.visible = True
-        self._stop_button.visible = False
-        self._status.value = 'Отслеживание активности выключено'
+        self._toggle_affected_on_start_stop(False)
+
+    def _toggle_affected_on_start_stop(self, is_start: bool):
+        self._start_button.visible = not is_start
+        self._stop_button.visible = is_start
+        self._status.value = 'Отслеживание активности...' if is_start else 'Отслеживание активности выключено'
+        self.window_session.visible = is_start
+        self.idle_session.visible = is_start
+        self._opened_windows_text.visible = is_start
+        self.all_window_sessions.visible = is_start
         self.update()

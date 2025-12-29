@@ -3,6 +3,7 @@ import datetime
 
 import flet as ft
 
+from apps.time_tracker.controls.view.timer import TimerComponent
 from apps.time_tracker.models import IdleSession, WindowSession
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.services.window_control.base import WindowControl
@@ -61,7 +62,9 @@ class ActivityTracker:
         if not self.is_idle:
             window = self.service.get_active_window()
             if window:
-                if not self.current_window or window['app_name'] != self.current_window['app_name']:
+                if not self.current_window:
+                    self._switch_window(window, now)
+                elif window['app_name'] != self.current_window['app_name'] or window['title'] != self.current_window['title']:
                     self._switch_window(window, now)
 
         all_windows_component = self._state['controls']['all_window_sessions']
@@ -69,11 +72,19 @@ class ActivityTracker:
             active_windows = self.service.get_all_windows()
             all_windows_component.controls.clear()
             for active_window in active_windows:
-                all_windows_component.controls.append(
-                    ft.Text(
-                        value=active_window['app_name']
-                    )
+                title = f'{active_window["app_name"]} ({active_window["title"]})'
+
+                row = ft.Row(
+                    controls=[
+                        ft.Icon(ft.Icons.APPS),
+                        ft.Text(
+                            value=title,
+                        )
+                    ]
                 )
+
+                all_windows_component.controls.append(row)
+
             all_windows_component.update()
 
     def _start_idle(self, ts: datetime.datetime):
@@ -111,7 +122,28 @@ class ActivityTracker:
     def _set_window_session(self, session: WindowSession | None):
         self.window_session = session
         self._state['selected']['window_session'] = self.window_session
+        window_session_control = self._state['controls']['window_session']
+        if window_session_control:
+            window_session_control.controls.clear()
+            window_session_control.controls.extend([
+                TimerComponent(),
+                ft.Text(
+                    value=f'{session.app_name} ({session.window_title})'
+                )
+            ])
+            window_session_control.update()
 
     def _set_idle_session(self, session: IdleSession | None):
         self.idle_session = session
         self._state['selected']['idle_session'] = self.idle_session
+        idle_session = self._state['controls']['idle_session']
+        if idle_session:
+            idle_session.controls.clear()
+            idle_session.controls.extend([
+                TimerComponent(),
+                ft.Text(
+                    value=f'Бездействие',
+                    color=ft.Colors.RED_300,
+                )
+            ])
+            idle_session.update()

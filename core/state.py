@@ -22,10 +22,6 @@ class ActivityTabSelectedState(TypedDict):
     idle_session: IdleSession | None
 
 
-class ActivityTabActivityViewState(TypedDict):
-    tab: ft.Container | None
-
-
 class ActivityTabMutateActivityModalState(TypedDict):
     """Состояние модалки добавления/редактирования активности"""
     modal: ft.AlertDialog | None
@@ -35,7 +31,8 @@ class ActivityTabMutateActivityModalState(TypedDict):
 
 class ActivityTabControlsState(TypedDict):
     new_activity: ActivityTabMutateActivityModalState
-    view: ActivityTabActivityViewState
+    window_session: ft.Column | None
+    idle_session: ft.Column | None
     all_window_sessions: ft.Column | None
 
 
