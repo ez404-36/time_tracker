@@ -3,7 +3,7 @@ from collections import defaultdict
 import flet as ft
 
 from apps.time_tracker.consts import ActionIds
-from apps.time_tracker.models import Activity, ActivityDayTrack, ActivityTrackActionTrackData
+from apps.time_tracker.models import PomodoroTimer, ActivityDayTrack, ActivityTrackActionTrackData
 from core.state import ActivityTabState
 
 
@@ -40,7 +40,7 @@ class TimeTrackDBHelpers:
 
     def refresh_activities(self):
         self._state['db']['activities'] = {
-            it.id: it for it in Activity.select()
+            it.id: it for it in PomodoroTimer.select()
         }
 
     def get_or_create_activity_track(self) -> ActivityDayTrack:

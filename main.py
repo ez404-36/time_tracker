@@ -1,7 +1,10 @@
+import datetime
+
 import flet as ft
 
 from apps.time_tracker.consts import ActionIds
 from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
+from apps.time_tracker.models import IdleSession, WindowSession
 from apps.to_do.controls.todo_tab import TodoTabViewControl
 from core.state import State, init_state
 
@@ -55,8 +58,15 @@ class DesktopApp:
     def window_event_handler(self, e):
         if e.data == 'close':
             self.page.window.destroy()
-            if activity_track := state['tabs']['activity']['selected']['day_track']:
-                activity_track.change_action(ActionIds.STOP)
+            selected_sessions = state['tabs']['activity']['selected']
+
+            now = datetime.datetime.now(datetime.UTC)
+
+            if window_session := selected_sessions['window_session']:
+                window_session.stop(now)
+
+            if idle_session := selected_sessions['idle_session']:
+                idle_session.stop(now)
 
 def main(page: ft.Page):
     app = DesktopApp(page)

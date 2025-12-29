@@ -1,33 +1,31 @@
 __all__ = (
-    'Activity',
-    'ActivityTrackActionTrackData',
-    'ActivityDayTrack',
-    'AppAction',
-    'ActivityAppActions',
+    'PomodoroTimer',
+    'Event',
+    'WindowSession',
+    'IdleSession',
 )
 
 import datetime
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING
 
 from peewee import *
-import time
-
 from playhouse.sqlite_ext import JSONField
 
+from apps.time_tracker.consts import EventType
 from core.models import BaseModel
 
 
-class Activity(BaseModel):
+class PomodoroTimer(BaseModel):
     """
-    Активность / Целевое действие (работа, учёба)
+    Таймер помидора (работа/отдых)
     """
 
     title = CharField(unique=True, max_length=50)
-    work_time = SmallIntegerField(help_text='Время непрерывной работы (минут)', null=True)
-    rest_time = SmallIntegerField(help_text='Время отдыха (минут)', null=True)
+    work_time = SmallIntegerField(help_text='Время непрерывной работы (минут)')
+    rest_time = SmallIntegerField(help_text='Время отдыха (минут)')
 
     class Meta:
-        table_name = 'activity'
+        table_name = 'pomodoro_timer'
 
     if TYPE_CHECKING:
         title: str
@@ -35,65 +33,49 @@ class Activity(BaseModel):
         rest_time: int | None
 
 
-class AppAction(BaseModel):
+class Event(BaseModel):
     """
-    Действие в каком-либо приложении на ПК
+    Любое событие
     """
 
-    app_name = CharField(help_text='Название программы')
-    app_path = CharField(help_text='Путь до исполняемого файла')
-    app_internal_path = CharField(help_text='Путь внутри приложения (например, вкладка браузера)', null=True)
+    ts = DateTimeField(help_text='Дата и время события (UTC)', default=lambda _: datetime.datetime.now(datetime.UTC))
+    type = IntegerField(help_text='Тип события', choices=EventType.choices)
+    data = JSONField(help_text='Опциональные данные', default=dict)
 
     class Meta:
-        table_name = 'app_action'
-        indexes = (
-            (('app_path', 'app_internal_path'), True),
-        )
+        table_name = 'event'
 
 
-class ActivityAppActions(BaseModel):
+class WindowSession(BaseModel):
     """
-    m2m связь между активностью и действием на ПК
+    Данные о сессии в конкретном окне
     """
 
-    activity = ForeignKeyField(Activity, backref='app_actions')
-    app_action = ForeignKeyField(AppAction, backref='activities')
-    is_useful = BooleanField(help_text='Полезное ли действие', null=True)
+    app_name = CharField(help_text='Название приложения')
+    window_title = CharField(help_text='Заголовок окна', null=True)
+    start_ts = DateTimeField(help_text='Дата и время начала сессии')
+    end_ts = DateTimeField(help_text='Дата и время окончания сессии', null=True)
 
     class Meta:
-        table_name = 'activity_app_actions'
+        table_name = 'window_session'
+
+    def stop(self, ts: datetime.datetime):
+        self.end_ts = ts
+        self.save(only=['end_ts'])
 
 
-class ActivityTrackActionTrackData(TypedDict):
-    application_id: str | int
-    timestamp: int
-
-
-class ActivityDayTrack(BaseModel):
+class IdleSession(BaseModel):
     """
-    Отслеживание активности за день.
-    Объект создаётся в момент начала работы каждый день.
+    Периоды бездействия
     """
-
-    activity: Activity = ForeignKeyField(Activity, backref='day_track')
-    date: datetime.date = DateField(default=datetime.date.today, help_text='День')
-
-    """
-    Здесь будет храниться время каждого фактического действия.
-    Представляет собой список объектов { application_id: ID окна | pause, timestamp: Текущий таймпстемп }
-    """
-    time_track: list[ActivityTrackActionTrackData] = JSONField(default=list, help_text='Затраченное время')
+    start_ts = DateTimeField(help_text='Дата и время начала сессии')
+    end_ts = DateTimeField(help_text='Дата и время окончания сессии', null=True)
+    duration = IntegerField(help_text='Время бездействия')
 
     class Meta:
-        table_name = 'activity_day_track'
+        table_name = 'idle_session'
 
-    def change_action(self, application_id: int | str):
-        """Смена действия (фокус на другом приложении)"""
-
-        self.time_track.append(
-            ActivityTrackActionTrackData(
-                application_id=application_id,
-                timestamp=int(time.time()),
-            )
-        )
-        self.save(only=['time_track'])
+    def stop(self, ts: datetime.datetime):
+        self.end_ts = ts
+        self.duration = ts - self.start_ts
+        self.save(only=['end_ts', 'duration'])

@@ -2,7 +2,7 @@ from typing import TypedDict, get_type_hints
 
 import flet as ft
 
-from apps.time_tracker.models import Activity, ActivityDayTrack
+from apps.time_tracker.models import IdleSession, PomodoroTimer, WindowSession
 from apps.to_do.models import ToDo
 
 
@@ -13,22 +13,17 @@ class BaseTabState(TypedDict):
 
 
 class ActivityTabDBState(TypedDict):
-    activities: dict[int, Activity]
+    pomodoro_timers: dict[int, PomodoroTimer]
 
 
 class ActivityTabSelectedState(TypedDict):
-    activity: Activity | None   # выбранная активность
-    day_track: ActivityDayTrack | None    # текущий объект отслеживания активности за день
-    application_id: str | None
+    pomodoro_timer: PomodoroTimer | None   # выбранный таймер помидора
+    window_session: WindowSession | None
+    idle_session: IdleSession | None
 
 
 class ActivityTabActivityViewState(TypedDict):
     tab: ft.Container | None
-    activity_actions_row: ft.Row | None
-    activity_selector: ft.Dropdown | None
-    new_activity_button: ft.ElevatedButton | None
-    actions_view: ft.Column | None
-    active_action_timer: ft.Text | None
 
 
 class ActivityTabMutateActivityModalState(TypedDict):
@@ -41,6 +36,7 @@ class ActivityTabMutateActivityModalState(TypedDict):
 class ActivityTabControlsState(TypedDict):
     new_activity: ActivityTabMutateActivityModalState
     view: ActivityTabActivityViewState
+    all_window_sessions: ft.Column | None
 
 
 class ActivityTabState(TypedDict):
