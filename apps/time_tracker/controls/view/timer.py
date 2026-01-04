@@ -22,7 +22,7 @@ class TimerComponent(ft.Text):
         self.running = False
 
     def update_value(self):
-        self.value = datetime.timedelta(seconds=self.seconds)
+        self.value = str(datetime.timedelta(seconds=self.seconds))
         self.update()
 
     async def update_timer(self):

@@ -4,8 +4,13 @@ import subprocess
 
 import psutil
 import pywinctl
-from ewmhlib import defaultEwmhRoot
-from pywinctl._pywinctl_linux import LinuxWindow
+
+try:
+    from ewmhlib import defaultEwmhRoot
+    from pywinctl._pywinctl_linux import LinuxWindow
+except ModuleNotFoundError:
+    defaultEwmhRoot = object
+    LinuxWindow = object
 
 from apps.time_tracker.services.window_control.abstract import WindowControlAbstract, WindowData
 

@@ -1,4 +1,7 @@
-from apps.time_tracker.models import Action, Activity, ActivityTrack
+from playhouse.migrate import SqliteMigrator, migrate
+
+from apps.time_tracker.models import *
+from apps.to_do.models import *
 from core.models import db
 
 
@@ -8,7 +11,7 @@ def drop_tables():
         Event,
         IdleSession,
         WindowSession,
-        # ToDo,
+        ToDo,
     ])
 
 
@@ -18,7 +21,7 @@ def create_tables():
         Event,
         IdleSession,
         WindowSession,
-        # ToDo,
+        ToDo,
     ])
 
 
@@ -29,3 +32,7 @@ def run_migration():
     migrate(
 
     )
+
+
+if __name__ == '__main__':
+    create_tables()

@@ -2,9 +2,7 @@ import datetime
 from typing import Optional
 
 import flet as ft
-from flet.core.border import Border, BorderSide
-from flet.core.control import Control
-from flet.core.padding import Padding
+from flet import Padding, BorderSide, Border, Control
 
 from apps.to_do.helpers import refresh_todo_list
 from apps.to_do.models import ToDo
@@ -180,7 +178,7 @@ class ToDoMutateContainer(ft.Container):
                     self.parent.update()
 
             self._submit_button = ft.TextButton(
-                text='Добавить',
+                content='Добавить',
                 disabled=True,
                 on_click=on_click
             )

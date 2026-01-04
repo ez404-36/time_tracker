@@ -1,7 +1,6 @@
 from typing import Any
 
 import flet as ft
-from flet.core.margin import Margin
 
 from apps.to_do.controls.todo_mutate_container import ToDoMutateContainer
 from apps.to_do.helpers import refresh_todo_list
@@ -19,7 +18,7 @@ class ToDoRowControl(ft.Container):
     def __init__(self, instance: ToDo, state: TodoTabState, **kwargs):
         has_parent = instance.parent_id is not None
         if has_parent:
-            kwargs.setdefault('margin', Margin(left=50, top=0, bottom=0, right=0))
+            kwargs.setdefault('margin', ft.Margin(left=50, top=0, bottom=0, right=0))
         kwargs.setdefault('visible', not has_parent or instance.parent_id in state['expanded'])
         super().__init__(**kwargs)
         self._instance = instance

@@ -123,7 +123,7 @@ class ActivityTracker:
         self.window_session = session
         self._state['selected']['window_session'] = self.window_session
         window_session_control = self._state['controls']['window_session']
-        if window_session_control:
+        if window_session_control and session:
             window_session_control.controls.clear()
             window_session_control.controls.extend([
                 TimerComponent(),
@@ -136,14 +136,14 @@ class ActivityTracker:
     def _set_idle_session(self, session: IdleSession | None):
         self.idle_session = session
         self._state['selected']['idle_session'] = self.idle_session
-        idle_session = self._state['controls']['idle_session']
-        if idle_session:
-            idle_session.controls.clear()
-            idle_session.controls.extend([
+        idle_session_control = self._state['controls']['idle_session']
+        if idle_session_control:
+            idle_session_control.controls.clear()
+            idle_session_control.controls.extend([
                 TimerComponent(),
                 ft.Text(
                     value=f'Бездействие',
                     color=ft.Colors.RED_300,
                 )
             ])
-            idle_session.update()
+            idle_session_control.update()

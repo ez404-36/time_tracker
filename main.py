@@ -1,6 +1,7 @@
 import datetime
 
 import flet as ft
+from flet import WindowEventType
 
 from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
 from apps.to_do.controls.todo_tab import TodoTabViewControl
@@ -37,24 +38,37 @@ class DesktopApp:
         tabs = ft.Tabs(
             selected_index=0,
             animation_duration=300,
+            length=2,
             expand=1,
-            tabs=[
-                ft.Tab(
-                    text='Трекер активности',
-                    content=self._activity_tab_control,
-                ),
-                ft.Tab(
-                    text='TODO',
-                    content=self._todo_tab_control,
-                )
-            ]
+            content=ft.Column(
+                expand=True,
+                controls=[
+                    ft.TabBar(
+                        tabs=[
+                            ft.Tab(
+                                label='Трекер активности',
+                                icon=ft.Icons.TIMER,
+                            ),
+                            ft.Tab(
+                                label='TODO',
+                            )
+                        ]
+                    ),
+                    ft.TabBarView(
+                        expand=True,
+                        controls=[
+                            self._activity_tab_control,
+                            self._todo_tab_control,
+                        ]
+                    )
+                ]
+            ),
         )
 
         page.add(tabs)
 
-    def window_event_handler(self, e):
-        if e.data == 'close':
-            self.page.window.destroy()
+    async def window_event_handler(self, e):
+        if e.type == WindowEventType.CLOSE:
             selected_sessions = state['tabs']['activity']['selected']
 
             now = datetime.datetime.now(datetime.UTC)
@@ -65,10 +79,13 @@ class DesktopApp:
             if idle_session := selected_sessions['idle_session']:
                 idle_session.stop(now)
 
+            await self.page.window.destroy()
+
+
 def main(page: ft.Page):
     app = DesktopApp(page)
     app.init()
 
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.run(main=main)

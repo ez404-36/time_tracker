@@ -1,3 +1,5 @@
+import datetime
+
 import flet as ft
 
 from apps.time_tracker.services.activity_tracker import ActivityTracker
@@ -8,7 +10,7 @@ class ActivityTabViewControl(ft.Container):
     """Таб активности"""
 
     parent: ft.Tab
-    content: ft.Column
+    content: ft.Row
 
     def __init__(self, state: State, **kwargs):
         kwargs.setdefault('padding', 20)
@@ -53,7 +55,8 @@ class ActivityTabViewControl(ft.Container):
         self.idle_session = ft.Column(visible=False)
         self._state['controls']['idle_session'] = self.idle_session
 
-        self.content = ft.Column(
+        current_state_column = ft.Column(
+            width=600,
             controls=[
                 ft.Row([
                     self._start_button,
@@ -66,6 +69,41 @@ class ActivityTabViewControl(ft.Container):
                 self.all_window_sessions,
             ]
         )
+
+
+
+        now = datetime.datetime.now()
+
+        default_drp = datetime.datetime(
+            year=now.year,
+            month=now.month,
+            day=now.day,
+        )
+
+        stat_drp = ft.DateRangePicker(
+            start_value=default_drp,
+            end_value=default_drp,
+            on_change=self._on_change_stat_drp,
+            # on_dismiss=handle_dismissal,
+        )
+
+        stat_column = ft.Column(
+            controls=[
+                ft.Text('Статистика', size=20, weight=ft.FontWeight.BOLD),
+                stat_drp,
+            ]
+        )
+
+        self.content = ft.Row(
+            controls=[
+                current_state_column,
+                ft.VerticalDivider(),
+                stat_column,
+            ]
+        )
+
+    def _on_change_stat_drp(self, e: ft.Event[ft.DateRangePicker]):
+        print('Changed', e)
 
     async def _on_click_start(self, e):
         await self.tracker.start()
