@@ -1,17 +1,18 @@
-import flet as ft
+import datetime
 
-from apps.time_tracker.consts import STOP_ACTION_ID
+import flet as ft
+from flet import WindowEventType
+
 from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
 from apps.to_do.controls.todo_tab import TodoTabViewControl
 from core.state import State, init_state
-
 
 state: State = init_state(State)
 
 
 class DesktopApp:
     def __init__(self, page: ft.Page):
-        state['page'] = page
+        self.page: ft.Page = page
 
         self._activity_tab_control: ActivityTabViewControl | None = None
         self._todo_tab_control: TodoTabViewControl | None = None
@@ -22,11 +23,11 @@ class DesktopApp:
         * первичная отрисовка компонентов
         * определение обработчиков кнопок и селекторов
         """
-        page = state['page']
+        page = self.page
 
         page.title = 'Персональный менеджер'
         page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-        page.vertical_alignment = ft.CrossAxisAlignment.START
+        page.vertical_alignment = ft.MainAxisAlignment.START
 
         page.window.prevent_close = True
         page.window.on_event = self.window_event_handler
@@ -37,26 +38,49 @@ class DesktopApp:
         tabs = ft.Tabs(
             selected_index=0,
             animation_duration=300,
+            length=2,
             expand=1,
-            tabs=[
-                ft.Tab(
-                    text='Трекер активности',
-                    content=self._activity_tab_control,
-                ),
-                ft.Tab(
-                    text='TODO',
-                    content=self._todo_tab_control,
-                )
-            ]
+            content=ft.Column(
+                expand=True,
+                controls=[
+                    ft.TabBar(
+                        tabs=[
+                            ft.Tab(
+                                label='Трекер активности',
+                                icon=ft.Icons.TIMER,
+                            ),
+                            ft.Tab(
+                                label='TODO',
+                            )
+                        ]
+                    ),
+                    ft.TabBarView(
+                        expand=True,
+                        controls=[
+                            self._activity_tab_control,
+                            self._todo_tab_control,
+                        ]
+                    )
+                ]
+            ),
         )
 
         page.add(tabs)
 
-    def window_event_handler(self, e):
-        if e.data == 'close':
-            state['page'].window.destroy()
-            if activity_track := state['tabs']['activity']['selected']['activity_track']:
-                activity_track.change_action(STOP_ACTION_ID)
+    async def window_event_handler(self, e):
+        if e.type == WindowEventType.CLOSE:
+            selected_sessions = state['tabs']['activity']['selected']
+
+            now = datetime.datetime.now(datetime.UTC)
+
+            if window_session := selected_sessions['window_session']:
+                window_session.stop(now)
+
+            if idle_session := selected_sessions['idle_session']:
+                idle_session.stop(now)
+
+            await self.page.window.destroy()
+
 
 def main(page: ft.Page):
     app = DesktopApp(page)
@@ -64,4 +88,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.run(main=main)

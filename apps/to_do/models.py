@@ -3,6 +3,7 @@ __all__ = (
 )
 
 import datetime
+from typing import Self
 
 from peewee import *
 
@@ -14,12 +15,12 @@ class ToDo(BaseModel):
     Пункт "что сделать ?"
     """
 
-    title = CharField(max_length=50)
+    title: str = CharField(max_length=50)
     created_at = DateTimeField(default=datetime.datetime.now)
-    parent = ForeignKeyField('self', null=True, backref='children')
-    deadline_date = DateField(null=True, help_text='Дедлайн (дата)')
-    deadline_time = TimeField(null=True, help_text='Дедлайн (время)')
-    is_done = BooleanField(default=False, help_text='Готово')
+    parent: Self | None = ForeignKeyField('self', null=True, backref='children')
+    deadline_date: datetime.date | None = DateField(null=True, help_text='Дедлайн (дата)')
+    deadline_time: datetime.time | None = TimeField(null=True, help_text='Дедлайн (время)')
+    is_done: bool = BooleanField(default=False, help_text='Готово')
 
     class Meta:
         table_name = 'todo'
