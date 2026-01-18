@@ -70,12 +70,12 @@ class IdleSession(BaseModel):
     """
     start_ts = DateTimeField(help_text='Дата и время начала сессии')
     end_ts = DateTimeField(help_text='Дата и время окончания сессии', null=True)
-    duration = IntegerField(help_text='Время бездействия')
+    duration = IntegerField(help_text='Время бездействия', default=0)
 
     class Meta:
         table_name = 'idle_session'
 
     def stop(self, ts: datetime.datetime):
         self.end_ts = ts
-        self.duration = ts - self.start_ts
+        self.duration = (ts - self.start_ts).seconds
         self.save(only=['end_ts', 'duration'])

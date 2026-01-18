@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
-    "flet[all]>=0.80.0",
+    "flet[all]>=0.80.2",
     "markdown>=3.10",
     "peewee>=3.18.3",
     "psutil>=7.2.0",
@@ -13,5 +13,5 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "ty>=0.0.8",
+    "ty>=0.0.12",
 ]

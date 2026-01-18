@@ -1,7 +1,7 @@
 import datetime
 
 import flet as ft
-from flet import WindowEventType
+from flet import ControlEvent
 
 from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
 from apps.to_do.controls.todo_tab import TodoTabViewControl
@@ -29,8 +29,9 @@ class DesktopApp:
         page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         page.vertical_alignment = ft.MainAxisAlignment.START
 
-        page.window.prevent_close = True
-        page.window.on_event = self.window_event_handler
+        # page.window.prevent_close = True
+        # page.window.on_event = self.window_event_handler
+        page.before_event = self.window_before_event_handler
 
         self._activity_tab_control = ActivityTabViewControl(state)
         self._todo_tab_control = TodoTabViewControl(state)
@@ -67,8 +68,8 @@ class DesktopApp:
 
         page.add(tabs)
 
-    async def window_event_handler(self, e):
-        if e.type == WindowEventType.CLOSE:
+    def window_before_event_handler(self, e: ControlEvent):
+        if e.name == 'close':
             selected_sessions = state['tabs']['activity']['selected']
 
             now = datetime.datetime.now(datetime.UTC)
@@ -79,7 +80,7 @@ class DesktopApp:
             if idle_session := selected_sessions['idle_session']:
                 idle_session.stop(now)
 
-            await self.page.window.destroy()
+        return True
 
 
 def main(page: ft.Page):

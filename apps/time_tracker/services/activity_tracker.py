@@ -9,7 +9,8 @@ from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.services.window_control.base import WindowControl
 from core.state import ActivityTabState
 
-IDLE_THRESHOLD = 60  # секунд до начала отсчёта бездействия
+# TODO: чисто для тестирования
+IDLE_THRESHOLD = 5  # секунд до начала отсчёта бездействия
 
 class ActivityTracker:
     def __init__(self, state: ActivityTabState):
@@ -139,11 +140,12 @@ class ActivityTracker:
         idle_session_control = self._state['controls']['idle_session']
         if idle_session_control:
             idle_session_control.controls.clear()
-            idle_session_control.controls.extend([
-                TimerComponent(),
-                ft.Text(
-                    value=f'Бездействие',
-                    color=ft.Colors.RED_300,
-                )
-            ])
+            if session:
+                idle_session_control.controls.extend([
+                    TimerComponent(),
+                    ft.Text(
+                        value=f'Бездействие',
+                        color=ft.Colors.RED_300,
+                    )
+                ])
             idle_session_control.update()

@@ -70,19 +70,27 @@ class ActivityTabViewControl(ft.Container):
             ]
         )
 
+        now = datetime.datetime.now(datetime.UTC)
 
+        start_date = datetime.datetime(
+            year=1900,
+            month=1,
+            day=1,
+            tzinfo=now.tzinfo,
+        )
 
-        now = datetime.datetime.now()
-
-        default_drp = datetime.datetime(
-            year=now.year,
-            month=now.month,
-            day=now.day,
+        last_date = datetime.datetime(
+            year=2099,
+            month=12,
+            day=31,
+            tzinfo=now.tzinfo,
         )
 
         stat_drp = ft.DateRangePicker(
-            start_value=default_drp,
-            end_value=default_drp,
+            start_value=now,
+            end_value=now,
+            first_date=start_date,
+            last_date=last_date,
             on_change=self._on_change_stat_drp,
             # on_dismiss=handle_dismissal,
         )
