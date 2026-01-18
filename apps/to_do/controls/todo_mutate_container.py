@@ -129,7 +129,7 @@ class ToDoMutateContainer(ft.Container):
         value: datetime.date = e.control.value.date()
         self._new_deadline_date = value
         if edit_date_button := self._edit_date_button:
-            edit_date_button.text = f'Дата: ({value.strftime("%d.%m.%Y")})'
+            edit_date_button.content = f'Дата: ({value.strftime("%d.%m.%Y")})'
             edit_date_button.update()
 
     def _build_edit_time_button(self):
@@ -148,7 +148,7 @@ class ToDoMutateContainer(ft.Container):
         value = e.control.value
         self._new_deadline_time = value
         if edit_time_button := self._edit_time_button:
-            edit_time_button.text = f'Время: ({value.strftime('%H:%M')})'
+            edit_time_button.content = f'Время: ({value.strftime('%H:%M')})'
             edit_time_button.update()
 
     def _build_submit_button(self):

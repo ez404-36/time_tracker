@@ -76,7 +76,7 @@ class ActivityTabViewControl(ft.Container):
             controls=[
                 current_state_column,
                 ft.VerticalDivider(),
-                # self._statistics_view,
+                self._statistics_view,
             ]
         )
 
