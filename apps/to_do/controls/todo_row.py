@@ -186,7 +186,7 @@ class ToDoRowControl(ft.Container):
         self.update()
 
     def on_click_add_children(self, e):
-        children = ToDoMutateContainer(self._state, parent=self._instance)
+        children = ToDoMutateContainer(self._state, parent_todo=self._instance)
         idx = None
 
         if parent := self.parent:

@@ -1,7 +1,6 @@
-import datetime
-
 import flet as ft
 
+from apps.time_tracker.controls.view.statistics.view import ActivityStatisticsView
 from apps.time_tracker.services.activity_tracker import ActivityTracker
 from core.state import ActivityTabState, State
 
@@ -25,6 +24,7 @@ class ActivityTabViewControl(ft.Container):
         self.window_session: ft.Column | None = None
         self.idle_session: ft.Column | None = None
         self.all_window_sessions: ft.Column | None = None
+        self._statistics_view: ActivityStatisticsView | None = None
 
         self.tracker = ActivityTracker(self._state)
 
@@ -70,43 +70,13 @@ class ActivityTabViewControl(ft.Container):
             ]
         )
 
-        now = datetime.datetime.now(datetime.UTC)
-
-        start_date = datetime.datetime(
-            year=1900,
-            month=1,
-            day=1,
-            tzinfo=now.tzinfo,
-        )
-
-        last_date = datetime.datetime(
-            year=2099,
-            month=12,
-            day=31,
-            tzinfo=now.tzinfo,
-        )
-
-        stat_drp = ft.DateRangePicker(
-            start_value=now,
-            end_value=now,
-            first_date=start_date,
-            last_date=last_date,
-            on_change=self._on_change_stat_drp,
-            # on_dismiss=handle_dismissal,
-        )
-
-        stat_column = ft.Column(
-            controls=[
-                ft.Text('Статистика', size=20, weight=ft.FontWeight.BOLD),
-                stat_drp,
-            ]
-        )
+        self._statistics_view = ActivityStatisticsView(self._state)
 
         self.content = ft.Row(
             controls=[
                 current_state_column,
                 ft.VerticalDivider(),
-                stat_column,
+                # self._statistics_view,
             ]
         )
 
