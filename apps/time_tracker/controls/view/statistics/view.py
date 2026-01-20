@@ -60,5 +60,5 @@ class ActivityStatisticsView(ft.Column):
             on_change=self._on_change_date_filter_modal,
         )
 
-    def _on_change_date_filter_modal(self, e: ft.Event[ft.DateRangePicker]):
+    def _on_change_date_filter_modal(self, e):
         print('Changed', e)
