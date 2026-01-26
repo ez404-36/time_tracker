@@ -13,10 +13,11 @@ class ActivityStatisticsView(ft.Column):
     page: ft.Page
 
     def __init__(self, state: ActivityTabState, **kwargs):
+        super().__init__(**kwargs)
         self._state = state
 
         self._date_filter_btn: ft.TextButton | None = None
-        self._date_filter_modal: ft.DateRangePicker | None = None
+        self._date_filter_modal: ft.DatePicker | None = None
 
         self._filter_date_value = datetime.datetime.now(datetime.UTC)
 
@@ -31,8 +32,8 @@ class ActivityStatisticsView(ft.Column):
 
     def _build_filter_btn(self):
         self._date_filter_btn = ft.TextButton(
-            f'Дата: {self._filter_date_value.strftime("%d.%m.%y")}',
-            on_click=lambda e: self.page.show_dialog(
+            f'По дате: {self._filter_date_value.strftime("%d.%m.%y")}',
+            on_click=lambda e: self.page.open(
                 self._date_filter_modal,
             ),
         )
@@ -52,9 +53,8 @@ class ActivityStatisticsView(ft.Column):
             tzinfo=self._filter_date_value.tzinfo,
         )
 
-        self._date_filter_modal = ft.DateRangePicker(
-            start_value=self._filter_date_value,
-            end_value=self._filter_date_value,
+        self._date_filter_modal = ft.DatePicker(
+            value=self._filter_date_value,
             first_date=start_date,
             last_date=last_date,
             on_change=self._on_change_date_filter_modal,
