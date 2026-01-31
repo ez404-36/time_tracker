@@ -114,7 +114,7 @@ class ToDoMutateContainer(ft.Container):
     def _build_edit_date_button(self):
         self._edit_date_button = ft.TextButton(
             f'Дата: ({getattr(self._instance, 'deadline_date_str', None) or "Не выбрана"})',
-            on_click=lambda e: self.page.show_dialog(
+            on_click=lambda e: self.page.open(
                 ft.DatePicker(
                     first_date=datetime.datetime.now().date(),
                     current_date=datetime.datetime.now().date(),
@@ -135,7 +135,7 @@ class ToDoMutateContainer(ft.Container):
     def _build_edit_time_button(self):
         self._edit_time_button = ft.TextButton(
             f'Время: ({getattr(self._instance, 'deadline_time_str', None) or "Не выбрано"})',
-            on_click=lambda e: self.page.show_dialog(
+            on_click=lambda e: self.page.open(
                 ft.TimePicker(
                     value=getattr(self._instance, 'deadline_time', None) or datetime.datetime.now().time(),
                     on_change=self._on_change_deadline_time,
@@ -180,7 +180,7 @@ class ToDoMutateContainer(ft.Container):
                     self.parent.update()
 
             self._submit_button = ft.TextButton(
-                content='Добавить',
+                text='Добавить',
                 disabled=True,
                 on_click=on_click
             )

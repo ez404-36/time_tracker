@@ -11,7 +11,7 @@ def drop_tables():
         Event,
         IdleSession,
         WindowSession,
-        ToDo,
+        # ToDo,
     ])
 
 
@@ -21,7 +21,7 @@ def create_tables():
         Event,
         IdleSession,
         WindowSession,
-        ToDo,
+        # ToDo,
     ])
 
 

@@ -80,7 +80,7 @@ class ActivityTabViewControl(ft.Container):
             ]
         )
 
-    def _on_change_stat_drp(self, e: ft.Event[ft.DateRangePicker]):
+    def _on_change_stat_drp(self, e):
         print('Changed', e)
 
     async def _on_click_start(self, e):

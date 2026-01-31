@@ -29,9 +29,8 @@ class DesktopApp:
         page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         page.vertical_alignment = ft.MainAxisAlignment.START
 
-        # page.window.prevent_close = True
-        # page.window.on_event = self.window_event_handler
-        page.before_event = self.window_before_event_handler
+        page.window.prevent_close = True
+        page.window.on_event = self.window_event_handler
 
         self._activity_tab_control = ActivityTabViewControl(state)
         self._todo_tab_control = TodoTabViewControl(state)
@@ -39,37 +38,24 @@ class DesktopApp:
         tabs = ft.Tabs(
             selected_index=0,
             animation_duration=300,
-            length=2,
             expand=1,
-            content=ft.Column(
-                expand=True,
-                controls=[
-                    ft.TabBar(
-                        tabs=[
-                            ft.Tab(
-                                label='Трекер активности',
-                                icon=ft.Icons.TIMER,
-                            ),
-                            ft.Tab(
-                                label='TODO',
-                            )
-                        ]
-                    ),
-                    ft.TabBarView(
-                        expand=True,
-                        controls=[
-                            self._activity_tab_control,
-                            self._todo_tab_control,
-                        ]
-                    )
-                ]
-            ),
+            tabs=[
+                ft.Tab(
+                    text='Трекер активности',
+                    icon=ft.Icons.TIMER,
+                    content=self._activity_tab_control,
+                ),
+                ft.Tab(
+                    text='TODO',
+                    content=self._todo_tab_control,
+                )
+            ]
         )
 
         page.add(tabs)
 
-    def window_before_event_handler(self, e: ControlEvent):
-        if e.name == 'close':
+    def window_event_handler(self, e: ControlEvent):
+        if e.data == 'close':
             selected_sessions = state['tabs']['activity']['selected']
 
             now = datetime.datetime.now(datetime.UTC)
@@ -80,6 +66,8 @@ class DesktopApp:
             if idle_session := selected_sessions['idle_session']:
                 idle_session.stop(now)
 
+            self.page.window.destroy()
+
         return True
 
 
@@ -89,4 +77,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.run(main=main)
+    ft.app(target=main)
