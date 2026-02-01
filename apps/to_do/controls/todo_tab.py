@@ -18,8 +18,8 @@ class TodoTabViewControl(ft.Container):
         self._list_done: ft.Column | None = None
 
     def build(self):
-        self._list_active = ft.Column()
-        self._list_done = ft.Column()
+        self._list_active = ft.Column(height=300, scroll=ft.ScrollMode.ADAPTIVE)
+        self._list_done = ft.Column(height=300, scroll=ft.ScrollMode.ADAPTIVE)
 
         self._state['controls']['list_active'] = self._list_active
         self._state['controls']['list_done'] = self._list_done

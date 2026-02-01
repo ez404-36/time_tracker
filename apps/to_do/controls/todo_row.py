@@ -212,7 +212,7 @@ class ToDoTabToDoViewControl(ft.Column):
         self._instance = instance
         self._state = state
 
-        self._view_row: ft.Row | None = None
+        self._view_row: ToDoRowControl | None = None
 
     def build(self):
         self._view_row = ToDoRowControl(self._instance, self._state)
