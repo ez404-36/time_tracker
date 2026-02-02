@@ -1,76 +1,81 @@
 __all__ = (
-    'Activity',
-    'Action',
-    'ActivityTrackActionTrackData',
-    'ActivityTrack',
+    'PomodoroTimer',
+    'Event',
+    'WindowSession',
+    'IdleSession',
 )
 
 import datetime
-from typing import TypedDict
+from typing import TYPE_CHECKING
 
 from peewee import *
-import time
-
 from playhouse.sqlite_ext import JSONField
 
+from apps.time_tracker.consts import EventType
 from core.models import BaseModel
 
 
-class Activity(BaseModel):
+class PomodoroTimer(BaseModel):
     """
-    Активность / Целевое действие (работа, учёба)
+    Таймер помидора (работа/отдых)
     """
 
     title = CharField(unique=True, max_length=50)
+    work_time = SmallIntegerField(help_text='Время непрерывной работы (минут)')
+    rest_time = SmallIntegerField(help_text='Время отдыха (минут)')
 
     class Meta:
-        table_name = 'activity'
+        table_name = 'pomodoro_timer'
+
+    if TYPE_CHECKING:
+        title: str
+        work_time: int | None
+        rest_time: int | None
 
 
-class Action(BaseModel):
+class Event(BaseModel):
     """
-    Действие, которое может быть выполнено во время активности
+    Любое событие
     """
 
-    activity = ForeignKeyField(Activity, backref='actions')
-    title = CharField(max_length=50)
-    is_target = BooleanField(help_text='Является ли действие целевым для данной активности')
-    is_useful = BooleanField(help_text='Является ли действие полезным для данной активности')
+    ts = DateTimeField(help_text='Дата и время события (UTC)', default=lambda _: datetime.datetime.now(datetime.UTC))
+    type = IntegerField(help_text='Тип события', choices=EventType.choices)
+    data = JSONField(help_text='Опциональные данные', default=dict)
 
     class Meta:
-        table_name = 'action'
+        table_name = 'event'
 
 
-class ActivityTrackActionTrackData(TypedDict):
-    action_id: str | int
-    timestamp: int
-
-
-class ActivityTrack(BaseModel):
-    """
-    Отслеживание активности за день.
-    Объект создаётся в момент начала работы каждый день.
-    """
-
-    activity = ForeignKeyField(Activity, backref='activity_track')
-    date: datetime.date = DateField(default=datetime.date.today, help_text='День')
-
-    """
-    Здесь будет храниться время каждого фактического действия.
-    Представляет собой список объектов { action_id: ID действия | pause, timestamp: Текущий таймпстемп }
-    """
-    time_track: list[ActivityTrackActionTrackData] = JSONField(default=list, help_text='Затраченное время')
+class SessionAbstract(BaseModel):
+    start_ts = DateTimeField(help_text='Дата и время начала сессии')
+    end_ts = DateTimeField(help_text='Дата и время окончания сессии', null=True)
+    duration = IntegerField(help_text='Время бездействия', default=0)
 
     class Meta:
-        table_name = 'activity_track'
+        abstract = True
 
-    def change_action(self, action_id: int | str):
-        """Смена действия"""
+    def stop(self, ts: datetime.datetime):
+        self.end_ts = ts
+        self.duration = (ts - self.start_ts).seconds
+        self.save(only=['end_ts', 'duration'])
 
-        self.time_track.append(
-            ActivityTrackActionTrackData(
-                action_id=action_id,
-                timestamp=int(time.time()),
-            )
-        )
-        self.save(only=['time_track'])
+
+class WindowSession(SessionAbstract):
+    """
+    Данные о сессии в конкретном окне
+    """
+
+    app_name = CharField(help_text='Название приложения')
+    window_title = CharField(help_text='Заголовок окна', null=True)
+
+    class Meta:
+        table_name = 'window_session'
+
+
+class IdleSession(SessionAbstract):
+    """
+    Периоды бездействия
+    """
+
+    class Meta:
+        table_name = 'idle_session'

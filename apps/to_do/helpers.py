@@ -35,9 +35,12 @@ def refresh_todo_list(
             ToDoTabToDoViewControl(instance=todo, state=state)
         )
 
-    todo_list_active.controls = active_todo_controls
-    todo_list_done.controls = done_todo_controls
+    if todo_list_active:
+        todo_list_active.controls = active_todo_controls
+        if with_update_controls:
+            todo_list_active.update()
 
-    if with_update_controls:
-        todo_list_active.update()
-        todo_list_done.update()
+    if todo_list_done:
+        todo_list_done.controls = done_todo_controls
+        if with_update_controls:
+            todo_list_done.update()

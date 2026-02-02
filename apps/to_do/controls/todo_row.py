@@ -1,7 +1,6 @@
 from typing import Any
 
 import flet as ft
-from flet.core.margin import Margin
 
 from apps.to_do.controls.todo_mutate_container import ToDoMutateContainer
 from apps.to_do.helpers import refresh_todo_list
@@ -13,11 +12,13 @@ class ToDoRowControl(ft.Container):
     """
     Компонент отображения одного ТУДУ
     """
+    parent: ft.Column
+    content: ft.Row
 
     def __init__(self, instance: ToDo, state: TodoTabState, **kwargs):
         has_parent = instance.parent_id is not None
         if has_parent:
-            kwargs.setdefault('margin', Margin(left=50, top=0, bottom=0, right=0))
+            kwargs.setdefault('margin', ft.Margin(left=50, top=0, bottom=0, right=0))
         kwargs.setdefault('visible', not has_parent or instance.parent_id in state['expanded'])
         super().__init__(**kwargs)
         self._instance = instance
@@ -185,15 +186,17 @@ class ToDoRowControl(ft.Container):
         self.update()
 
     def on_click_add_children(self, e):
-        children = ToDoMutateContainer(self._state, parent=self._instance)
+        children = ToDoMutateContainer(self._state, parent_todo=self._instance)
         idx = None
-        for i, control in enumerate(self.parent.controls):
-            if control == self:
-                idx = i + 1
-                break
 
-        self.parent.controls.insert(idx, children)
-        self.parent.update()
+        if parent := self.parent:
+            for i, control in enumerate(parent.controls):
+                if control == self:
+                    idx = i + 1
+                    break
+
+            parent.controls.insert(idx, children)
+            parent.update()
 
     def on_click_remove(self, e):
         self._instance.delete_instance()
@@ -209,7 +212,7 @@ class ToDoTabToDoViewControl(ft.Column):
         self._instance = instance
         self._state = state
 
-        self._view_row: ft.Row | None = None
+        self._view_row: ToDoRowControl | None = None
 
     def build(self):
         self._view_row = ToDoRowControl(self._instance, self._state)
