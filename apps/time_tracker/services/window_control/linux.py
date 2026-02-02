@@ -47,8 +47,8 @@ class WindowControlLinux(WindowControlAbstract):
             try:
                 out = subprocess.check_output(["xprintidle"], stderr=subprocess.DEVNULL)
                 return int(out.strip()) // 1000
-            except Exception:
-                pass
+            except Exception as e:
+                print(e)
 
         # Wayland (GNOME)
         if session == "wayland":
@@ -73,7 +73,7 @@ class WindowControlLinux(WindowControlAbstract):
         if windows is not None:
             for window in windows:
                 try:
-                    if window: outList.append(LinuxWindow(window))
+                    if window: outList.append(window)
                 except Exception as e:
                     print(e)
                     pass

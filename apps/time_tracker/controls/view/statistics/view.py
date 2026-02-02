@@ -25,22 +25,22 @@ class ActivityStatisticsView(ft.Column):
         self._app_statistics: ft.Column | None = None
         self._sort_dropdown: StatisticsSortDropdown | None = None
         self._show_button: ft.TextButton | None = None
+        self._refresh_button: ft.IconButton | None = None
         self._params_row: ft.Row | None = None
 
         self._filter_date_value: datetime.date = datetime.datetime.now(datetime.UTC).date()
         self._is_showed = False
+        self._window_sessions: list[WindowSession] = []
+        self._idle_sessions: list[IdleSession] = []
 
     def build(self):
         self._build_show_button()
+        self._build_refresh_button()
         self._build_filter_btn()
         self._build_date_filter_modal()
+        self._build_app_statistics()
 
         self._sort_dropdown = StatisticsSortDropdown(border_width=0)
-        self._app_statistics = ft.Column(
-            visible=False,
-            scroll=ft.ScrollMode.ADAPTIVE,
-            height=600,
-        )
 
         self._params_row = ft.Row(
             controls=[
@@ -55,6 +55,7 @@ class ActivityStatisticsView(ft.Column):
                 controls=[
                     ft.Text('Статистика', size=20, weight=ft.FontWeight.BOLD),
                     self._show_button,
+                    self._refresh_button,
                 ]
             ),
             self._params_row,
@@ -62,18 +63,23 @@ class ActivityStatisticsView(ft.Column):
             self._app_statistics,
         ]
 
-        # TODO: Выборка по дате
+        self._rebuild_app_statistics()
 
-        # TODO: get total duration
-        idle_sessions = list(
-            IdleSession.select()
-            .order_by(IdleSession.duration.desc())
+    def _build_app_statistics(self):
+        self._app_statistics = ft.Column(
+            visible=False,
+            scroll=ft.ScrollMode.ADAPTIVE,
+            height=600,
         )
+
+    def _rebuild_app_statistics(self, with_update=False):
+        self._app_statistics.controls.clear()
+        self._refresh_sessions_db()
 
         grouped_sessions: dict[str, Counter] = defaultdict(Counter)
         total_duration_apps = Counter()
 
-        for session in WindowSession.select():
+        for session in self._window_sessions:
             app_name = session.app_name
             window_title = session.window_title
             duration = session.duration
@@ -82,11 +88,11 @@ class ActivityStatisticsView(ft.Column):
             data[window_title] += duration
             total_duration_apps[app_name] += duration
 
-        if idle_sessions:
+        if self._idle_sessions:
             self._app_statistics.controls.append(
                 OneAppView(
                     'Бездействие',
-                    0,   # TODO
+                    sum([it.duration for it in self._idle_sessions]),
                 )
             )
 
@@ -105,9 +111,23 @@ class ActivityStatisticsView(ft.Column):
                 OneAppView(
                     app_name,
                     duration,
-                    sessions_data,
+                    [it for it in sessions_data if it.get('window_title')],
                 )
             )
+
+        if with_update:
+            self._app_statistics.update()
+
+    def _refresh_sessions_db(self):
+        # TODO: Выборка по дате
+
+        self._idle_sessions = list(
+            IdleSession.select()
+            .order_by(IdleSession.duration.desc())
+        )
+        self._window_sessions = list(
+            WindowSession.select()
+        )
 
     def _build_show_button(self):
         if self._is_showed:
@@ -123,13 +143,25 @@ class ActivityStatisticsView(ft.Column):
                 on_click=self._on_click_show_button,
             )
 
+    def _build_refresh_button(self):
+        self._refresh_button = ft.IconButton(
+            icon=ft.Icons.REFRESH,
+            tooltip='Обновить',
+            visible=False,
+            on_click=self._on_click_refresh,
+        )
+
+    def _on_click_refresh(self, e):
+        self._rebuild_app_statistics(with_update=True)
+
     def _on_click_show_button(self, e):
         self._is_showed = not self._is_showed
 
-        for children in [self._params_row, self._app_statistics]:
+        for children in [self._params_row, self._app_statistics, self._refresh_button]:
             children.visible = self._is_showed
 
         self._build_show_button()
+        self._rebuild_app_statistics()
 
         self.update()
 
@@ -142,19 +174,9 @@ class ActivityStatisticsView(ft.Column):
         )
 
     def _build_date_filter_modal(self):
-        start_date = datetime.date(
-            year=2000,
-            month=1,
-            day=1,
-            # tzinfo=self._filter_date_value.tzinfo,
-        )
+        start_date = datetime.date(year=2000, month=1, day=1)
 
-        last_date = datetime.date(
-            year=2099,
-            month=12,
-            day=31,
-            # tzinfo=self._filter_date_value.tzinfo,
-        )
+        last_date = datetime.date(year=datetime.date.today().year, month=12, day=31)
 
         self._date_filter_modal = ft.DatePicker(
             value=self._filter_date_value,

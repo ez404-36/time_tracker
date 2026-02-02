@@ -7,6 +7,7 @@ from apps.time_tracker.controls.view.timer import TimerComponent
 from apps.time_tracker.models import IdleSession, WindowSession
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.services.window_control.base import WindowControl
+from apps.time_tracker.utils import transform_app_name_and_window_title
 from core.state import ActivityTabState
 
 # TODO: чисто для тестирования
@@ -73,7 +74,8 @@ class ActivityTracker:
             active_windows = self.service.get_all_windows()
             all_windows_component.controls.clear()
             for active_window in active_windows:
-                title = f'{active_window["app_name"]} ({active_window["title"]})'
+                app_name, window_title = transform_app_name_and_window_title(active_window['app_name'], active_window['title'])
+                title = f'{app_name} ({window_title})'
 
                 row = ft.Row(
                     controls=[
@@ -104,9 +106,11 @@ class ActivityTracker:
         if self.window_session:
             self.window_session.stop(ts)
 
+        app_name, title = transform_app_name_and_window_title(window['app_name'], window['title'])
+
         new_window_session = WindowSession.create(
-            app_name=window['app_name'],
-            window_title=window['title'],
+            app_name=app_name,
+            window_title=title,
             start_ts=ts,
         )
 

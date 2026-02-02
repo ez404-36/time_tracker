@@ -24,6 +24,7 @@ class StatisticsOneRow(ft.Container):
         self.is_expanded = False
         self.text_width = 14 if not self.has_parent else 12
         self.text_bold = True if not self.has_parent else False
+        self.text_color = ft.Colors.RED_300 if title == 'Бездействие' else ft.Colors.BLACK
 
         self._text: ft.Text | None = None
         self._duration_text: ft.Text | None = None
@@ -50,6 +51,7 @@ class StatisticsOneRow(ft.Container):
             self.title,
             size=self.text_width,
             weight=ft.FontWeight.W_500 if self.text_bold else ft.FontWeight.NORMAL,
+            color=self.text_color,
             width=120 if not self.has_parent else 200,
         )
 
@@ -60,6 +62,7 @@ class StatisticsOneRow(ft.Container):
         self._duration_text = ft.Text(
             value=txt,
             weight=ft.FontWeight.W_500 if self.text_bold else ft.FontWeight.NORMAL,
+            color=self.text_color,
             size=self.text_width,
         )
 
