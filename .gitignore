@@ -1,4 +1,6 @@
 .venv
 .idea
-database.db
+*.db
 TODO.md
+build/**
+dist/**

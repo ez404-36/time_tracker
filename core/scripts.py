@@ -2,31 +2,30 @@ from playhouse.migrate import SqliteMigrator, migrate
 
 from apps.time_tracker.models import *
 from apps.to_do.models import *
-from core.models import db
 
 
-def drop_tables():
-    db.drop_tables([
+def drop_tables(_db):
+    _db.drop_tables([
         PomodoroTimer,
         Event,
         IdleSession,
         WindowSession,
-        # ToDo,
+        ToDo,
     ])
 
 
-def create_tables():
-    db.create_tables([
+def create_tables(_db):
+    _db.create_tables([
         PomodoroTimer,
         Event,
         IdleSession,
         WindowSession,
-        # ToDo,
+        ToDo,
     ])
 
 
-def run_migration():
-    migrator = SqliteMigrator(db)
+def run_migration(_db):
+    migrator = SqliteMigrator(_db)
 
     # Код для миграций
     migrate(
@@ -35,4 +34,5 @@ def run_migration():
 
 
 if __name__ == '__main__':
-    create_tables()
+    from core.models import db
+    create_tables(db)

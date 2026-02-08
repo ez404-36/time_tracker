@@ -55,7 +55,7 @@ class ActivityTabViewControl(ft.Container):
         self.idle_session = ft.Column(visible=False)
         self._state['controls']['idle_session'] = self.idle_session
 
-        current_state_column = ft.Column(
+        time_tracking_column = ft.Column(
             width=600,
             controls=[
                 ft.Row([
@@ -74,14 +74,11 @@ class ActivityTabViewControl(ft.Container):
 
         self.content = ft.Row(
             controls=[
-                current_state_column,
+                time_tracking_column,
                 ft.VerticalDivider(),
                 self._statistics_view,
             ]
         )
-
-    def _on_change_stat_drp(self, e):
-        print('Changed', e)
 
     async def _on_click_start(self, e):
         await self.tracker.start()

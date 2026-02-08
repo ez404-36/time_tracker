@@ -2,6 +2,7 @@ import datetime
 from collections import Counter, defaultdict
 
 import flet as ft
+from peewee import fn
 
 from apps.time_tracker.controls.view.statistics.one_app_view import OneAppView, WindowTitleSessionData
 from apps.time_tracker.controls.view.statistics.sort_dropdown import StatisticsSortDropdown
@@ -119,14 +120,18 @@ class ActivityStatisticsView(ft.Column):
             self._app_statistics.update()
 
     def _refresh_sessions_db(self):
-        # TODO: Выборка по дате
-
         self._idle_sessions = list(
             IdleSession.select()
+            .where(
+                fn.date(IdleSession.start_ts) == self._filter_date_value
+            )
             .order_by(IdleSession.duration.desc())
         )
         self._window_sessions = list(
             WindowSession.select()
+            .where(
+                fn.date(WindowSession.start_ts) == self._filter_date_value
+            )
         )
 
     def _build_show_button(self):
@@ -166,12 +171,17 @@ class ActivityStatisticsView(ft.Column):
         self.update()
 
     def _build_filter_btn(self):
-        self._date_filter_btn = ft.TextButton(
-            f'По дате: {self._filter_date_value.strftime("%d.%m.%y")}',
-            on_click=lambda e: self.page.open(
-                self._date_filter_modal
-            ),
-        )
+        text = f'По дате: {self._filter_date_value.strftime("%d.%m.%y")}'
+
+        if self._date_filter_btn:
+            self._date_filter_btn.text = text
+        else:
+            self._date_filter_btn = ft.TextButton(
+                text=text,
+                on_click=lambda e: self.page.open(
+                    self._date_filter_modal
+                ),
+            )
 
     def _build_date_filter_modal(self):
         start_date = datetime.date(year=2000, month=1, day=1)
@@ -186,4 +196,7 @@ class ActivityStatisticsView(ft.Column):
         )
 
     def _on_change_date_filter_modal(self, e):
-        print('Changed', e)
+        self._filter_date_value = e.control.value.date()
+        self._build_filter_btn()
+        self._rebuild_app_statistics(with_update=False)
+        self.update()
