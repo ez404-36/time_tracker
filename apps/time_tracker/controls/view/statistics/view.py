@@ -24,7 +24,7 @@ class ActivityStatisticsView(ft.Column):
         self._date_filter_btn: ft.TextButton | None = None
         self._date_filter_modal: ft.DatePicker | None = None
         self._app_statistics: ft.Column | None = None
-        self._sort_dropdown: StatisticsSortDropdown | None = None
+        # self._sort_dropdown: StatisticsSortDropdown | None = None
         self._show_button: ft.TextButton | None = None
         self._refresh_button: ft.IconButton | None = None
         self._params_row: ft.Row | None = None
@@ -41,7 +41,7 @@ class ActivityStatisticsView(ft.Column):
         self._build_date_filter_modal()
         self._build_app_statistics()
 
-        self._sort_dropdown = StatisticsSortDropdown(border_width=0)
+        # self._sort_dropdown = StatisticsSortDropdown(border_width=0)
 
         self._params_row = ft.Row(
             controls=[
@@ -157,10 +157,16 @@ class ActivityStatisticsView(ft.Column):
         )
 
     def _on_click_refresh(self, e):
-        self._rebuild_app_statistics(with_update=True)
+        self.refresh_statistics()
 
     def _on_click_show_button(self, e):
-        self._is_showed = not self._is_showed
+        self.toggle_show_statistics()
+
+    def refresh_statistics(self):
+        self._rebuild_app_statistics(with_update=True)
+
+    def toggle_show_statistics(self, force_show=False):
+        self._is_showed = not self._is_showed or force_show
 
         for children in [self._params_row, self._app_statistics, self._refresh_button]:
             children.visible = self._is_showed

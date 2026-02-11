@@ -12,7 +12,6 @@ a = Analysis(
     ],
     binaries=[],
     datas=[
-        ('database.db', '.'),
         ('apps/**/*', 'apps/'),
         ('core/**/*', 'core/'),
     ],

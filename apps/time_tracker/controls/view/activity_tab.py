@@ -1,3 +1,5 @@
+import asyncio
+
 import flet as ft
 
 from apps.time_tracker.controls.view.statistics.view import ActivityStatisticsView
@@ -25,6 +27,9 @@ class ActivityTabViewControl(ft.Container):
         self.idle_session: ft.Column | None = None
         self.all_window_sessions: ft.Column | None = None
         self._statistics_view: ActivityStatisticsView | None = None
+
+        self._is_activity_tracker_enabled = False
+        self._autorefresh_statistics_task: asyncio.Task | None = None
 
         self.tracker = ActivityTracker(self._state)
 
@@ -71,6 +76,7 @@ class ActivityTabViewControl(ft.Container):
         )
 
         self._statistics_view = ActivityStatisticsView(self._state)
+        self._state['controls']['statistics_view'] = self._statistics_view
 
         self.content = ft.Row(
             controls=[
@@ -81,14 +87,18 @@ class ActivityTabViewControl(ft.Container):
         )
 
     async def _on_click_start(self, e):
+        self._is_activity_tracker_enabled = True
         await self.tracker.start()
-        self._toggle_affected_on_start_stop(True)
+        self._toggle_affected_on_start_stop()
 
     async def _on_click_stop(self, e):
+        self._is_activity_tracker_enabled = False
         await self.tracker.stop()
-        self._toggle_affected_on_start_stop(False)
+        self._toggle_affected_on_start_stop()
 
-    def _toggle_affected_on_start_stop(self, is_start: bool):
+    def _toggle_affected_on_start_stop(self):
+        is_start = self._is_activity_tracker_enabled
+
         self._start_button.visible = not is_start
         self._stop_button.visible = is_start
         self._status.value = 'Отслеживание активности...' if is_start else 'Отслеживание активности выключено'
@@ -96,4 +106,14 @@ class ActivityTabViewControl(ft.Container):
         self.idle_session.visible = is_start
         self._opened_windows_text.visible = is_start
         self.all_window_sessions.visible = is_start
+
+        if is_start:
+            self._statistics_view.toggle_show_statistics()
+            self._autorefresh_statistics_task = asyncio.create_task(self._run_auto_refresh_statistics())
+
         self.update()
+
+    async def _run_auto_refresh_statistics(self):
+        while self._is_activity_tracker_enabled:
+            await asyncio.sleep(5)  # рефреш статистики каждые 5 секунд
+            self._statistics_view.refresh_statistics()

@@ -1,28 +1,30 @@
 import re
 
+from core.utils import remove_spaces
+
 telegram_msg_count_regex = re.compile(r'.{1,3}\(\d+\)')
 
 
-class AppNameTransformBase:
+class AppNameAndWindowTitleTransformerBase:
     """
     Базовый класс трансмформации названия приложения и заголовка окна
     """
 
-    def __init__(self, app_name: str, window_title: str):
-        self.app_name = app_name.replace(' ', ' ').replace('‎', '')
-        self.window_title = window_title.replace(' ', ' ').replace('‎', '')
+    def __init__(self, executable_name: str, window_title: str | None):
+        self.executable_name = remove_spaces(executable_name)
+        self.window_title = remove_spaces(window_title)
 
     def transform(self) -> tuple[str, str]:
         return self.transform_app_name(), self.transform_window_title()
 
     def transform_app_name(self) -> str:
-        return self.app_name
+        return self.executable_name
 
     def transform_window_title(self) -> str | None:
         return self.window_title
 
 
-class TelegramTransform(AppNameTransformBase):
+class TelegramTransform(AppNameAndWindowTitleTransformerBase):
     def transform_app_name(self) -> str:
         return 'Telegram'
 
@@ -31,7 +33,7 @@ class TelegramTransform(AppNameTransformBase):
         return telegram_msg_count_regex.sub('', user_or_channel_name)
 
 
-class YandexBrowserTransform(AppNameTransformBase):
+class YandexBrowserTransform(AppNameAndWindowTitleTransformerBase):
     def transform_app_name(self) -> str:
         return 'Яндекс Браузер'
 
@@ -39,28 +41,7 @@ class YandexBrowserTransform(AppNameTransformBase):
         return self.window_title.split(' — Яндекс Браузер')[0].replace(' вкладка закреплена', '')
 
 
-class DBeaverTransform(AppNameTransformBase):
-    def transform_app_name(self) -> str:
-        return 'DBeaver'
-
-
-class FletTransform(AppNameTransformBase):
-    def transform_app_name(self) -> str:
-        return self.window_title
-
-    def transform_window_title(self) -> str | None:
-        return None
-
-
-class WindowsExplorerTransform(AppNameTransformBase):
-    def transform_app_name(self) -> str:
-        return 'Проводник Windows'
-
-    def transform_window_title(self) -> str | None:
-        return self.window_title or 'Проводник'
-
-
-class WindowsSteamGameTransform(AppNameTransformBase):
+class WindowsSteamGameTransform(AppNameAndWindowTitleTransformerBase):
     def transform_app_name(self) -> str:
         return self.window_title.split('PID')[0].strip()
 
@@ -68,32 +49,23 @@ class WindowsSteamGameTransform(AppNameTransformBase):
         return None
 
 
-class WindowsSnippingToolsTransform(AppNameTransformBase):
-    def transform_app_name(self) -> str:
-        return self.window_title or 'Ножницы'
+def get_app_name_and_transform_window_title(executable_name: str, window_title: str) -> tuple[str, str]:
+    """
+    :param executable_name: название исполняемого файла
+    :param window_title: заголовок окна
+    :return: Название приложения, Трансформированный заголовок окна
+    """
 
-    def transform_window_title(self) -> str | None:
-        return None
-
-
-def transform_app_name_and_window_title(app_name: str, title: str) -> tuple[str, str]:
     transform_cls = None
 
-    match app_name:
+    match executable_name:
         case 'telegram-desktop' | 'Telegram.exe':
             transform_cls = TelegramTransform
         case 'yandex_browser' | 'browser.exe':
             transform_cls = YandexBrowserTransform
-        case 'java':
-            if 'dbeaver' in title.lower():
-                transform_cls = DBeaverTransform
-            else:
-                transform_cls = YandexBrowserTransform
-        case 'flet' | 'flet.exe':
-            transform_cls = FletTransform
-        case str() if 'steamapps' in title:
+        case str() if 'steamapps' in window_title:
             transform_cls = WindowsSteamGameTransform
         case _:
-            transform_cls = AppNameTransformBase
+            transform_cls = AppNameAndWindowTitleTransformerBase
 
-    return transform_cls(app_name, title).transform()
+    return transform_cls(executable_name, window_title).transform()

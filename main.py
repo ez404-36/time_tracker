@@ -6,6 +6,8 @@ from flet.core.types import AppView
 
 from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
 from apps.to_do.controls.todo_tab import TodoTabViewControl
+from core.models import db
+from core.scripts import create_tables
 from core.state import State, init_state
 
 state: State = init_state(State)
@@ -75,5 +77,6 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
+    create_tables(db)
     ft.app(target=main, view=AppView.FLET_APP)
 

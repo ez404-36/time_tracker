@@ -7,7 +7,7 @@ from apps.time_tracker.controls.view.timer import TimerComponent
 from apps.time_tracker.models import IdleSession, WindowSession
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.services.window_control.base import WindowControl
-from apps.time_tracker.utils import transform_app_name_and_window_title
+from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.state import ActivityTabState
 
 # TODO: чисто для тестирования
@@ -66,7 +66,7 @@ class ActivityTracker:
             if window:
                 if not self.current_window:
                     self._switch_window(window, now)
-                elif window['app_name'] != self.current_window['app_name'] or window['title'] != self.current_window['title']:
+                elif window['executable_name'] != self.current_window['executable_name'] or window['window_title'] != self.current_window['window_title']:
                     self._switch_window(window, now)
 
         all_windows_component = self._state['controls']['all_window_sessions']
@@ -74,14 +74,24 @@ class ActivityTracker:
             active_windows = self.service.get_all_windows()
             all_windows_component.controls.clear()
             for active_window in active_windows:
-                app_name, window_title = transform_app_name_and_window_title(active_window['app_name'], active_window['title'])
-                title = f'{app_name} ({window_title})'
+                app_name, window_title = get_app_name_and_transform_window_title(
+                    active_window['executable_name'],
+                    active_window['window_title']
+                )
+                title = app_name
+                if window_title:
+                    app_name += f' ({window_title})'
+
+                executable_title = active_window['executable_name']
+                if active_window['executable_path']:
+                    executable_title += f' ({active_window['executable_path']}'
 
                 row = ft.Row(
                     controls=[
                         ft.Icon(ft.Icons.APPS),
                         ft.Text(
                             value=title,
+                            tooltip=executable_title,
                         )
                     ]
                 )
@@ -106,10 +116,11 @@ class ActivityTracker:
         if self.window_session:
             self.window_session.stop(ts)
 
-        app_name, title = transform_app_name_and_window_title(window['app_name'], window['title'])
+        _, title = get_app_name_and_transform_window_title(window['executable_name'], window['window_title'])
 
         new_window_session = WindowSession.create(
-            app_name=app_name,
+            executable_name=window['executable_name'],
+            executable_path=window['executable_path'],
             window_title=title,
             start_ts=ts,
         )
@@ -130,10 +141,15 @@ class ActivityTracker:
         window_session_control = self._state['controls']['window_session']
         if window_session_control and session:
             window_session_control.controls.clear()
+
+            app_title = session.app_name
+            if session.window_title:
+                app_title += f' ({session.window_title})'
+
             window_session_control.controls.extend([
                 TimerComponent(),
                 ft.Text(
-                    value=f'{session.app_name} ({session.window_title})'
+                    value=app_title,
                 )
             ])
             window_session_control.update()
@@ -148,7 +164,7 @@ class ActivityTracker:
                 idle_session_control.controls.extend([
                     TimerComponent(),
                     ft.Text(
-                        value=f'Бездействие',
+                        value='Бездействие',
                         color=ft.Colors.RED_300,
                     )
                 ])
