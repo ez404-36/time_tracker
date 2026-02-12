@@ -89,14 +89,14 @@ class ActivityTabViewControl(ft.Container):
     async def _on_click_start(self, e):
         self._is_activity_tracker_enabled = True
         await self.tracker.start()
-        self._toggle_affected_on_start_stop()
+        await self._toggle_affected_on_start_stop()
 
     async def _on_click_stop(self, e):
         self._is_activity_tracker_enabled = False
         await self.tracker.stop()
-        self._toggle_affected_on_start_stop()
+        await self._toggle_affected_on_start_stop()
 
-    def _toggle_affected_on_start_stop(self):
+    async def _toggle_affected_on_start_stop(self):
         is_start = self._is_activity_tracker_enabled
 
         self._start_button.visible = not is_start
@@ -108,8 +108,11 @@ class ActivityTabViewControl(ft.Container):
         self.all_window_sessions.visible = is_start
 
         if is_start:
-            self._statistics_view.toggle_show_statistics()
+            self._statistics_view.toggle_show_statistics(force_show=True)
             self._autorefresh_statistics_task = asyncio.create_task(self._run_auto_refresh_statistics())
+        else:
+            if self._autorefresh_statistics_task:
+                await self._autorefresh_statistics_task
 
         self.update()
 
