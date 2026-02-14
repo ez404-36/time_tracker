@@ -3,7 +3,11 @@ import asyncio
 import flet as ft
 
 from apps.time_tracker.controls.view.statistics.view import ActivityStatisticsView
+from apps.time_tracker.controls.view.timer import TimerComponent
+from apps.time_tracker.models import IdleSession, WindowSession
 from apps.time_tracker.services.activity_tracker import ActivityTracker
+from apps.time_tracker.services.window_control.abstract import WindowData
+from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.state import ActivityTabState, State
 
 
@@ -18,9 +22,10 @@ class ActivityTabViewControl(ft.Container):
         super().__init__(**kwargs)
         self._state: ActivityTabState = state['tabs']['activity']
 
-        self._status: ft.Text | None = None
+        self._tracking_status: ft.Text | None = None
         self._start_button: ft.IconButton | None = None
         self._stop_button: ft.IconButton | None = None
+        self._show_opened_windows: ft.Checkbox | None = None
         self._opened_windows_text: ft.Text | None = None
 
         self.window_session: ft.Column | None = None
@@ -34,10 +39,7 @@ class ActivityTabViewControl(ft.Container):
         self.tracker = ActivityTracker(self._state)
 
     def build(self):
-        self._status = ft.Text(
-            value='Отслеживание активности выключено',
-            size=16,
-        )
+        self.rebuild_tracking_status()
         self._start_button = ft.IconButton(
             icon=ft.Icons.PLAY_CIRCLE_OUTLINE,
             on_click=self._on_click_start,
@@ -49,16 +51,17 @@ class ActivityTabViewControl(ft.Container):
             on_click=self._on_click_stop,
             tooltip='Выключить',
         )
-        self._opened_windows_text = ft.Text('Открытые окна', visible=False)
 
-        self.all_window_sessions = ft.Column()
-        self._state['controls']['all_window_sessions'] = self.all_window_sessions
+        self.build_show_opened_windows_checkbox()
+        self._opened_windows_text = ft.Text('Открытые окна', visible=False, size=16, weight=ft.FontWeight.W_400)
+
+        self.all_window_sessions = ft.Column(
+            scroll=ft.ScrollMode.ADAPTIVE,
+            height=450,
+        )
 
         self.window_session = ft.Column(visible=False)
-        self._state['controls']['window_session'] = self.window_session
-
         self.idle_session = ft.Column(visible=False)
-        self._state['controls']['idle_session'] = self.idle_session
 
         time_tracking_column = ft.Column(
             width=600,
@@ -66,10 +69,12 @@ class ActivityTabViewControl(ft.Container):
                 ft.Row([
                     self._start_button,
                     self._stop_button,
-                    self._status,
+                    self._tracking_status,
                 ]),
                 self.window_session,
                 self.idle_session,
+                ft.Divider(),
+                self._show_opened_windows,
                 self._opened_windows_text,
                 self.all_window_sessions,
             ]
@@ -86,6 +91,37 @@ class ActivityTabViewControl(ft.Container):
             ]
         )
 
+        self._state['controls']['activity_tab'] = self
+
+    def rebuild_tracking_status(self):
+        title = self.get_status_title()
+        if not self._tracking_status:
+            self._tracking_status = ft.Text(
+                value=title,
+                size=16,
+            )
+        else:
+            self._tracking_status.value = title
+
+    def get_status_title(self):
+        if self._is_activity_tracker_enabled:
+            return 'Отслеживание активности...'
+        else:
+            return 'Отслеживание активности выключено'
+
+    def build_show_opened_windows_checkbox(self):
+        self._show_opened_windows = ft.Checkbox(
+            label='Показать открытые окна',
+            on_change=self.on_click_show_opened_windows,
+        )
+
+    def on_click_show_opened_windows(self, e):
+        value = e.control.value
+        self._opened_windows_text.visible = value
+        self.all_window_sessions.visible = value
+
+        self.update()
+
     async def _on_click_start(self, e):
         self._is_activity_tracker_enabled = True
         await self.tracker.start()
@@ -101,7 +137,7 @@ class ActivityTabViewControl(ft.Container):
 
         self._start_button.visible = not is_start
         self._stop_button.visible = is_start
-        self._status.value = 'Отслеживание активности...' if is_start else 'Отслеживание активности выключено'
+        self.rebuild_tracking_status()
         self.window_session.visible = is_start
         self.idle_session.visible = is_start
         self._opened_windows_text.visible = is_start
@@ -116,7 +152,70 @@ class ActivityTabViewControl(ft.Container):
 
         self.update()
 
+    # TODO: большая нагрузка при рефреше статистики: каждую секунду перезапрос в БД и отрисовка.
+    #  Пока некритично
     async def _run_auto_refresh_statistics(self):
         while self._is_activity_tracker_enabled:
-            await asyncio.sleep(5)  # рефреш статистики каждые 5 секунд
             self._statistics_view.refresh_statistics()
+            await asyncio.sleep(1)
+
+    def update_idle_session(self, session: IdleSession | None):
+        idle_session_control = self.idle_session
+        if idle_session_control:
+            idle_session_control.controls.clear()
+            if session:
+                idle_session_control.controls.extend([
+                    TimerComponent(),
+                    ft.Text(
+                        value='Бездействие',
+                        color=ft.Colors.RED_300,
+                    )
+                ])
+            idle_session_control.update()
+
+    def update_window_session(self, session: WindowSession | None):
+        window_session_control = self.window_session
+        if window_session_control and session:
+            window_session_control.controls.clear()
+
+            app_title = session.app_name
+            if session.window_title:
+                app_title += f' ({session.window_title})'
+
+            window_session_control.controls.extend([
+                TimerComponent(),
+                ft.Text(
+                    value=app_title,
+                )
+            ])
+            window_session_control.update()
+
+    def update_all_active_window_sessions(self, active_windows: list[WindowData]):
+        all_windows_component = self.all_window_sessions
+        all_windows_component.controls.clear()
+        for active_window in active_windows:
+            app_name, window_title = get_app_name_and_transform_window_title(
+                active_window['executable_name'],
+                active_window['window_title']
+            )
+            title = app_name
+            if window_title:
+                app_name += f' ({window_title})'
+
+            executable_title = active_window['executable_name']
+            if active_window['executable_path']:
+                executable_title += f' ({active_window['executable_path']}'
+
+            row = ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.APPS),
+                    ft.Text(
+                        value=title,
+                        tooltip=executable_title,
+                    )
+                ]
+            )
+
+            all_windows_component.controls.append(row)
+
+        all_windows_component.update()

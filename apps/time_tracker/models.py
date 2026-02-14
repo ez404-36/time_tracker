@@ -1,5 +1,4 @@
 __all__ = (
-    'PomodoroTimer',
     'Event',
     'WindowSession',
     'IdleSession',
@@ -14,18 +13,6 @@ from apps.time_tracker.consts import EventInitiator, EventType
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.models import BaseModel
 
-
-class PomodoroTimer(BaseModel):
-    """
-    Таймер помидора (работа/отдых)
-    """
-
-    title = CharField(unique=True, max_length=50)
-    work_time = SmallIntegerField(help_text='Время непрерывной работы (минут)')
-    rest_time = SmallIntegerField(help_text='Время отдыха (минут)')
-
-    class Meta:
-        table_name = 'pomodoro_timer'
 
 
 class Event(BaseModel):
