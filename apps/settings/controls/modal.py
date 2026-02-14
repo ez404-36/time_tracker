@@ -20,11 +20,9 @@ class SettingsModal(ft.AlertDialog):
         super().__init__(**kwargs)
 
         self._on_close = on_close
-        self._app_settings: AppSettings | None = None
+        self._app_settings = AppSettings.get_solo()
 
     def build(self):
-        self._app_settings = AppSettings.select().first()
-
         self.content = SettingsPanel(self._app_settings)
         self.actions = [
             ft.TextButton('Отмена', on_click=lambda e: self._on_close()),

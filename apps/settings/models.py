@@ -21,3 +21,7 @@ class AppSettings(BaseModel):
 
     class Meta:
         table_name = 'settings'
+
+    @classmethod
+    def get_solo(cls) -> AppSettings:
+        return AppSettings.select().first()
