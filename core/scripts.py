@@ -1,12 +1,13 @@
 from playhouse.migrate import SqliteMigrator, migrate
 
+from apps.settings.models import AppSettings
 from apps.time_tracker.models import *
 from apps.to_do.models import *
 
 
 def drop_tables(_db):
     _db.drop_tables([
-        PomodoroTimer,
+        AppSettings,
         Event,
         IdleSession,
         WindowSession,
@@ -16,7 +17,7 @@ def drop_tables(_db):
 
 def create_tables(_db):
     _db.create_tables([
-        PomodoroTimer,
+        AppSettings,
         Event,
         IdleSession,
         WindowSession,
