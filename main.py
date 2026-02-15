@@ -4,11 +4,11 @@ import flet as ft
 from flet.core.types import AppView
 
 from apps.settings.controls.modal import SettingsModal
-from apps.settings.models import AppSettings
 from apps.time_tracker.consts import EventType, EventInitiator
 from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
 from apps.time_tracker.models import Event
 from apps.to_do.controls.todo_tab import TodoTabViewControl
+from core.settings import app_settings
 from core.models import db
 from core.scripts import create_tables
 from core.state import State, init_state
@@ -22,7 +22,6 @@ class DesktopApp:
 
         self._open_settings_btn: ft.ElevatedButton | None = None
         self._is_settings_open = False
-        self._app_settings: AppSettings | None = None
 
         self._settings_modal: SettingsModal | None = None
         self._activity_tab_control: ActivityTabViewControl | None = None
@@ -34,8 +33,7 @@ class DesktopApp:
         * первичная отрисовка компонентов
         * определение обработчиков кнопок и селекторов
         """
-        self._app_settings, _ = AppSettings.get_or_create()
-        self._app_settings.detect_and_update_client_timezone()
+        app_settings.detect_and_update_client_timezone()
 
         page = self.page
 
@@ -79,7 +77,7 @@ class DesktopApp:
 
     def _build_open_settings_btn(self):
         self._open_settings_btn = ft.ElevatedButton(
-            'Открыть настройки',
+            'Настройки',
             on_click=self._on_click_open_settings,
         )
 

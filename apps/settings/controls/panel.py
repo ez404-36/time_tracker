@@ -1,8 +1,12 @@
+from pathlib import Path
 from typing import TypedDict
 
 import flet as ft
+from playsound3 import playsound
 
 from apps.settings.models import AppSettings
+from apps.settings.utils import get_available_notification_sounds
+from core.consts import AUDIO_DIR
 
 
 class SettingsForm(TypedDict):
@@ -10,6 +14,10 @@ class SettingsForm(TypedDict):
     enable_pomodoro: bool
     pomodoro_work_time: int | None
     pomodoro_rest_time: int | None
+    enable_todo_deadline_sound_notifications: bool
+    todo_deadline_sound: str | None
+    enable_idle_start_sound_notifications: bool
+    idle_start_sound: str | None
 
 
 class SettingsPanel(ft.Container):
@@ -33,15 +41,28 @@ class SettingsPanel(ft.Container):
         self._app_settings = app_settings
 
         self._idle_threshold: ft.TextField | None = None
+
         self._enable_pomodoro_switch: ft.Switch | None = None
         self._pomodoro_work_time: ft.TextField | None = None
         self._pomodoro_rest_time: ft.TextField | None = None
+
+        self._enable_todo_deadline_sound_switch: ft.Switch | None = None
+        self._todo_deadline_sound_dropdown: ft.Dropdown | None = None
+
+        self._enable_idle_start_sound_switch: ft.Switch | None = None
+        self._idle_start_sound_dropdown: ft.Dropdown | None = None
+
+        self._available_notification_sounds = get_available_notification_sounds()
 
     def build(self):
         self._build_idle_threshold()
         self._build_enable_pomodoro_switch()
         self._build_pomodoro_work_time()
         self._build_pomodoro_rest_time()
+        self._build_enable_todo_deadline_sound_switch()
+        self._build_todo_deadline_sound_dropdown()
+        self._build_enable_idle_start_sound_switch()
+        self._build_idle_start_sound_dropdown()
 
         content = ft.Column(
             spacing=10,
@@ -51,14 +72,10 @@ class SettingsPanel(ft.Container):
                 self._enable_pomodoro_switch,
                 self._pomodoro_work_time,
                 self._pomodoro_rest_time,
-                ft.Switch(
-                    label='Включить звуковые уведомления для задач',
-                    value=self._app_settings.enable_todo_sound_deadline_notifications,
-                ),
-                ft.Switch(
-                    label='Включить звуковые уведомления о начала бездействия',
-                    value=self._app_settings.enable_idle_start_sound_notifications,
-                ),
+                self._enable_todo_deadline_sound_switch,
+                self._todo_deadline_sound_dropdown,
+                self._enable_idle_start_sound_switch,
+                self._idle_start_sound_dropdown,
             ]
         )
         self.content = content
@@ -87,6 +104,10 @@ class SettingsPanel(ft.Container):
             enable_pomodoro=self._enable_pomodoro_switch.value,
             pomodoro_work_time=pomodoro_work_time,
             pomodoro_rest_time=pomodoro_rest_time,
+            enable_todo_deadline_sound_notifications=self._enable_todo_deadline_sound_switch.value,
+            todo_deadline_sound=self._todo_deadline_sound_dropdown.value,
+            enable_idle_start_sound_notifications=self._enable_idle_start_sound_switch.value,
+            idle_start_sound=self._idle_start_sound_dropdown.value,
         )
 
     def _build_idle_threshold(self):
@@ -124,4 +145,63 @@ class SettingsPanel(ft.Container):
             label='Время отдыха (минут)',
             value=self._app_settings.pomodoro_rest_time,
             visible=self._app_settings.enable_pomodoro,
+        )
+
+    def _build_enable_todo_deadline_sound_switch(self):
+        self._enable_todo_deadline_sound_switch = ft.Switch(
+            label='Включить звуковые уведомления для задач',
+            value=self._app_settings.enable_todo_deadline_sound_notifications,
+            on_change=self._on_change_todo_deadline_sound_switch,
+        )
+
+    def _on_change_todo_deadline_sound_switch(self, e):
+        enabled = e.control.value
+        self._todo_deadline_sound_dropdown.visible = enabled
+        self.update()
+
+    def _build_enable_idle_start_sound_switch(self):
+        self._enable_idle_start_sound_switch = ft.Switch(
+            label='Включить звуковые уведомления о начале бездействия',
+            value=self._app_settings.enable_idle_start_sound_notifications,
+            on_change=self._on_change_idle_start_sound_switch,
+        )
+
+    def _on_change_idle_start_sound_switch(self, e):
+        enabled = e.control.value
+        self._idle_start_sound_dropdown.visible = enabled
+        self.update()
+
+    def _build_todo_deadline_sound_dropdown(self):
+        self._todo_deadline_sound_dropdown = self.get_notification_sound_dropdown()
+        self._todo_deadline_sound_dropdown.visible = self._app_settings.enable_todo_deadline_sound_notifications
+
+    def _build_idle_start_sound_dropdown(self):
+        self._idle_start_sound_dropdown = self.get_notification_sound_dropdown()
+        self._idle_start_sound_dropdown.visible = self._app_settings.enable_todo_deadline_sound_notifications
+
+    def get_notification_sound_dropdown(self) -> ft.Dropdown:
+        options: list[ft.DropdownOption] = []
+
+        for sound_file_path in self._available_notification_sounds:
+            def on_click(e):
+                sound_name = e.control.parent.controls[1].value
+                playsound(AUDIO_DIR / sound_name)
+
+            option = ft.DropdownOption(
+                key=Path(sound_file_path).name,
+                content=ft.Row(
+                    controls=[
+                        ft.IconButton(
+                            icon=ft.Icons.PLAY_ARROW,
+                            on_click=on_click,
+                        ),
+                        ft.Text(Path(sound_file_path).name)
+                    ]
+                ),
+            )
+            options.append(option)
+
+        return ft.Dropdown(
+            label='Звук уведомления',
+            options=options,
         )

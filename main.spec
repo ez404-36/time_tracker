@@ -14,6 +14,7 @@ a = Analysis(
     datas=[
         ('apps/**/*', 'apps/'),
         ('core/**/*', 'core/'),
+        ('media/**/*', 'media/'),
     ],
     hiddenimports=[
         # Добавьте здесь любые скрытые импорты

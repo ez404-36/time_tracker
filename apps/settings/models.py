@@ -1,4 +1,5 @@
 import datetime
+from functools import lru_cache
 
 from peewee import *
 
@@ -30,19 +31,32 @@ class AppSettings(BaseModel):
     enable_pomodoro = BooleanField(help_text='Включить работу по таймеру', default=False)
     pomodoro_work_time = SmallIntegerField(help_text='Время непрерывной работы (минут)', null=True)
     pomodoro_rest_time = SmallIntegerField(help_text='Время отдыха (минут)', null=True)
-    enable_todo_sound_deadline_notifications = BooleanField(
-        help_text='Включить звуковые уведомления для задач', default=True
+
+    # region Звуковые уведомления
+
+    enable_todo_deadline_sound_notifications = BooleanField(
+        help_text='Включить звуковые уведомления для дедлайна задач', default=False
+    )
+    todo_deadline_sound = CharField(
+        help_text='Название файла звукового уведомления для дедлайна задач', null=True, max_length=255
     )
     enable_idle_start_sound_notifications = BooleanField(
-        help_text='Включить звуковые уведомления о начала бездействия', default=True
+        help_text='Включить звуковые уведомления о начала бездействия', default=False
     )
+    idle_start_sound = CharField(
+        help_text='Название файла звукового уведомления о начале бездействия', null=True, max_length=255
+    )
+
+    # endregion
 
     class Meta:
         table_name = 'settings'
 
     @classmethod
+    @lru_cache(maxsize=1)
     def get_solo(cls) -> AppSettings:
-        return AppSettings.select().first()
+        app_settings, _ = AppSettings.get_or_create()
+        return app_settings
 
     def detect_and_update_client_timezone(self):
         client_timezone = get_client_timezone_offset()

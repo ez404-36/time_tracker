@@ -7,6 +7,7 @@ dependencies = [
     "flet[all]==0.28.3",
     "markdown>=3.10",
     "peewee>=3.18.3",
+    "playsound3>=3.3.1",
     "psutil>=7.2.0",
     "pyinstaller>=6.18.0",
     "pywinctl>=0.4.1",

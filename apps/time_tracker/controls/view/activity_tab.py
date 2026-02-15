@@ -3,13 +3,13 @@ import datetime
 
 import flet as ft
 
-from apps.settings.models import AppSettings
 from apps.time_tracker.controls.view.statistics.view import ActivityStatisticsView
 from apps.time_tracker.controls.view.timer import TimerComponent
 from apps.time_tracker.models import IdleSession, WindowSession
 from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
+from core.settings import app_settings
 from core.state import ActivityTabState, State
 
 
@@ -35,7 +35,6 @@ class ActivityTabViewControl(ft.Container):
         self.all_window_sessions: ft.Column | None = None
         self._statistics_view: ActivityStatisticsView | None = None
 
-        self._app_settings = AppSettings.get_solo()
         self._window_session: WindowSession | None = None
         self._idle_session: IdleSession | None = None
         self._is_activity_tracker_enabled = False
@@ -43,7 +42,7 @@ class ActivityTabViewControl(ft.Container):
         self._autorefresh_statistics_task: asyncio.Task | None = None
         self._current_window_data: WindowData | None = None  # данные текущего окна, полученные из трекера
 
-        self.tracker = ActivityTracker(self._state, self._app_settings.idle_threshold)
+        self.tracker = ActivityTracker(self._state, app_settings.idle_threshold)
 
     def build(self):
         self.rebuild_tracking_status_text()

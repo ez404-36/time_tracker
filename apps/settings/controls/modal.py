@@ -3,9 +3,9 @@ from typing import Callable
 import flet as ft
 
 from apps.settings.controls.panel import SettingsPanel
-from apps.settings.models import AppSettings
 from apps.time_tracker.consts import EventType, EventInitiator
 from apps.time_tracker.models import Event
+from core.settings import app_settings
 
 
 class SettingsModal(ft.AlertDialog):
@@ -22,7 +22,7 @@ class SettingsModal(ft.AlertDialog):
         super().__init__(**kwargs)
 
         self._on_close = on_close
-        self._app_settings = AppSettings.get_solo()
+        self._app_settings = app_settings
 
     def build(self):
         self.content = SettingsPanel(self._app_settings)
