@@ -1,26 +1,22 @@
 import flet as ft
 
-from core.settings import app_settings
-
 
 class NotificationSender:
     """
-    Отправляет уведомления пользователю.
-    Текстовые и голосовые
+    Отправляет текстовые уведомления пользователю
     """
 
     def __init__(self, page: ft.Page, msg: str):
         self._page = page
-        self._app_settings = app_settings
         self._msg = msg
 
-    def show_snackbar(self):
-        popup = ft.SnackBar(
-            content=ft.Text(self._msg),
-            open=True,
-            show_close_icon=True,
+    def send(self):
+        popup = ft.AlertDialog(
+            title=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.ERROR, color=ft.Colors.RED_300, size=48),
+                    ft.Text(self._msg)
+                ]
+            ),
         )
-        self._page.snack_bar = popup
-
-    def play_sound(self):
-        pass
+        self._page.open(popup)

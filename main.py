@@ -12,6 +12,7 @@ from core.settings import app_settings
 from core.models import db
 from core.scripts import create_tables
 from core.state import State, init_state
+from core.tasks import check_tasks_deadline
 
 state: State = init_state(State)
 
@@ -60,7 +61,8 @@ class DesktopApp:
                     content=self._activity_tab_control,
                 ),
                 ft.Tab(
-                    text='TODO',
+                    text='Задачи',
+                    icon=ft.Icons.CHECK,
                     content=self._todo_tab_control,
                 )
             ]
@@ -69,6 +71,8 @@ class DesktopApp:
 
         page.add(self._open_settings_btn)
         page.add(tabs)
+
+        page.run_task(check_tasks_deadline, page=page)
 
     def _close_settings(self):
         if self._is_settings_open:

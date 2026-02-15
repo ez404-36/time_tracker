@@ -1,8 +1,8 @@
 import datetime
 from typing import Collection
 
+from apps.settings.models import AppSettings
 from apps.to_do.models import ToDo
-from core.settings import app_settings
 
 
 class ToDoDeadlineChecker:
@@ -10,8 +10,8 @@ class ToDoDeadlineChecker:
     Проверяет ТУДУшки на предмет срока их исполнения
     """
 
-    def __init__(self):
-        self._app_settings = app_settings
+    def __init__(self, settings: AppSettings):
+        self._app_settings = settings
 
     async def get_deadlined_right_now(self) -> Collection[ToDo]:
         """
@@ -19,7 +19,7 @@ class ToDoDeadlineChecker:
         """
         now = datetime.datetime.now()
         now_date = now.date()
-        now_time = now.time()
+        now_time = datetime.time(now.hour, now.minute, 0)
 
         return (
             ToDo.select()
