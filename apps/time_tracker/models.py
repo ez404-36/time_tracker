@@ -20,7 +20,7 @@ class Event(BaseModel):
     Любое событие
     """
 
-    ts = DateTimeField(help_text='Дата и время события (UTC)', default=lambda _: datetime.datetime.now(datetime.UTC))
+    ts = DateTimeField(help_text='Дата и время события (UTC)', default=lambda: datetime.datetime.now(datetime.UTC))
     type = IntegerField(help_text='Тип события', choices=EventType.choices)
     initiator = IntegerField(help_text='Инициатор события', choices=EventInitiator.choices)
     data = JSONField(help_text='Опциональные данные', default=dict)

@@ -1,12 +1,13 @@
 import datetime
 
 import flet as ft
-from flet import ControlEvent
 from flet.core.types import AppView
 
 from apps.settings.controls.modal import SettingsModal
 from apps.settings.models import AppSettings
+from apps.time_tracker.consts import EventType, EventInitiator
 from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
+from apps.time_tracker.models import Event
 from apps.to_do.controls.todo_tab import TodoTabViewControl
 from core.models import db
 from core.scripts import create_tables
@@ -33,7 +34,8 @@ class DesktopApp:
         * первичная отрисовка компонентов
         * определение обработчиков кнопок и селекторов
         """
-        self._app_settings = AppSettings.get_or_create()
+        self._app_settings, _ = AppSettings.get_or_create()
+        self._app_settings.detect_and_update_client_timezone()
 
         page = self.page
 
@@ -91,7 +93,9 @@ class DesktopApp:
         else:
             self.page.close(self._settings_modal)
 
-    async def on_disconnect(self, e: ControlEvent):
+    async def on_disconnect(self, e: ft.ControlEvent):
+        Event.create(type=EventType.CLOSE_APP, initiator=EventInitiator.USER)
+
         if e.name == 'disconnect':
             selected_sessions = state['tabs']['activity']['selected']
 
@@ -113,5 +117,6 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     create_tables(db)
+    Event.create(type=EventType.OPEN_APP, initiator=EventInitiator.USER)
     ft.app(target=main, view=AppView.FLET_APP)
 

@@ -4,6 +4,8 @@ import flet as ft
 
 from apps.settings.controls.panel import SettingsPanel
 from apps.settings.models import AppSettings
+from apps.time_tracker.consts import EventType, EventInitiator
+from apps.time_tracker.models import Event
 
 
 class SettingsModal(ft.AlertDialog):
@@ -34,4 +36,5 @@ class SettingsModal(ft.AlertDialog):
         for field, value in settings_form_values.items():
             setattr(self._app_settings, field, value)
         self._app_settings.save()
+        Event.create(type=EventType.CHANGE_SETTINGS, initiator=EventInitiator.USER, data=settings_form_values)
         self._on_close()

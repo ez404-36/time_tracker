@@ -16,7 +16,7 @@ class ToDo(BaseModel):
     """
 
     title: str = CharField(max_length=50)
-    created_at = DateTimeField(default=datetime.datetime.now)
+    created_at = DateTimeField(default=lambda: datetime.datetime.now(datetime.UTC))
     parent: Self | None = ForeignKeyField('self', null=True, backref='children')
     deadline_date: datetime.date | None = DateField(null=True, help_text='Дедлайн (дата)')
     deadline_time: datetime.time | None = TimeField(null=True, help_text='Дедлайн (время)')
