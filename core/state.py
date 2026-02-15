@@ -15,6 +15,7 @@ class BaseTabState(TypedDict):
 class ActivityTabSelectedState(TypedDict):
     window_session: WindowSession | None
     idle_session: IdleSession | None
+    expanded_statistics: set[str]
 
 
 class ActivityTabControlsState(TypedDict):
@@ -65,7 +66,7 @@ def init_state(typed_dict_class) -> State:
         if hasattr(type_hint, '__annotations__'):
             # Рекурсивно инициализируем вложенный TypedDict
             result[key] = init_state(type_hint)
-        elif type_hint == set[int]:
+        elif type_hint == set[int] or type_hint == set[str]:
             result[key] = set()
         else:
             # Для обычных типов ставим None

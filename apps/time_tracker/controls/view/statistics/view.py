@@ -5,7 +5,6 @@ import flet as ft
 from peewee import fn
 
 from apps.time_tracker.controls.view.statistics.one_app_view import OneAppView, WindowTitleSessionData
-from apps.time_tracker.controls.view.statistics.sort_dropdown import StatisticsSortDropdown
 from core.state import ActivityTabState
 from apps.time_tracker.models import WindowSession, IdleSession
 
@@ -70,7 +69,7 @@ class ActivityStatisticsView(ft.Column):
         self._app_statistics = ft.Column(
             visible=False,
             scroll=ft.ScrollMode.ADAPTIVE,
-            height=600,
+            height=410,
         )
 
     def _rebuild_app_statistics(self, with_update=False):
@@ -92,6 +91,7 @@ class ActivityStatisticsView(ft.Column):
         if self._idle_sessions:
             self._app_statistics.controls.append(
                 OneAppView(
+                    self._state,
                     'Бездействие',
                     sum([it.duration for it in self._idle_sessions]),
                 )
@@ -110,6 +110,7 @@ class ActivityStatisticsView(ft.Column):
 
             self._app_statistics.controls.append(
                 OneAppView(
+                    self._state,
                     app_name,
                     duration,
                     [it for it in sessions_data if it.get('window_title')],
@@ -123,14 +124,16 @@ class ActivityStatisticsView(ft.Column):
         self._idle_sessions = list(
             IdleSession.select()
             .where(
-                fn.date(IdleSession.start_ts) == self._filter_date_value
+                fn.date(IdleSession.start_ts) == self._filter_date_value,
+                IdleSession.duration > 0,
             )
             .order_by(IdleSession.duration.desc())
         )
         self._window_sessions = list(
             WindowSession.select()
             .where(
-                fn.date(WindowSession.start_ts) == self._filter_date_value
+                fn.date(WindowSession.start_ts) == self._filter_date_value,
+                WindowSession.duration > 0,
             )
         )
 
