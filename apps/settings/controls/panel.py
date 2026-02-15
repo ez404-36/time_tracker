@@ -174,10 +174,12 @@ class SettingsPanel(ft.Container):
     def _build_todo_deadline_sound_dropdown(self):
         self._todo_deadline_sound_dropdown = self.get_notification_sound_dropdown()
         self._todo_deadline_sound_dropdown.visible = self._app_settings.enable_todo_deadline_sound_notifications
+        self._todo_deadline_sound_dropdown.value = self._app_settings.todo_deadline_sound
 
     def _build_idle_start_sound_dropdown(self):
         self._idle_start_sound_dropdown = self.get_notification_sound_dropdown()
         self._idle_start_sound_dropdown.visible = self._app_settings.enable_todo_deadline_sound_notifications
+        self._idle_start_sound_dropdown.value = self._app_settings.idle_start_sound
 
     def get_notification_sound_dropdown(self) -> ft.Dropdown:
         options: list[ft.DropdownOption] = []

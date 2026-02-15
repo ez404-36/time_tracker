@@ -42,7 +42,8 @@ class ActivityTabViewControl(ft.Container):
         self._autorefresh_statistics_task: asyncio.Task | None = None
         self._current_window_data: WindowData | None = None  # данные текущего окна, полученные из трекера
 
-        self.tracker = ActivityTracker(self._state, app_settings.idle_threshold)
+        self._app_settings = app_settings
+        self.tracker = ActivityTracker(self._state)
 
     def build(self):
         self.rebuild_tracking_status_text()
@@ -183,19 +184,19 @@ class ActivityTabViewControl(ft.Container):
             return
 
         self._idle_session = IdleSession.create(start_ts=ts)
+        self._app_settings.play_idle_start_sound()
 
         idle_session_control = self.idle_session_ctrl
-        if idle_session_control:
-            idle_session_control.controls.clear()
-            if self._idle_session:
-                idle_session_control.controls.extend([
-                    TimerComponent(),
-                    ft.Text(
-                        value='Бездействие',
-                        color=ft.Colors.RED_300,
-                    )
-                ])
-            idle_session_control.update()
+        idle_session_control.controls.clear()
+        if self._idle_session:
+            idle_session_control.controls.extend([
+                TimerComponent(),
+                ft.Text(
+                    value='Бездействие',
+                    color=ft.Colors.RED_300,
+                )
+            ])
+        idle_session_control.update()
 
     def switch_window_session(self, window: WindowData, ts: datetime.datetime):
         self._current_window_data = window
@@ -214,20 +215,21 @@ class ActivityTabViewControl(ft.Container):
             start_ts=ts,
         )
 
-        if window_session_control := self.window_session_ctrl:
-            window_session_control.controls.clear()
+        window_session_control = self.window_session_ctrl
 
-            app_title = self._window_session.app_name
-            if self._window_session.window_title:
-                app_title += f' ({self._window_session.window_title})'
+        window_session_control.controls.clear()
 
-            window_session_control.controls.extend([
-                TimerComponent(),
-                ft.Text(
-                    value=app_title,
-                )
-            ])
-            window_session_control.update()
+        app_title = self._window_session.app_name
+        if self._window_session.window_title:
+            app_title += f' ({self._window_session.window_title})'
+
+        window_session_control.controls.extend([
+            TimerComponent(),
+            ft.Text(
+                value=app_title,
+            )
+        ])
+        window_session_control.update()
 
     def stop_idle_session(self, ts: datetime.datetime):
         if not self._is_activity_tracker_enabled:
@@ -237,10 +239,8 @@ class ActivityTabViewControl(ft.Container):
             self._idle_session.stop(ts)
 
         self._idle_session = None
-        idle_session_control = self.idle_session_ctrl
-        if idle_session_control:
-            idle_session_control.controls.clear()
-            idle_session_control.update()
+        self.idle_session_ctrl.controls.clear()
+        self.idle_session_ctrl.update()
 
     async def stop_tracking(self, ts: datetime.datetime):
         self.stop_window_session(ts)
@@ -256,10 +256,8 @@ class ActivityTabViewControl(ft.Container):
             self._window_session.stop(ts)
 
         self._window_session = None
-        window_session_control = self.window_session_ctrl
-        if window_session_control:
-            window_session_control.controls.clear()
-            window_session_control.update()
+        self.window_session_ctrl.controls.clear()
+        self.window_session_ctrl.update()
 
     def update_all_active_window_sessions(self, active_windows: list[WindowData]):
         if not self._is_active_windows_showed:

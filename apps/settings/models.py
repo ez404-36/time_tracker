@@ -2,9 +2,11 @@ import datetime
 from functools import lru_cache
 
 from peewee import *
+from playsound3 import playsound
 
 from apps.time_tracker.consts import EventType, EventInitiator
 from apps.time_tracker.models import Event
+from core.consts import AUDIO_DIR
 from core.models import BaseModel
 
 
@@ -68,3 +70,44 @@ class AppSettings(BaseModel):
                 initiator=EventInitiator.SYSTEM,
                 data={'client_timezone': self.client_timezone}
             )
+
+    def play_todo_deadline_sound(self):
+        if self.enable_todo_deadline_sound_notifications:
+            if self.todo_deadline_sound:
+                self._play_sound(self.todo_deadline_sound)
+            else:
+                Event.create(
+                    type=EventType.WRONG_CONFIG,
+                    initiator=EventInitiator.SYSTEM,
+                    data={
+                        'todo_deadline_sound': 'File not specified',
+                    }
+                )
+
+    def play_idle_start_sound(self):
+        if self.enable_idle_start_sound_notifications:
+            if self.idle_start_sound:
+                self._play_sound(self.idle_start_sound)
+            else:
+                Event.create(
+                    type=EventType.WRONG_CONFIG,
+                    initiator=EventInitiator.SYSTEM,
+                    data={
+                        'idle_start_sound': 'File not specified',
+                    }
+                )
+
+    @staticmethod
+    def _play_sound(file_name: str | None):
+        if file_name:
+            file = AUDIO_DIR / file_name
+            if file.exists():
+                playsound(file)
+            else:
+                Event.create(
+                    type=EventType.FILE_NOT_FOUND,
+                    initiator=EventInitiator.SYSTEM,
+                    data={
+                        'file': file,
+                    }
+                )

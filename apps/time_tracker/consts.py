@@ -10,10 +10,16 @@ class EventType:
     CLOSE_APP = 2
     CHANGE_SETTINGS = 3
 
+    # Errors
+    WRONG_CONFIG = 100
+    FILE_NOT_FOUND = 101
+
     choices = (
         (OPEN_APP, 'Открытие приложения'),
         (CLOSE_APP, 'Закрытие приложения'),
         (CHANGE_SETTINGS, 'Изменение настроек'),
+        (WRONG_CONFIG, 'Ошибки в конфигурации'),
+        (FILE_NOT_FOUND, 'Файл найден'),
     )
 
 

@@ -3,14 +3,15 @@ import datetime
 
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.services.window_control.base import WindowControl
+from core.settings import app_settings
 from core.state import ActivityTabState
 
 
 class ActivityTracker:
-    def __init__(self, state: ActivityTabState, idle_threshold: int):
+    def __init__(self, state: ActivityTabState):
         self._state = state
         self.running = False
-        self.idle_threshold = idle_threshold
+        self.idle_threshold: int | None = None
         self.task: asyncio.Task | None = None
         self.current_window: WindowData | None = None
         self.is_idle = False
@@ -23,6 +24,7 @@ class ActivityTracker:
     async def start(self):
         if self.running:
             return
+        self.idle_threshold = app_settings.idle_threshold
         self.running = True
         self.task = asyncio.create_task(self._run())
 
