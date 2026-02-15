@@ -64,6 +64,7 @@ class ActivityTabViewControl(ft.Container):
 
         self.all_window_sessions = ft.Column(
             scroll=ft.ScrollMode.ADAPTIVE,
+            width=600,
             height=350,
         )
 
