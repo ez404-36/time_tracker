@@ -2,7 +2,7 @@ from typing import TypedDict, get_type_hints
 
 import flet as ft
 
-from apps.time_tracker.models import IdleSession, PomodoroTimer, WindowSession
+from apps.time_tracker.models import IdleSession, WindowSession
 from apps.to_do.models import ToDo
 
 
@@ -12,33 +12,21 @@ class BaseTabState(TypedDict):
     selected: dict
 
 
-class ActivityTabDBState(TypedDict):
-    pomodoro_timers: dict[int, PomodoroTimer]
-
-
 class ActivityTabSelectedState(TypedDict):
-    pomodoro_timer: PomodoroTimer | None   # выбранный таймер помидора
     window_session: WindowSession | None
     idle_session: IdleSession | None
-
-
-class ActivityTabMutateActivityModalState(TypedDict):
-    """Состояние модалки добавления/редактирования активности"""
-    modal: ft.AlertDialog | None
-    activity_title_input: ft.TextField | None
-    submit_button: ft.TextButton | None
+    expanded_statistics: set[str]
 
 
 class ActivityTabControlsState(TypedDict):
-    new_activity: ActivityTabMutateActivityModalState
-    window_session: ft.Column | None
-    idle_session: ft.Column | None
-    all_window_sessions: ft.Column | None
+    # Таб "Активность"
+    activity_tab: ft.Container | None
+    # Блок "Статистика"
+    statistics_view: ft.Column | None
 
 
 class ActivityTabState(TypedDict):
     """Состояние таба Активности"""
-    db: ActivityTabDBState
     selected: ActivityTabSelectedState
     controls: ActivityTabControlsState
 
@@ -78,7 +66,7 @@ def init_state(typed_dict_class) -> State:
         if hasattr(type_hint, '__annotations__'):
             # Рекурсивно инициализируем вложенный TypedDict
             result[key] = init_state(type_hint)
-        elif type_hint == set[int]:
+        elif type_hint == set[int] or type_hint == set[str]:
             result[key] = set()
         else:
             # Для обычных типов ставим None

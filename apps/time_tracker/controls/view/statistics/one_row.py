@@ -2,10 +2,18 @@ import time
 
 import flet as ft
 
+from core.state import ActivityTabState
+
 
 class StatisticsOneRow(ft.Container):
+    """
+    Компонент отображения одного пункта статистики:
+    конкретной вкладки приложения или название приложения, по которому сгруппированы дочерние вкладки
+    """
+
     def __init__(
             self,
+            state: ActivityTabState,
             title: str,
             duration: int,  # секунд
             has_parent: bool,
@@ -14,14 +22,14 @@ class StatisticsOneRow(ft.Container):
     ):
         if has_parent:
             kwargs.setdefault('margin', ft.Margin(left=50, top=0, bottom=0, right=0))
-        kwargs.setdefault('visible', not has_parent)
         kwargs.setdefault('width', 500)
         super().__init__(**kwargs)
+        self._state = state
         self.has_parent = has_parent
         self.has_children = has_children
         self.title = title
         self.duration = duration
-        self.is_expanded = False
+        self.is_expanded = title in self._state['selected']['expanded_statistics']
         self.text_width = 14 if not self.has_parent else 12
         self.text_bold = True if not self.has_parent else False
         self.text_color = ft.Colors.RED_300 if title == 'Бездействие' else ft.Colors.BLACK
@@ -44,7 +52,6 @@ class StatisticsOneRow(ft.Container):
         controls.append(self._duration_text)
 
         self.content = ft.Row(controls)
-        # self.controls = controls
 
     def build_text(self):
         self._text = ft.Text(
@@ -88,12 +95,16 @@ class StatisticsOneRow(ft.Container):
 
     def on_click_expand_children_icon(self, e):
         self.is_expanded = not self.is_expanded
+
+        if self.is_expanded:
+            self._state['selected']['expanded_statistics'].add(self.title)
+        else:
+            self._state['selected']['expanded_statistics'].discard(self.title)
+
         self.build_expand_children_icon()
 
-        parent = self.parent.parent
+        parent = self.parent
 
-        show_children = self.is_expanded
-        for control in parent.controls:
-            control.visible = show_children or isinstance(control, ft.Row)
+        parent._children_component.visible = self.is_expanded
 
         parent.update()

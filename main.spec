@@ -12,15 +12,16 @@ a = Analysis(
     ],
     binaries=[],
     datas=[
-        ('database.db', '.'),
         ('apps/**/*', 'apps/'),
         ('core/**/*', 'core/'),
+        ('media/**/*', 'media/'),
     ],
     hiddenimports=[
         # Добавьте здесь любые скрытые импорты
         'flet',
         'sqlite3',
-        'pywinctl',
+        # 'pywin32', # Для Windows
+        # 'pywinctl', # Для Linux
     ],
     hookspath=[],
     hooksconfig={},

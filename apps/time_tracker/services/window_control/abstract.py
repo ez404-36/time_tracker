@@ -3,8 +3,9 @@ from typing import TypedDict
 
 
 class WindowData(TypedDict):
-    app_name: str
-    title: str
+    executable_name: str
+    window_title: str | None
+    executable_path: str | None
 
 
 class WindowControlAbstract(abc.ABC):

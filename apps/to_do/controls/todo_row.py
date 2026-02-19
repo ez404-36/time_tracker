@@ -152,6 +152,11 @@ class ToDoRowControl(ft.Container):
             )
             controls.append(deadline)
 
+        if instance.is_expired:
+            controls.append(
+                ft.Icon(ft.Icons.WARNING, color=ft.Colors.RED_300, tooltip='Задача просрочена'),
+            )
+
         controls.append(text)
         return ft.Row(controls=controls)
 

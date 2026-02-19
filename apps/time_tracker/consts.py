@@ -5,12 +5,30 @@ class ActionIds:
 
 
 class EventType:
-    WINDOW_CHANGE = 1
-    IDLE_START = 1
-    IDLE_END = 3
+    """Тип события"""
+    OPEN_APP = 1
+    CLOSE_APP = 2
+    CHANGE_SETTINGS = 3
+
+    # Errors
+    WRONG_CONFIG = 100
+    FILE_NOT_FOUND = 101
 
     choices = (
-        (WINDOW_CHANGE, 'Смена активного окна'),
-        (IDLE_START, 'Начало бездействия'),
-        (IDLE_END, 'Конец бездействия'),
+        (OPEN_APP, 'Открытие приложения'),
+        (CLOSE_APP, 'Закрытие приложения'),
+        (CHANGE_SETTINGS, 'Изменение настроек'),
+        (WRONG_CONFIG, 'Ошибки в конфигурации'),
+        (FILE_NOT_FOUND, 'Файл найден'),
+    )
+
+
+class EventInitiator:
+    """Инициатор события"""
+    SYSTEM = 1
+    USER = 2
+
+    choices = (
+        (SYSTEM, 'Система'),
+        (USER, 'Пользователь'),
     )
