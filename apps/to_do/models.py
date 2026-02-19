@@ -21,6 +21,7 @@ class ToDo(BaseModel):
     deadline_date: datetime.date | None = DateField(null=True, help_text='Дедлайн (дата)')
     deadline_time: datetime.time | None = TimeField(null=True, help_text='Дедлайн (время)')
     is_done: bool = BooleanField(default=False, help_text='Готово')
+    is_expired: bool = BooleanField(default=False, help_text='Просрочено')
 
     class Meta:
         table_name = 'todo'

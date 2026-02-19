@@ -1,31 +1,34 @@
 import datetime
 from typing import Collection
 
-from apps.settings.models import AppSettings
+from peewee import Value
+
 from apps.to_do.models import ToDo
 
 
 class ToDoDeadlineChecker:
     """
-    Проверяет ТУДУшки на предмет срока их исполнения
+    Проверяет ТУДУшки на предмет срока их исполнения.
     """
 
-    def __init__(self, settings: AppSettings):
-        self._app_settings = settings
+    @staticmethod
+    async def get_expired_todo(date_time: datetime.datetime) -> Collection[ToDo]:
+        """
+        Возвращает ТУДУ, срок исполнения которых прошёл к текущему моменту времени
+        """
 
-    async def get_deadlined_right_now(self) -> Collection[ToDo]:
-        """
-        Возвращает ТУДУ, срок исполнения которых наступил прямо сейчас
-        """
-        now = datetime.datetime.now()
-        now_date = now.date()
-        now_time = datetime.time(now.hour, now.minute, 0)
+        _date = date_time.date()
+        _time = datetime.time(date_time.hour, date_time.minute, 0)
 
         return (
-            ToDo.select()
+            ToDo.select(
+                ToDo,
+                Value(ToDo.deadline_time == _time).alias('is_expired_at_now'),
+            )
             .where(
                 ToDo.is_done == False,
-                ToDo.deadline_date == now_date,
-                ToDo.deadline_time == now_time,
+                ToDo.is_expired == False,
+                ToDo.deadline_date <= _date,
+                ToDo.deadline_time <= _time,
             )
         )
