@@ -30,14 +30,12 @@ class OneAppView(ft.Column):
         self._sessions = sessions
         self._total_time = total_time
 
-        # self._sort_component: StatisticsSortDropdown | None = None
         self._main_row: StatisticsOneRow | None = None
-        self._children_component: ft.Column | None = None
+        self._children_component: ft.ListView | None = None
 
     def build(self):
-        # self._sort_component = StatisticsSortDropdown(text_size=12)
         self._main_row = StatisticsOneRow(self._state, self._app_name, self._total_time, False, bool(self._sessions))
-        self._children_component = ft.Column(
+        self._children_component = ft.ListView(
             visible=self._app_name in self._state['selected']['expanded_statistics'],
         )
 

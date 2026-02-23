@@ -1,14 +1,12 @@
 import datetime
 
 import flet as ft
-from flet.core.types import AppView
 
 from apps.settings.controls.modal import SettingsModal
 from apps.time_tracker.consts import EventType, EventInitiator
 from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
 from apps.time_tracker.models import Event
 from apps.to_do.controls.todo_tab import TodoTabViewControl
-from core.settings import app_settings
 from core.models import db
 from core.scripts import create_tables
 from core.state import State, init_state
@@ -21,7 +19,7 @@ class DesktopApp:
     def __init__(self, page: ft.Page):
         self.page: ft.Page = page
 
-        self._open_settings_btn: ft.ElevatedButton | None = None
+        self._open_settings_btn: ft.IconButton | None = None
         self._is_settings_open = False
 
         self._settings_modal: SettingsModal | None = None
@@ -34,15 +32,15 @@ class DesktopApp:
         * первичная отрисовка компонентов
         * определение обработчиков кнопок и селекторов
         """
-        app_settings.detect_and_update_client_timezone()
 
         page = self.page
 
+        page.adaptive = True
         page.title = 'Персональный менеджер'
         page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         page.vertical_alignment = ft.MainAxisAlignment.START
 
-        page.on_disconnect = self.on_disconnect
+        page.on_close = self.on_close_page
 
         self._build_open_settings_btn()
 
@@ -53,23 +51,43 @@ class DesktopApp:
         tabs = ft.Tabs(
             selected_index=0,
             animation_duration=300,
-            expand=1,
-            tabs=[
-                ft.Tab(
-                    text='Трекер активности',
-                    icon=ft.Icons.TIMER,
-                    content=self._activity_tab_control,
-                ),
-                ft.Tab(
-                    text='Задачи',
-                    icon=ft.Icons.CHECK,
-                    content=self._todo_tab_control,
-                )
-            ]
+            expand=True,
+            length=2,
+            content=ft.Column(
+                controls=[
+                    ft.TabBar(
+                        tabs=[
+                            ft.Tab(
+                                label='Трекер активности',
+                                icon=ft.Icons.TIMER,
+                            ),
+                            ft.Tab(
+                                label='Задачи',
+                                icon=ft.Icons.CHECK,
+                            ),
+                        ]
+                    ),
+                    ft.TabBarView(
+                        expand=True,
+                        controls=[
+                            self._activity_tab_control,
+                            self._todo_tab_control,
+                        ]
+                    ),
+                ]
+            ),
+        )
+
+        page.appbar = ft.AppBar(
+            leading=None,
+            title=ft.Text("Персональный менеджер"),
+            actions=[
+                self._open_settings_btn,
+            ],
+            bgcolor=ft.Colors.with_opacity(0.04, ft.CupertinoColors.SYSTEM_BACKGROUND),
         )
 
 
-        page.add(self._open_settings_btn)
         page.add(tabs)
 
         page.run_task(check_tasks_deadline, page=page)
@@ -80,8 +98,9 @@ class DesktopApp:
             self._is_settings_open = False
 
     def _build_open_settings_btn(self):
-        self._open_settings_btn = ft.ElevatedButton(
-            'Настройки',
+        self._open_settings_btn = ft.IconButton(
+            icon=ft.Icons.SETTINGS_OUTLINED,
+            tooltip='Настройки',
             on_click=self._on_click_open_settings,
         )
 
@@ -91,34 +110,31 @@ class DesktopApp:
 
     def toggle_show_settings(self, show: bool):
         if show:
-            self.page.open(self._settings_modal)
+            self.page.show_dialog(self._settings_modal)
         else:
-            self.page.close(self._settings_modal)
+            self.page.pop_dialog()
 
-    async def on_disconnect(self, e: ft.ControlEvent):
+    def on_close_page(self):
         Event.create(type=EventType.CLOSE_APP, initiator=EventInitiator.USER)
 
-        if e.name == 'disconnect':
-            selected_sessions = state['tabs']['activity']['selected']
+        selected_sessions = state['tabs']['activity']['selected']
 
-            now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.UTC)
 
-            if window_session := selected_sessions['window_session']:
-                window_session.stop(now)
+        if window_session := selected_sessions['window_session']:
+            window_session.stop(now)
 
-            if idle_session := selected_sessions['idle_session']:
-                idle_session.stop(now)
+        if idle_session := selected_sessions['idle_session']:
+            idle_session.stop(now)
 
         return True
 
 
-def main(page: ft.Page):
+async def main(page: ft.Page):
+    create_tables(db)
+    Event.create(type=EventType.OPEN_APP, initiator=EventInitiator.USER)
     app = DesktopApp(page)
     app.init()
 
 
-if __name__ == "__main__":
-    create_tables(db)
-    Event.create(type=EventType.OPEN_APP, initiator=EventInitiator.USER)
-    ft.app(target=main, view=AppView.FLET_APP)
-
+ft.run(main=main, view=ft.AppView.FLET_APP)

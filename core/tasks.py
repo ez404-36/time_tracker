@@ -6,20 +6,20 @@ import flet as ft
 from apps.notifications.services.notification_sender import NotificationSender
 from apps.to_do.models import ToDo
 from apps.to_do.services.deadline_checker import ToDoDeadlineChecker
-from core.settings import app_settings
+from core.settings import AppSettings
 
 
 async def check_tasks_deadline(page: ft.Page):
-    settings = app_settings
+    settings = AppSettings.get_solo()
     checker = ToDoDeadlineChecker()
+    notification_sender = NotificationSender(page)
 
     while True:
         now = datetime.datetime.now()
         expired_tasks = await checker.get_expired_todo(now)
 
         if expired_tasks:
-            if settings.enable_todo_deadline_sound_notifications:
-                settings.play_todo_deadline_sound()
+            settings.play_todo_deadline_sound()
 
             expired_at_now = []
             expired_before = []
@@ -31,18 +31,16 @@ async def check_tasks_deadline(page: ft.Page):
                     expired_before.append(task)
 
             if expired_at_now:
-                NotificationSender(
-                    page,
-                    f'Время выполнить задачи:\n{_pretty_task_list(expired_at_now)}',
-                ).send()
+                notification_sender.send(
+                    f'Время выполнить задачи:\n{_pretty_task_list(expired_at_now)}'
+                )
 
             if expired_before:
 
                 ToDo.update(is_expired=True).where(ToDo.id in [it.id for it in expired_before]).execute()
 
-                NotificationSender(
-                    page,
-                    f'Просрочен срок исполнения следующих задач:\n{_pretty_task_list(expired_before)}',
+                notification_sender.send(
+                    f'Просрочен срок исполнения следующих задач:\n{_pretty_task_list(expired_before)}'
                 )
 
         await asyncio.sleep(60)

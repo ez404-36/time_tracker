@@ -7,7 +7,7 @@ from core.state import State, TodoTabState
 
 class TodoTabViewControl(ft.Container):
     parent: ft.Tab
-    content: ft.Column
+    content: ft.Row
 
     def __init__(self, state: State, **kwargs):
         kwargs.setdefault('padding', 20)
@@ -15,23 +15,39 @@ class TodoTabViewControl(ft.Container):
         self._state: TodoTabState = state['tabs']['todo']
 
         self._list_active: ft.Column | None = None
-        self._list_done: ft.Column | None = None
+        self._list_done: ft.ListView | None = None
 
     def build(self):
-        self._list_active = ft.Column(height=300, scroll=ft.ScrollMode.ADAPTIVE)
-        self._list_done = ft.Column(height=300, scroll=ft.ScrollMode.ADAPTIVE)
+        self._list_active = ft.Column(
+            height=300,
+            scroll=ft.ScrollMode.ADAPTIVE,
+            spacing=10,
+        )
+        self._list_done = ft.ListView(
+            height=300,
+            scroll=ft.ScrollMode.ADAPTIVE,
+            spacing=10,
+        )
 
         self._state['controls']['list_active'] = self._list_active
         self._state['controls']['list_done'] = self._list_done
 
         refresh_todo_list(self._state, with_update_controls=False)
 
-        self.content = ft.Column(
+        self.content = ft.Row(
             controls=[
-                ToDoMutateContainer(self._state),
-                self._list_active,
-                ft.Divider(),
-                ft.Text('Завершено'),
-                self._list_done,
+                ft.Column(
+                    controls=[
+                        ToDoMutateContainer(self._state),
+                        self._list_active,
+                    ]
+                ),
+                ft.VerticalDivider(),
+                ft.Column(
+                    controls=[
+                        ft.Text('Завершено', size=20, weight=ft.FontWeight.BOLD),
+                        self._list_done,
+                    ]
+                ),
             ]
         )

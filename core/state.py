@@ -32,8 +32,8 @@ class ActivityTabState(TypedDict):
 
 
 class ToDoTabControlsState(TypedDict):
-    list_active: ft.Column | None
-    list_done: ft.Column | None
+    list_active: ft.ListView | None
+    list_done: ft.ListView | None
 
 
 class ToDoDBState(TypedDict):

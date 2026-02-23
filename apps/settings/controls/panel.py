@@ -1,15 +1,18 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict
 
 import flet as ft
+import pytz
 from playsound3 import playsound
 
-from apps.settings.models import AppSettings
+from core.settings import AppSettings
 from apps.settings.utils import get_available_notification_sounds
 from core.consts import AUDIO_DIR
 
 
-class SettingsForm(TypedDict):
+@dataclass(frozen=True)
+class SettingsForm:
     idle_threshold: int
     enable_pomodoro: bool
     pomodoro_work_time: int | None
@@ -18,21 +21,23 @@ class SettingsForm(TypedDict):
     todo_deadline_sound: str | None
     enable_idle_start_sound_notifications: bool
     idle_start_sound: str | None
+    client_timezone: str
 
 
 class SettingsPanel(ft.Container):
     """
     Панель настроек
     """
+    content: ft.ListView
 
     def __init__(self, app_settings: AppSettings, **kwargs):
         kwargs.update(
             dict(
                 padding=10,
-                border=ft.border.all(1, "grey"),
+                border=ft.Border.all(1, "grey"),
                 border_radius=10,
                 bgcolor=ft.Colors.WHITE,
-                width=400,
+                width=500,
                 height=400,
             )
         )
@@ -52,6 +57,8 @@ class SettingsPanel(ft.Container):
         self._enable_idle_start_sound_switch: ft.Switch | None = None
         self._idle_start_sound_dropdown: ft.Dropdown | None = None
 
+        self._timezone_dropdown: ft.Dropdown | None = None
+
         self._available_notification_sounds = get_available_notification_sounds()
 
     def build(self):
@@ -63,19 +70,23 @@ class SettingsPanel(ft.Container):
         self._build_todo_deadline_sound_dropdown()
         self._build_enable_idle_start_sound_switch()
         self._build_idle_start_sound_dropdown()
+        self._build_timezone_dropdown()
 
-        content = ft.Column(
-            spacing=10,
-            scroll=ft.ScrollMode.AUTO,
+        content = ft.ListView(
+            spacing=12,
             controls=[
+                ft.Container(padding=6),
                 self._idle_threshold,
                 self._enable_pomodoro_switch,
                 self._pomodoro_work_time,
                 self._pomodoro_rest_time,
+                ft.Divider(),
                 self._enable_todo_deadline_sound_switch,
                 self._todo_deadline_sound_dropdown,
                 self._enable_idle_start_sound_switch,
                 self._idle_start_sound_dropdown,
+                ft.Divider(),
+                self._timezone_dropdown,
             ]
         )
         self.content = content
@@ -108,12 +119,12 @@ class SettingsPanel(ft.Container):
             todo_deadline_sound=self._todo_deadline_sound_dropdown.value,
             enable_idle_start_sound_notifications=self._enable_idle_start_sound_switch.value,
             idle_start_sound=self._idle_start_sound_dropdown.value,
+            client_timezone=self._timezone_dropdown.value,
         )
 
     def _build_idle_threshold(self):
         self._idle_threshold = ft.TextField(
             label='Порог бездействия (секунд)',
-            helper_text='0 - отключает определение времени бездействия',
             value=self._app_settings.idle_threshold,
             input_filter=ft.NumbersOnlyInputFilter()
         )
@@ -178,8 +189,22 @@ class SettingsPanel(ft.Container):
 
     def _build_idle_start_sound_dropdown(self):
         self._idle_start_sound_dropdown = self.get_notification_sound_dropdown()
-        self._idle_start_sound_dropdown.visible = self._app_settings.enable_todo_deadline_sound_notifications
+        self._idle_start_sound_dropdown.visible = self._app_settings.enable_idle_start_sound_notifications
         self._idle_start_sound_dropdown.value = self._app_settings.idle_start_sound
+
+    def _build_timezone_dropdown(self):
+        self._timezone_dropdown = ft.Dropdown(
+            label='Часовой пояс',
+            value=self._app_settings.client_timezone,
+            menu_height=200,
+            enable_filter=True,
+            options=[
+                ft.DropdownOption(
+                    key=tz,
+                )
+                for tz in pytz.all_timezones
+            ]
+        )
 
     def get_notification_sound_dropdown(self) -> ft.Dropdown:
         options: list[ft.DropdownOption] = []
@@ -205,5 +230,6 @@ class SettingsPanel(ft.Container):
 
         return ft.Dropdown(
             label='Звук уведомления',
+            menu_height=200,
             options=options,
         )

@@ -28,7 +28,8 @@ class ToDoDeadlineChecker:
             .where(
                 ToDo.is_done == False,
                 ToDo.is_expired == False,
-                ToDo.deadline_date <= _date,
-                ToDo.deadline_time <= _time,
+                (ToDo.deadline_date <= _date) & (ToDo.deadline_time <= _time)
+                 |
+                (ToDo.deadline_date < _date) & (ToDo.deadline_time == None)
             )
         )

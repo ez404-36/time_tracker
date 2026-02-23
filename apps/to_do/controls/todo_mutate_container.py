@@ -7,6 +7,8 @@ from flet import Padding, BorderSide, Border, Control
 from apps.to_do.helpers import refresh_todo_list
 from apps.to_do.models import ToDo
 from core.state import TodoTabState
+from core.utils import to_current_tz
+from ui.consts import Colors
 
 
 class ToDoMutateContainer(ft.Container):
@@ -33,7 +35,7 @@ class ToDoMutateContainer(ft.Container):
         kwargs.setdefault('padding', padding)
 
         if instance or parent_todo:
-            bs = BorderSide(2, color=ft.Colors.BLUE)
+            bs = BorderSide(2, color=Colors.BLUE)
             border = Border(left=bs, top=bs, right=bs, bottom=bs)
             kwargs.setdefault('visible', parent_todo is not None)
             kwargs.setdefault('border', border)
@@ -48,12 +50,16 @@ class ToDoMutateContainer(ft.Container):
 
         self._title_field: ft.TextField | None = None
         self._edit_date_button: ft.TextButton | None = None
+        self._date_picker: ft.DatePicker | None = None
         self._edit_time_button: ft.TextButton | None = None
+        self._time_picker: ft.TimePicker | None = None
         self._submit_button: ft.IconButton | ft.TextButton | None = None
         self._cancel_button: ft.IconButton | None = None
 
     def build(self):
         self._build_title_field()
+        self._build_date_picker()
+        self._build_time_picker()
         self._build_edit_date_button()
         self._build_edit_time_button()
         self._build_submit_button()
@@ -111,44 +117,72 @@ class ToDoMutateContainer(ft.Container):
                 on_change=on_change
             )
 
-    def _build_edit_date_button(self):
-        self._edit_date_button = ft.TextButton(
-            f'Дата: ({getattr(self._instance, 'deadline_date_str', None) or "Не выбрана"})',
-            on_click=lambda e: self.page.open(
-                ft.DatePicker(
-                    first_date=datetime.datetime.now().date(),
-                    current_date=datetime.datetime.now().date(),
-                    value=getattr(self._instance, 'deadline_date', None),
-                    on_change=self._on_change_deadline_date,
-                )
-            ),
-            visible=self._instance is not None or self._parent_todo is not None,
+    def _build_date_picker(self):
+        self._date_picker = ft.DatePicker(
+            first_date=datetime.datetime.now().date(),
+            current_date=datetime.datetime.now().date(),
+            value=getattr(self._instance, 'deadline_date', None),
+            on_change=self._on_change_deadline_date,
         )
+
+    def _build_edit_date_button(self):
+        selected_date = getattr(self._instance, 'deadline_date_str', None) or "Не выбрана"
+        button_label = f'Дата: ({selected_date})'
+        is_visible = self._instance is not None or self._parent_todo is not None
+
+        if self._edit_date_button:
+            self._edit_date_button.content = button_label
+            self._edit_date_button.visible = is_visible
+        else:
+            self._edit_date_button = ft.TextButton(
+                content=button_label,
+                on_click=self._on_click_date_button,
+                visible=is_visible,
+            )
+
+    def _on_click_date_button(self, e):
+        if not self._date_picker.open:
+            self.page.show_dialog(
+                self._date_picker
+            )
 
     def _on_change_deadline_date(self, e):
-        value: datetime.date = e.control.value.date()
+        value: datetime.date = to_current_tz(e.control.value).date()
         self._new_deadline_date = value
         if edit_date_button := self._edit_date_button:
-            edit_date_button.text = f'Дата: ({value.strftime("%d.%m.%Y")})'
+            edit_date_button.content = f'Дата: ({value.strftime("%d.%m.%Y")})'
             edit_date_button.update()
 
-    def _build_edit_time_button(self):
-        self._edit_time_button = ft.TextButton(
-            f'Время: ({getattr(self._instance, 'deadline_time_str', None) or "Не выбрано"})',
-            on_click=lambda e: self.page.open(
-                ft.TimePicker(
-                    value=getattr(self._instance, 'deadline_time', None) or datetime.datetime.now().time(),
-                    on_change=self._on_change_deadline_time,
-                )
-            ),
-            visible=self._instance is not None or self._parent_todo is not None,
+    def _build_time_picker(self):
+        self._time_picker = ft.TimePicker(
+            value=getattr(self._instance, 'deadline_time', None) or datetime.datetime.now().time(),
+            on_change=self._on_change_deadline_time,
         )
+
+    def _build_edit_time_button(self):
+        selected_time = getattr(self._instance, 'deadline_time_str', None) or "Не выбрано"
+        button_label = f'Время: ({selected_time})'
+        is_visible = self._instance is not None or self._parent_todo is not None
+
+        if self._edit_time_button:
+            self._edit_time_button.content = button_label
+            self._edit_time_button.visible = is_visible
+        else:
+            self._edit_time_button = ft.TextButton(
+                content=button_label,
+                on_click=self._on_click_edit_time_button,
+                visible=is_visible,
+            )
+
+    def _on_click_edit_time_button(self, e):
+        if not self._time_picker.open:
+            self.page.show_dialog(self._time_picker)
 
     def _on_change_deadline_time(self, e):
         value = e.control.value
         self._new_deadline_time = value
         if edit_time_button := self._edit_time_button:
-            edit_time_button.text = f'Время: ({value.strftime('%H:%M')})'
+            edit_time_button.content = f'Время: ({value.strftime('%H:%M')})'
             edit_time_button.update()
 
     def _build_submit_button(self):
@@ -171,16 +205,18 @@ class ToDoMutateContainer(ft.Container):
 
                 if not self._parent_todo:
                     self._title_field.value = ''
+                    self._new_deadline_date = None
+                    self._new_deadline_time = None
                     self._submit_button.disabled = True
-                    self._edit_date_button.visible = False
-                    self._edit_time_button.visible = False
+                    self._build_edit_date_button()
+                    self._build_edit_time_button()
                     self.update()
                 elif self.parent:
                     self.parent.controls.remove(self)
                     self.parent.update()
 
             self._submit_button = ft.TextButton(
-                text='Добавить',
+                content='Добавить',
                 disabled=True,
                 on_click=on_click
             )
@@ -189,7 +225,7 @@ class ToDoMutateContainer(ft.Container):
         visible = self._instance is not None or self._parent_todo is not None
         self._cancel_button = ft.IconButton(
             icon=ft.Icons.CANCEL,
-            icon_color=ft.Colors.RED_300,
+            icon_color=Colors.RED,
             visible=visible,
             tooltip='Отменить',
             on_click=self._on_click_cancel,

@@ -4,12 +4,13 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
-    "flet[all]==0.28.3",
+    "flet[all]==0.80.5",
     "markdown>=3.10",
     "peewee>=3.18.3",
     "playsound3>=3.3.1",
     "psutil>=7.2.0",
     "pyinstaller>=6.18.0",
+    "pytz>=2025.2",
     "pywinctl>=0.4.1",
 ]
 

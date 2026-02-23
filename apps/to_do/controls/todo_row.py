@@ -6,6 +6,7 @@ from apps.to_do.controls.todo_mutate_container import ToDoMutateContainer
 from apps.to_do.helpers import refresh_todo_list
 from apps.to_do.models import ToDo
 from core.state import TodoTabState
+from ui.consts import Colors
 
 
 class ToDoRowControl(ft.Container):
@@ -17,6 +18,7 @@ class ToDoRowControl(ft.Container):
 
     def __init__(self, instance: ToDo, state: TodoTabState, **kwargs):
         has_parent = instance.parent_id is not None
+        kwargs['width'] = 400
         if has_parent:
             kwargs.setdefault('margin', ft.Margin(left=50, top=0, bottom=0, right=0))
         kwargs.setdefault('visible', not has_parent or instance.parent_id in state['expanded'])
@@ -64,7 +66,7 @@ class ToDoRowControl(ft.Container):
         self._delete_icon = ft.IconButton(
             icon=ft.Icons.DELETE,
             on_click=self.on_click_remove,
-            icon_color=ft.Colors.RED_300,
+            icon_color=Colors.RED,
             tooltip='Удалить',
         )
 
@@ -87,7 +89,7 @@ class ToDoRowControl(ft.Container):
 
     def build_checkbox(self):
         is_done = self._instance.is_done
-        color = ft.Colors.GREY if is_done else None
+        color = Colors.GREY if is_done else None
         self._checkbox = ft.Checkbox(
             label=None,
             value=is_done,
@@ -154,7 +156,7 @@ class ToDoRowControl(ft.Container):
 
         if instance.is_expired:
             controls.append(
-                ft.Icon(ft.Icons.WARNING, color=ft.Colors.RED_300, tooltip='Задача просрочена'),
+                ft.Icon(ft.Icons.WARNING, color=Colors.RED, tooltip='Задача просрочена'),
             )
 
         controls.append(text)

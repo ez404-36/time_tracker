@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from typing import Callable
 
 import flet as ft
@@ -5,7 +6,7 @@ import flet as ft
 from apps.settings.controls.panel import SettingsPanel
 from apps.time_tracker.consts import EventType, EventInitiator
 from apps.time_tracker.models import Event
-from core.settings import app_settings
+from core.settings import AppSettings
 
 
 class SettingsModal(ft.AlertDialog):
@@ -22,7 +23,7 @@ class SettingsModal(ft.AlertDialog):
         super().__init__(**kwargs)
 
         self._on_close = on_close
-        self._app_settings = app_settings
+        self._app_settings = AppSettings.get_solo()
 
     def build(self):
         self.content = SettingsPanel(self._app_settings)
@@ -32,7 +33,7 @@ class SettingsModal(ft.AlertDialog):
         ]
 
     def _save_settings(self, e):
-        settings_form_values = self.content.collect_form_fields()
+        settings_form_values = asdict(self.content.collect_form_fields())
         for field, value in settings_form_values.items():
             setattr(self._app_settings, field, value)
         self._app_settings.save()

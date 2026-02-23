@@ -1,8 +1,8 @@
 from playhouse.migrate import SqliteMigrator, migrate
 
-from apps.settings.models import AppSettings
 from apps.time_tracker.models import *
 from apps.to_do.models import *
+from core.settings import AppSettings
 
 
 def drop_tables(_db):
@@ -36,4 +36,5 @@ def run_migration(_db):
 
 if __name__ == '__main__':
     from core.models import db
+
     create_tables(db)

@@ -7,6 +7,7 @@ from peewee import fn
 from apps.time_tracker.controls.view.statistics.one_app_view import OneAppView, WindowTitleSessionData
 from core.state import ActivityTabState
 from apps.time_tracker.models import WindowSession, IdleSession
+from core.utils import to_current_tz
 
 
 class ActivityStatisticsView(ft.Column):
@@ -22,7 +23,7 @@ class ActivityStatisticsView(ft.Column):
 
         self._date_filter_btn: ft.TextButton | None = None
         self._date_filter_modal: ft.DatePicker | None = None
-        self._app_statistics: ft.Column | None = None
+        self._app_statistics: ft.ListView | None = None
         # self._sort_dropdown: StatisticsSortDropdown | None = None
         self._show_button: ft.TextButton | None = None
         self._refresh_button: ft.IconButton | None = None
@@ -66,10 +67,10 @@ class ActivityStatisticsView(ft.Column):
         self._rebuild_app_statistics()
 
     def _build_app_statistics(self):
-        self._app_statistics = ft.Column(
+        self._app_statistics = ft.ListView(
             visible=False,
-            scroll=ft.ScrollMode.ADAPTIVE,
-            height=410,
+            height=400,
+            spacing=10,
         )
 
     def _rebuild_app_statistics(self, with_update=False):
@@ -147,7 +148,7 @@ class ActivityStatisticsView(ft.Column):
             self._show_button.text = text
         else:
             self._show_button = ft.TextButton(
-                text=text,
+                content=text,
                 on_click=self._on_click_show_button,
             )
 
@@ -183,11 +184,11 @@ class ActivityStatisticsView(ft.Column):
         text = f'По дате: {self._filter_date_value.strftime("%d.%m.%y")}'
 
         if self._date_filter_btn:
-            self._date_filter_btn.text = text
+            self._date_filter_btn.content = text
         else:
             self._date_filter_btn = ft.TextButton(
-                text=text,
-                on_click=lambda e: self.page.open(
+                content=text,
+                on_click=lambda e: self.page.show_dialog(
                     self._date_filter_modal
                 ),
             )
@@ -205,7 +206,8 @@ class ActivityStatisticsView(ft.Column):
         )
 
     def _on_change_date_filter_modal(self, e):
-        self._filter_date_value = e.control.value.date()
+        date: datetime.date = to_current_tz(e.control.value).date()
+        self._filter_date_value = date
         self._build_filter_btn()
         self._rebuild_app_statistics(with_update=False)
         self.update()

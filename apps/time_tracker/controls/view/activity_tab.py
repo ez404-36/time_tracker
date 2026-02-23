@@ -9,8 +9,9 @@ from apps.time_tracker.models import IdleSession, WindowSession
 from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
-from core.settings import app_settings
+from core.settings import AppSettings
 from core.state import ActivityTabState, State
+from ui.consts import Colors
 
 
 class ActivityTabViewControl(ft.Container):
@@ -32,7 +33,7 @@ class ActivityTabViewControl(ft.Container):
 
         self.window_session_ctrl: ft.Column | None = None
         self.idle_session_ctrl: ft.Column | None = None
-        self.all_window_sessions: ft.Column | None = None
+        self.all_window_sessions: ft.ListView | None = None
         self._statistics_view: ActivityStatisticsView | None = None
 
         self._window_session: WindowSession | None = None
@@ -42,7 +43,7 @@ class ActivityTabViewControl(ft.Container):
         self._autorefresh_statistics_task: asyncio.Task | None = None
         self._current_window_data: WindowData | None = None  # данные текущего окна, полученные из трекера
 
-        self._app_settings = app_settings
+        self._app_settings = AppSettings.get_solo()
         self.tracker = ActivityTracker(self._state)
 
     def build(self):
@@ -62,10 +63,8 @@ class ActivityTabViewControl(ft.Container):
         self.build_show_opened_windows_checkbox()
         self._opened_windows_text = ft.Text('Открытые окна', visible=False, size=16, weight=ft.FontWeight.W_400)
 
-        self.all_window_sessions = ft.Column(
-            scroll=ft.ScrollMode.ADAPTIVE,
-            width=600,
-            height=350,
+        self.all_window_sessions = ft.ListView(
+            expand=True,
         )
 
         self.window_session_ctrl = ft.Column(visible=False)
@@ -194,7 +193,7 @@ class ActivityTabViewControl(ft.Container):
                 TimerComponent(),
                 ft.Text(
                     value='Бездействие',
-                    color=ft.Colors.RED_300,
+                    color=Colors.RED,
                 )
             ])
         idle_session_control.update()
