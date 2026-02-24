@@ -1,6 +1,6 @@
 import flet as ft
 
-from ui.popup.error import ErrorPopup
+from ui.base.components.popup.error import ErrorPopup
 
 
 class NotificationSender:

@@ -1,18 +1,17 @@
 from dataclasses import asdict
-from typing import Callable
 
 import flet as ft
 
-from apps.settings.controls.panel import SettingsPanel
+from apps.settings.controls.settings_form import SettingsForm
 from apps.time_tracker.consts import EventType, EventInitiator
 from apps.time_tracker.models import Event
 from core.settings import AppSettings
 
 
 class SettingsModal(ft.AlertDialog):
-    content: SettingsPanel
+    content: SettingsForm
 
-    def __init__(self, on_close: Callable[[], None], **kwargs):
+    def __init__(self, **kwargs):
         kwargs.update(
             dict(
                 modal=True,
@@ -22,13 +21,12 @@ class SettingsModal(ft.AlertDialog):
         )
         super().__init__(**kwargs)
 
-        self._on_close = on_close
         self._app_settings = AppSettings.get_solo()
 
     def build(self):
-        self.content = SettingsPanel(self._app_settings)
+        self.content = SettingsForm(self._app_settings)
         self.actions = [
-            ft.TextButton('Отмена', on_click=lambda e: self._on_close()),
+            ft.TextButton('Отмена', on_click=lambda e: self.page.pop_dialog()),
             ft.TextButton('Сохранить', on_click=self._save_settings)
         ]
 
@@ -38,4 +36,4 @@ class SettingsModal(ft.AlertDialog):
             setattr(self._app_settings, field, value)
         self._app_settings.save()
         Event.create(type=EventType.CHANGE_SETTINGS, initiator=EventInitiator.USER, data=settings_form_values)
-        self._on_close()
+        self.page.pop_dialog()

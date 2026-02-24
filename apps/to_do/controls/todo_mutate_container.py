@@ -225,7 +225,7 @@ class ToDoMutateContainer(ft.Container):
         visible = self._instance is not None or self._parent_todo is not None
         self._cancel_button = ft.IconButton(
             icon=ft.Icons.CANCEL,
-            icon_color=Colors.RED,
+            icon_color=Colors.RED_LIGHT,
             visible=visible,
             tooltip='Отменить',
             on_click=self._on_click_cancel,

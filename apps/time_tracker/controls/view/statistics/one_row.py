@@ -33,7 +33,7 @@ class StatisticsOneRow(ft.Container):
         self.is_expanded = title in self._state['selected']['expanded_statistics']
         self.text_width = 14 if not self.has_parent else 12
         self.text_bold = True if not self.has_parent else False
-        self.text_color = Colors.RED if title == 'Бездействие' else Colors.BLACK
+        self.text_color = Colors.RED_LIGHT if title == 'Бездействие' else Colors.BLACK
 
         self._text: ft.Text | None = None
         self._duration_text: ft.Text | None = None

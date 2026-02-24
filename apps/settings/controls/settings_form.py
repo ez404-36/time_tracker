@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TypedDict
 
 import flet as ft
 import pytz
@@ -9,10 +8,11 @@ from playsound3 import playsound
 from core.settings import AppSettings
 from apps.settings.utils import get_available_notification_sounds
 from core.consts import AUDIO_DIR
+from ui.consts import Colors
 
 
 @dataclass(frozen=True)
-class SettingsForm:
+class SettingsFormData:
     idle_threshold: int
     enable_pomodoro: bool
     pomodoro_work_time: int | None
@@ -24,9 +24,9 @@ class SettingsForm:
     client_timezone: str
 
 
-class SettingsPanel(ft.Container):
+class SettingsForm(ft.Container):
     """
-    Панель настроек
+    Форма изменения настроек
     """
     content: ft.ListView
 
@@ -34,9 +34,9 @@ class SettingsPanel(ft.Container):
         kwargs.update(
             dict(
                 padding=10,
-                border=ft.Border.all(1, "grey"),
+                border=ft.Border.all(1, Colors.GREY),
                 border_radius=10,
-                bgcolor=ft.Colors.WHITE,
+                bgcolor=Colors.WHITE,
                 width=500,
                 height=400,
             )
@@ -73,7 +73,7 @@ class SettingsPanel(ft.Container):
         self._build_timezone_dropdown()
 
         content = ft.ListView(
-            spacing=12,
+            spacing=10,
             controls=[
                 ft.Container(padding=6),
                 self._idle_threshold,
@@ -91,7 +91,7 @@ class SettingsPanel(ft.Container):
         )
         self.content = content
 
-    def collect_form_fields(self) -> SettingsForm:
+    def collect_form_fields(self) -> SettingsFormData:
         idle_threshold = self._idle_threshold.value
         if idle_threshold:
             idle_threshold = int(idle_threshold)
@@ -110,7 +110,7 @@ class SettingsPanel(ft.Container):
         else:
             pomodoro_rest_time = None
 
-        return SettingsForm(
+        return SettingsFormData(
             idle_threshold=idle_threshold,
             enable_pomodoro=self._enable_pomodoro_switch.value,
             pomodoro_work_time=pomodoro_work_time,

@@ -5,6 +5,7 @@ import flet as ft
 from peewee import fn
 
 from apps.time_tracker.controls.view.statistics.one_app_view import OneAppView, WindowTitleSessionData
+from apps.time_tracker.controls.view.statistics.statistics_list import StatisticsListView
 from core.state import ActivityTabState
 from apps.time_tracker.models import WindowSession, IdleSession
 from core.utils import to_current_tz
@@ -23,8 +24,7 @@ class ActivityStatisticsView(ft.Column):
 
         self._date_filter_btn: ft.TextButton | None = None
         self._date_filter_modal: ft.DatePicker | None = None
-        self._app_statistics: ft.ListView | None = None
-        # self._sort_dropdown: StatisticsSortDropdown | None = None
+        self._app_statistics: StatisticsListView | None = None
         self._show_button: ft.TextButton | None = None
         self._refresh_button: ft.IconButton | None = None
         self._params_row: ft.Row | None = None
@@ -41,12 +41,9 @@ class ActivityStatisticsView(ft.Column):
         self._build_date_filter_modal()
         self._build_app_statistics()
 
-        # self._sort_dropdown = StatisticsSortDropdown(border_width=0)
-
         self._params_row = ft.Row(
             controls=[
                 self._date_filter_btn,
-                # self._sort_dropdown,
             ],
             visible=False,
         )
@@ -67,10 +64,8 @@ class ActivityStatisticsView(ft.Column):
         self._rebuild_app_statistics()
 
     def _build_app_statistics(self):
-        self._app_statistics = ft.ListView(
+        self._app_statistics = StatisticsListView(
             visible=False,
-            height=400,
-            spacing=10,
         )
 
     def _rebuild_app_statistics(self, with_update=False):
@@ -145,7 +140,7 @@ class ActivityStatisticsView(ft.Column):
             text = 'Показать'
 
         if self._show_button:
-            self._show_button.text = text
+            self._show_button.content = text
         else:
             self._show_button = ft.TextButton(
                 content=text,

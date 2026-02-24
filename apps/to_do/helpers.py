@@ -1,3 +1,4 @@
+import flet as ft
 from peewee import JOIN
 
 from apps.to_do.models import ToDo
@@ -11,7 +12,7 @@ def refresh_todo_list(
     """
     :return: список активных и список завершенных дел
     """
-    from apps.to_do.controls.todo_row import ToDoTabToDoViewControl
+    from apps.to_do.controls.todo_list_item import ToDoListItem
 
     ChildrenToDo = ToDo.alias()
 
@@ -32,7 +33,7 @@ def refresh_todo_list(
     for todo in todos:
         controls = done_todo_controls if todo.is_done else active_todo_controls
         controls.append(
-            ToDoTabToDoViewControl(instance=todo, state=state)
+            ToDoListItem(instance=todo, state=state)
         )
 
     if todo_list_active:

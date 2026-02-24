@@ -15,7 +15,8 @@ class ToDo(BaseModel):
     Пункт "что сделать ?"
     """
 
-    title: str = CharField(max_length=50)
+    title: str = CharField(max_length=50, help_text='Название задачи')
+    description: str = TextField(null=True, help_text='Описание задачи')
     created_at = DateTimeField(default=lambda: datetime.datetime.now(datetime.UTC))
     parent: Self | None = ForeignKeyField('self', null=True, backref='children')
     deadline_date: datetime.date | None = DateField(null=True, help_text='Дедлайн (дата)')
@@ -25,6 +26,9 @@ class ToDo(BaseModel):
 
     class Meta:
         table_name = 'todo'
+
+    def __str__(self):
+        return f'(#{self.id}) {self.title}'
 
     @property
     def deadline_date_str(self) -> str:

@@ -66,7 +66,7 @@ class ToDoRowControl(ft.Container):
         self._delete_icon = ft.IconButton(
             icon=ft.Icons.DELETE,
             on_click=self.on_click_remove,
-            icon_color=Colors.RED,
+            icon_color=Colors.RED_LIGHT,
             tooltip='Удалить',
         )
 
@@ -156,7 +156,7 @@ class ToDoRowControl(ft.Container):
 
         if instance.is_expired:
             controls.append(
-                ft.Icon(ft.Icons.WARNING, color=Colors.RED, tooltip='Задача просрочена'),
+                ft.Icon(ft.Icons.WARNING, color=Colors.RED_LIGHT, tooltip='Задача просрочена'),
             )
 
         controls.append(text)

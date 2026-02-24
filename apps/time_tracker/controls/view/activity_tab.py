@@ -193,7 +193,7 @@ class ActivityTabViewControl(ft.Container):
                 TimerComponent(),
                 ft.Text(
                     value='Бездействие',
-                    color=Colors.RED,
+                    color=Colors.RED_LIGHT,
                 )
             ])
         idle_session_control.update()

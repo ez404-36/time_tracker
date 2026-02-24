@@ -11,7 +11,7 @@ class ErrorPopup(ft.AlertDialog):
     def build(self):
         self.title = ft.Row(
             controls=[
-                ft.Icon(ft.Icons.ERROR, color=Colors.RED, size=48),
+                ft.Icon(ft.Icons.ERROR, color=Colors.RED_LIGHT, size=48),
                 ft.Text(self._msg)
             ]
         )

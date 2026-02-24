@@ -2,7 +2,6 @@ import datetime
 
 import flet as ft
 
-from apps.settings.controls.modal import SettingsModal
 from apps.time_tracker.consts import EventType, EventInitiator
 from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
 from apps.time_tracker.models import Event
@@ -11,20 +10,23 @@ from core.models import db
 from core.scripts import create_tables
 from core.state import State, init_state
 from core.tasks import check_tasks_deadline
+from ui.components.app_bar import AppBar
+from ui.consts import Icons
 
 state: State = init_state(State)
+
+ACTIVITY_TRACK_NAV_INDEX = 0
+TASKS_NAV_INDEX = 1
 
 
 class DesktopApp:
     def __init__(self, page: ft.Page):
         self.page: ft.Page = page
 
-        self._open_settings_btn: ft.IconButton | None = None
-        self._is_settings_open = False
-
-        self._settings_modal: SettingsModal | None = None
         self._activity_tab_control: ActivityTabViewControl | None = None
         self._todo_tab_control: TodoTabViewControl | None = None
+
+        self._selected_nav_index: int = ACTIVITY_TRACK_NAV_INDEX
 
     def init(self):
         """
@@ -42,77 +44,50 @@ class DesktopApp:
 
         page.on_close = self.on_close_page
 
-        self._build_open_settings_btn()
-
         self._activity_tab_control = ActivityTabViewControl(state)
-        self._todo_tab_control = TodoTabViewControl(state)
-        self._settings_modal = SettingsModal(on_close=self._close_settings)
+        self._todo_tab_control = TodoTabViewControl(state, visible=False)
 
-        tabs = ft.Tabs(
-            selected_index=0,
-            animation_duration=300,
-            expand=True,
-            length=2,
-            content=ft.Column(
-                controls=[
-                    ft.TabBar(
-                        tabs=[
-                            ft.Tab(
-                                label='Трекер активности',
-                                icon=ft.Icons.TIMER,
-                            ),
-                            ft.Tab(
-                                label='Задачи',
-                                icon=ft.Icons.CHECK,
-                            ),
-                        ]
-                    ),
-                    ft.TabBarView(
-                        expand=True,
-                        controls=[
-                            self._activity_tab_control,
-                            self._todo_tab_control,
-                        ]
-                    ),
-                ]
-            ),
+        page.appbar = AppBar(title='Трекер активности')
+
+        page.add(self._activity_tab_control)
+        page.add(self._todo_tab_control)
+
+        nav_bar = ft.NavigationDrawer(
+            on_change=self._on_change_navigation_drawer,
+            selected_index=self._selected_nav_index,
+            controls=[
+                ft.NavigationDrawerDestination(label='Трекер активности', icon=Icons.TIMER),
+                ft.NavigationDrawerDestination(label='Задачи', icon=Icons.CHECK),
+            ]
         )
 
-        page.appbar = ft.AppBar(
-            leading=None,
-            title=ft.Text("Персональный менеджер"),
-            actions=[
-                self._open_settings_btn,
-            ],
-            bgcolor=ft.Colors.with_opacity(0.04, ft.CupertinoColors.SYSTEM_BACKGROUND),
-        )
-
-
-        page.add(tabs)
+        page.drawer = nav_bar
 
         page.run_task(check_tasks_deadline, page=page)
 
-    def _close_settings(self):
-        if self._is_settings_open:
-            self.toggle_show_settings(False)
-            self._is_settings_open = False
+    async def _on_change_navigation_drawer(self, e: ft.Event[ft.NavigationDrawer]):
+        new_nav_index = int(e.data)
 
-    def _build_open_settings_btn(self):
-        self._open_settings_btn = ft.IconButton(
-            icon=ft.Icons.SETTINGS_OUTLINED,
-            tooltip='Настройки',
-            on_click=self._on_click_open_settings,
-        )
+        if new_nav_index == self._selected_nav_index:
+            return
 
-    def _on_click_open_settings(self, e):
-        self._is_settings_open = not self._is_settings_open
-        self.toggle_show_settings(self._is_settings_open)
+        self._selected_nav_index = new_nav_index
 
-    def toggle_show_settings(self, show: bool):
-        if show:
-            self.page.show_dialog(self._settings_modal)
+        if self._selected_nav_index == ACTIVITY_TRACK_NAV_INDEX:
+            to_show_view = self._activity_tab_control
+            to_hide_view = self._todo_tab_control
+            app_bar_title = 'Трекер активности'
         else:
-            self.page.pop_dialog()
+            to_show_view = self._todo_tab_control
+            to_hide_view = self._activity_tab_control
+            app_bar_title = 'Задачи'
+
+        to_show_view.visible = True
+        to_hide_view.visible = False
+
+        self.page.appbar.title = app_bar_title
+
+        await self.page.close_drawer()
 
     def on_close_page(self):
         Event.create(type=EventType.CLOSE_APP, initiator=EventInitiator.USER)
