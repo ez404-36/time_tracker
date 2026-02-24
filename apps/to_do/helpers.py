@@ -1,4 +1,3 @@
-import flet as ft
 from peewee import JOIN
 
 from apps.to_do.models import ToDo

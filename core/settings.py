@@ -43,7 +43,7 @@ class AppSettings(BaseModel):
 
     @classmethod
     @lru_cache(maxsize=1)
-    def get_solo(cls) -> AppSettings:
+    def get_solo(cls) -> 'AppSettings':
         app_settings, _ = AppSettings.get_or_create()
         return app_settings
 

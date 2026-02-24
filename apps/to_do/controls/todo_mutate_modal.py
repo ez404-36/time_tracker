@@ -6,6 +6,7 @@ from apps.to_do.controls.todo_mutate_form import TodoMutateForm
 from apps.to_do.helpers import refresh_todo_list
 from apps.to_do.models import ToDo
 from core.state import TodoTabState
+from ui.base.components.buttons import CancelButton, SaveButton
 
 
 class ToDoMutateModal(ft.AlertDialog):
@@ -43,8 +44,8 @@ class ToDoMutateModal(ft.AlertDialog):
         self.content = TodoMutateForm(self._instance, self._parent_instance)
 
         self.actions = [
-            ft.TextButton('Отмена', on_click=lambda e: self.page.pop_dialog()),
-            ft.TextButton('Сохранить', on_click=self._on_save)
+            CancelButton(on_click=lambda e: self.page.pop_dialog()),
+            SaveButton(on_click=self._on_save),
         ]
 
     def _on_save(self):
@@ -53,6 +54,7 @@ class ToDoMutateModal(ft.AlertDialog):
         if self._instance:
             for field, value in form_values.items():
                 setattr(self._instance, field, value)
+            self._instance.save()
         else:
             ToDo.create(**form_values)
 

@@ -20,3 +20,5 @@ class Icons:
     TIMER = ft.Icons.TIMER
     MENU = ft.Icons.MENU
     SETTINGS = ft.Icons.SETTINGS_OUTLINED
+    SAVE = ft.Icons.SAVE
+    CANCEL = ft.Icons.CANCEL

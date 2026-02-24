@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import Collection
+from typing import Any, Collection
 
 import flet as ft
 
@@ -87,6 +87,7 @@ class TodoMutateForm(ft.Container):
     def _build_title_field(self):
         self._title_field = ft.TextField(
             hint_text='Название задачи',
+            value=self._get_value_from_instance('title'),
         )
 
     def _build_description_field(self):
@@ -94,21 +95,19 @@ class TodoMutateForm(ft.Container):
             hint_text='Описание задачи',
             multiline=True,
             shift_enter=True,
+            value=self._get_value_from_instance('description'),
         )
 
     def _build_parent_dropdown(self):
         root_todos = self._get_root_todos()
 
-        if self._instance:
-            value = self._instance.parent_id and str(self._instance.parent.id)
-        elif self._parent_instance:
-            value = str(self._parent_instance.id)
-        else:
-            value = None
+        parent_id = self._get_value_from_instance('parent_id')
+        if not parent_id and self._parent_instance:
+            parent_id = self._parent_instance.id
 
         self._parent_dropdown = ft.Dropdown(
             text='Связать с задачей',
-            value=value,
+            value=parent_id and str(parent_id),
             options=[
                 ft.DropdownOption(
                     key=str(root_todo.id),
@@ -120,9 +119,14 @@ class TodoMutateForm(ft.Container):
             disabled=self._parent_instance is not None,
         )
 
-    @staticmethod
-    def _get_root_todos() -> Collection[ToDo]:
-        return ToDo().select().where(ToDo.parent == None)
+    def _get_root_todos(self) -> Collection[ToDo]:
+        return ToDo().select().where(ToDo.parent == None, ToDo.id != self._get_value_from_instance('id'))
+
+    def _get_value_from_instance(self, field_name: str) -> Any | None:
+        if self._instance:
+            assert hasattr(self._instance, field_name)
+            return getattr(self._instance, field_name)
+        return None
 
     def _build_edit_date_button(self):
         selected_date = getattr(self._instance, 'deadline_date_str', None) or "Не выбрана"
@@ -143,7 +147,7 @@ class TodoMutateForm(ft.Container):
         self._date_picker = ft.DatePicker(
             first_date=datetime.datetime.now().date(),
             current_date=datetime.datetime.now().date(),
-            value=getattr(self._instance, 'deadline_date', None),
+            value=self._get_value_from_instance('deadline_date'),
             on_change=self._on_change_deadline_date,
         )
 
@@ -169,7 +173,7 @@ class TodoMutateForm(ft.Container):
 
     def _build_time_picker(self):
         self._time_picker = ft.TimePicker(
-            value=getattr(self._instance, 'deadline_time', None) or datetime.datetime.now().time(),
+            value=self._get_value_from_instance('deadline_time') or datetime.datetime.now().time(),
             on_change=self._on_change_deadline_time,
         )
 

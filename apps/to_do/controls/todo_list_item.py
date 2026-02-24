@@ -13,12 +13,6 @@ class ToDoListItem(ft.ListTile):
     """
 
     def __init__(self, state: TodoTabState, instance: ToDo, **kwargs):
-        kwargs.update(
-            dict(
-                width=400,
-            )
-        )
-
         super().__init__(**kwargs)
         self._state = state
         self._instance = instance
