@@ -1,6 +1,5 @@
 import flet as ft
 
-from apps.to_do.controls.todo_mutate_container import ToDoMutateContainer
 from apps.to_do.controls.todo_mutate_modal import ToDoMutateModal
 from apps.to_do.helpers import refresh_todo_list
 from core.state import State, TodoTabState

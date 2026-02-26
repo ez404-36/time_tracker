@@ -42,8 +42,8 @@ class TodoMutateForm(ft.Container):
         self._instance = instance
         self._parent_instance = parent_instance
 
-        self._new_deadline_date: datetime.date | None = None
-        self._new_deadline_time: datetime.time | None = None
+        self._new_deadline_date: datetime.date | None = self._get_value_from_instance('deadline_date')
+        self._new_deadline_time: datetime.time | None = self._get_value_from_instance('deadline_time')
 
         self._title_field: ft.TextField | None = None
         self._description_field: ft.TextField | None = None

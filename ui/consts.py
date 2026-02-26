@@ -8,6 +8,7 @@ class Colors:
     BLACK = ft.Colors.BLACK
     WHITE = ft.Colors.WHITE
     GREY = ft.Colors.GREY
+    GREY_LIGHT = ft.Colors.GREY_300
 
 
 class Icons:
@@ -22,3 +23,13 @@ class Icons:
     SETTINGS = ft.Icons.SETTINGS_OUTLINED
     SAVE = ft.Icons.SAVE
     CANCEL = ft.Icons.CANCEL
+
+
+class FontSize:
+    SMALL = 12
+    REGULAR = 14
+    H5 = 16
+    H4 = 18
+    H3 = 24
+    H2 = 36
+    H1 = 48

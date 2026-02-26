@@ -142,24 +142,7 @@ class ToDoRowControl(ft.Container):
 
 
     def get_text_label(self) -> ft.Row:
-        instance = self._instance
-        text = ft.Text(instance.title)
-
         controls = []
-
-        if deadline_str := instance.deadline_str:
-            deadline = ft.Text(
-                f'[{deadline_str}]',
-                weight=ft.FontWeight.W_500
-            )
-            controls.append(deadline)
-
-        if instance.is_expired:
-            controls.append(
-                ft.Icon(ft.Icons.WARNING, color=Colors.RED_LIGHT, tooltip='Задача просрочена'),
-            )
-
-        controls.append(text)
         return ft.Row(controls=controls)
 
     def build_edit_container(self):
