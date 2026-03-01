@@ -9,21 +9,21 @@ from apps.time_tracker.models import IdleSession, WindowSession
 from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
+from core.flet_helpers import add_to_store, remove_from_store
 from core.settings import AppSettings
-from core.state import ActivityTabState, State
+from ui.base.components.stored_component import StoredComponent
 from ui.consts import Colors
 
 
-class ActivityTabViewControl(ft.Container):
+class ActivityTabViewControl(ft.Container, StoredComponent):
     """Таб активности"""
 
     parent: ft.Tab
     content: ft.Row
 
-    def __init__(self, state: State, **kwargs):
+    def __init__(self, **kwargs):
         kwargs.setdefault('padding', 20)
         super().__init__(**kwargs)
-        self._state: ActivityTabState = state['tabs']['activity']
 
         self._tracking_status: ft.Text | None = None
         self._start_button: ft.IconButton | None = None
@@ -44,9 +44,11 @@ class ActivityTabViewControl(ft.Container):
         self._current_window_data: WindowData | None = None  # данные текущего окна, полученные из трекера
 
         self._app_settings = AppSettings.get_solo()
-        self.tracker = ActivityTracker(self._state)
+        self.tracker: ActivityTracker | None = None
 
     def build(self):
+        self.tracker = ActivityTracker(self.page)
+
         self.rebuild_tracking_status_text()
         self._start_button = ft.IconButton(
             icon=ft.Icons.PLAY_CIRCLE_OUTLINE,
@@ -87,18 +89,17 @@ class ActivityTabViewControl(ft.Container):
             ]
         )
 
-        self._statistics_view = ActivityStatisticsView(self._state)
-        self._state['controls']['statistics_view'] = self._statistics_view
+        self._statistics_view = ActivityStatisticsView()
 
         self.content = ft.Row(
+            vertical_alignment=ft.CrossAxisAlignment.START,
             controls=[
                 time_tracking_column,
                 ft.VerticalDivider(),
                 self._statistics_view,
             ]
         )
-
-        self._state['controls']['activity_tab'] = self
+        super().build()
 
     def rebuild_tracking_status_text(self):
         title = self.get_status_title()
@@ -184,6 +185,7 @@ class ActivityTabViewControl(ft.Container):
             return
 
         self._idle_session = IdleSession.create(start_ts=ts)
+        add_to_store(self.page, 'idle_session', self._idle_session)
         self._app_settings.play_idle_start_sound()
 
         idle_session_control = self.idle_session_ctrl
@@ -215,6 +217,8 @@ class ActivityTabViewControl(ft.Container):
             start_ts=ts,
         )
 
+        add_to_store(self.page, 'window_session', self._window_session)
+
         window_session_control = self.window_session_ctrl
 
         window_session_control.controls.clear()
@@ -239,6 +243,7 @@ class ActivityTabViewControl(ft.Container):
             self._idle_session.stop(ts)
 
         self._idle_session = None
+        remove_from_store(self.page, 'idle_session')
         self.idle_session_ctrl.controls.clear()
         self.idle_session_ctrl.update()
 
@@ -256,6 +261,7 @@ class ActivityTabViewControl(ft.Container):
             self._window_session.stop(ts)
 
         self._window_session = None
+        remove_from_store(self.page, 'window_session')
         self.window_session_ctrl.controls.clear()
         self.window_session_ctrl.update()
 

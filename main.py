@@ -5,15 +5,16 @@ import flet as ft
 from apps.time_tracker.consts import EventType, EventInitiator
 from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
 from apps.time_tracker.models import Event
-from apps.to_do.controls.todo_tab import TodoTabViewControl
+from apps.tasks.controls.tasks_tab import TasksTabViewControl
+from apps.tasks.helpers import refresh_tasks_tab
+from apps.time_tracker.models import IdleSession
+from apps.time_tracker.models import WindowSession
+from core.flet_helpers import get_from_store
 from core.models import db
 from core.scripts import create_tables
-from core.state import State, init_state
 from core.tasks import check_tasks_deadline
 from ui.components.app_bar import AppBar
 from ui.consts import Icons
-
-state: State = init_state(State)
 
 ACTIVITY_TRACK_NAV_INDEX = 0
 TASKS_NAV_INDEX = 1
@@ -24,7 +25,7 @@ class DesktopApp:
         self.page: ft.Page = page
 
         self._activity_tab_control: ActivityTabViewControl | None = None
-        self._todo_tab_control: TodoTabViewControl | None = None
+        self._tasks_tab_control: TasksTabViewControl | None = None
 
         self._selected_nav_index: int = ACTIVITY_TRACK_NAV_INDEX
 
@@ -44,13 +45,17 @@ class DesktopApp:
 
         page.on_close = self.on_close_page
 
-        self._activity_tab_control = ActivityTabViewControl(state)
-        self._todo_tab_control = TodoTabViewControl(state, visible=False)
+        self._activity_tab_control = ActivityTabViewControl(
+            visible=self._selected_nav_index == ACTIVITY_TRACK_NAV_INDEX,
+        )
+        self._tasks_tab_control = TasksTabViewControl(
+            visible=self._selected_nav_index == TASKS_NAV_INDEX,
+        )
 
         page.appbar = AppBar(title='Трекер активности')
 
         page.add(self._activity_tab_control)
-        page.add(self._todo_tab_control)
+        page.add(self._tasks_tab_control)
 
         nav_bar = ft.NavigationDrawer(
             on_change=self._on_change_navigation_drawer,
@@ -62,6 +67,8 @@ class DesktopApp:
         )
 
         page.drawer = nav_bar
+
+        refresh_tasks_tab(self.page, with_update_controls=False)
 
         page.run_task(check_tasks_deadline, page=page)
 
@@ -75,10 +82,10 @@ class DesktopApp:
 
         if self._selected_nav_index == ACTIVITY_TRACK_NAV_INDEX:
             to_show_view = self._activity_tab_control
-            to_hide_view = self._todo_tab_control
+            to_hide_view = self._tasks_tab_control
             app_bar_title = 'Трекер активности'
         else:
-            to_show_view = self._todo_tab_control
+            to_show_view = self._tasks_tab_control
             to_hide_view = self._activity_tab_control
             app_bar_title = 'Задачи'
 
@@ -92,14 +99,14 @@ class DesktopApp:
     def on_close_page(self):
         Event.create(type=EventType.CLOSE_APP, initiator=EventInitiator.USER)
 
-        selected_sessions = state['tabs']['activity']['selected']
-
         now = datetime.datetime.now(datetime.UTC)
 
-        if window_session := selected_sessions['window_session']:
+        window_session: WindowSession | None = get_from_store(self.page, 'window_session')
+        if window_session:
             window_session.stop(now)
 
-        if idle_session := selected_sessions['idle_session']:
+        idle_session: IdleSession | None = get_from_store(self.page, 'idle_session')
+        if idle_session:
             idle_session.stop(now)
 
         return True

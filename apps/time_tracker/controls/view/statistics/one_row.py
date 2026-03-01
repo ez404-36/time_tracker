@@ -2,7 +2,7 @@ import time
 
 import flet as ft
 
-from core.state import ActivityTabState
+from core.flet_helpers import get_from_store, get_or_create_from_store
 from ui.consts import Colors
 
 
@@ -14,7 +14,6 @@ class StatisticsOneRow(ft.Container):
 
     def __init__(
             self,
-            state: ActivityTabState,
             title: str,
             duration: int,  # секунд
             has_parent: bool,
@@ -25,12 +24,11 @@ class StatisticsOneRow(ft.Container):
             kwargs.setdefault('margin', ft.Margin(left=50, top=0, bottom=0, right=0))
         kwargs.setdefault('width', 500)
         super().__init__(**kwargs)
-        self._state = state
         self.has_parent = has_parent
         self.has_children = has_children
         self.title = title
         self.duration = duration
-        self.is_expanded = title in self._state['selected']['expanded_statistics']
+        self.is_expanded = False
         self.text_width = 14 if not self.has_parent else 12
         self.text_bold = True if not self.has_parent else False
         self.text_color = Colors.RED_LIGHT if title == 'Бездействие' else Colors.BLACK
@@ -40,6 +38,9 @@ class StatisticsOneRow(ft.Container):
         self._expand_children_icon: ft.IconButton | None = None
 
     def build(self):
+        expanded_statistics = get_from_store(self.page, 'expanded_statistics')
+        self.is_expanded = expanded_statistics and self.title in expanded_statistics
+
         if self.has_children:
             self.build_expand_children_icon()
         self.build_text()
@@ -97,10 +98,12 @@ class StatisticsOneRow(ft.Container):
     def on_click_expand_children_icon(self, e):
         self.is_expanded = not self.is_expanded
 
+        expanded_statistics: set[str] = get_or_create_from_store(self.page, 'expanded_statistics', set())
+
         if self.is_expanded:
-            self._state['selected']['expanded_statistics'].add(self.title)
+            expanded_statistics.add(self.title)
         else:
-            self._state['selected']['expanded_statistics'].discard(self.title)
+            expanded_statistics.discard(self.title)
 
         self.build_expand_children_icon()
 

@@ -1,23 +1,21 @@
 import flet as ft
 
-from apps.to_do.controls.todo_mutate_modal import ToDoMutateModal
-from apps.to_do.helpers import refresh_todo_list
-from apps.to_do.models import ToDo
-from core.state import TodoTabState
+from apps.tasks.controls.task_mutate_modal import TaskMutateModal
+from apps.tasks.helpers import refresh_tasks_tab
+from apps.tasks.models import Task
 from ui.consts import Colors, Icons, FontSize
 
 
-class ToDoListItem(ft.ExpansionTile):
+class TaskListItem(ft.ExpansionTile):
     """
     Отображение одной задачи
     """
 
-    def __init__(self, state: TodoTabState, instance: ToDo, **kwargs):
+    def __init__(self, instance: Task, **kwargs):
         kwargs['title'] = None
         kwargs['affinity'] = ft.TileAffinity.TRAILING
 
         super().__init__(**kwargs)
-        self._state = state
         self._instance = instance
 
     def build(self):
@@ -47,7 +45,7 @@ class ToDoListItem(ft.ExpansionTile):
         children_tasks = self._instance.children
 
         self.controls = [
-            self.__class__(state=self._state, instance=child)
+            self.__class__(instance=child)
             for child in children_tasks
         ]
 
@@ -55,11 +53,11 @@ class ToDoListItem(ft.ExpansionTile):
         is_done = e.control.value
         self._instance.is_done = is_done
         self._instance.save(only=['is_done'])
-        refresh_todo_list(self._state)
+        refresh_tasks_tab(self.page)
 
     def _on_click_delete(self, e):
         self._instance.delete_instance()
-        refresh_todo_list(self._state)
+        refresh_tasks_tab(self.page)
 
     def get_text_label(self) -> ft.Row:
         instance = self._instance
@@ -98,13 +96,13 @@ class ToDoListItem(ft.ExpansionTile):
         edit_menu_item = ft.PopupMenuItem(
            icon=Icons.EDIT,
            content='Редактировать',
-           on_click=lambda e: self.page.show_dialog(ToDoMutateModal(self._state, instance=self._instance)),
+           on_click=lambda e: self.page.show_dialog(TaskMutateModal(instance=self._instance)),
         )
 
         add_children_menu_item = ft.PopupMenuItem(
             icon=Icons.ADD,
             content='Добавить вложенную задачу',
-            on_click=lambda e: self.page.show_dialog(ToDoMutateModal(self._state, parent_instance=self._instance)),
+            on_click=lambda e: self.page.show_dialog(TaskMutateModal(parent_instance=self._instance)),
         )
 
         delete_menu_item = ft.PopupMenuItem(

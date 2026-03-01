@@ -23,10 +23,10 @@ class AppSettings(BaseModel):
 
     # region Звуковые уведомления
 
-    enable_todo_deadline_sound_notifications = BooleanField(
+    enable_task_deadline_sound_notifications = BooleanField(
         help_text='Включить звуковые уведомления для дедлайна задач', default=False
     )
-    todo_deadline_sound = CharField(
+    task_deadline_sound = CharField(
         help_text='Название файла звукового уведомления для дедлайна задач', null=True, max_length=255
     )
     enable_idle_start_sound_notifications = BooleanField(
@@ -50,16 +50,16 @@ class AppSettings(BaseModel):
     def get_tz(self) -> pytz.BaseTzInfo:
         return pytz.timezone(self.client_timezone)
 
-    def play_todo_deadline_sound(self):
-        if self.enable_todo_deadline_sound_notifications:
-            if self.todo_deadline_sound:
-                self._play_sound(self.todo_deadline_sound)
+    def play_task_deadline_sound(self):
+        if self.enable_task_deadline_sound_notifications:
+            if self.task_deadline_sound:
+                self._play_sound(self.task_deadline_sound)
             else:
                 Event.create(
                     type=EventType.WRONG_CONFIG,
                     initiator=EventInitiator.SYSTEM,
                     data={
-                        'todo_deadline_sound': 'File not specified',
+                        'task_deadline_sound': 'File not specified',
                     }
                 )
 

@@ -1,15 +1,17 @@
 import asyncio
 import datetime
 
+from flet import Page
+
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.services.window_control.base import WindowControl
+from core.flet_helpers import get_from_store
 from core.settings import AppSettings
-from core.state import ActivityTabState
 
 
 class ActivityTracker:
-    def __init__(self, state: ActivityTabState):
-        self._state = state
+    def __init__(self, page: Page):
+        self._page = page
         self.running = False
         self.idle_threshold: int | None = None
         self.task: asyncio.Task | None = None
@@ -19,7 +21,7 @@ class ActivityTracker:
 
     @property
     def activity_tab(self):
-        return self._state['controls']['activity_tab']
+        return get_from_store(self._page, 'ActivityTabViewControl')
 
     async def start(self):
         if self.running:

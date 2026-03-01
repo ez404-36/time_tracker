@@ -2,25 +2,23 @@ from dataclasses import asdict
 
 import flet as ft
 
-from apps.to_do.controls.todo_mutate_form import TodoMutateForm
-from apps.to_do.helpers import refresh_todo_list
-from apps.to_do.models import ToDo
-from core.state import TodoTabState
+from apps.tasks.controls.task_mutate_form import TaskMutateForm
+from apps.tasks.helpers import refresh_tasks_tab
+from apps.tasks.models import Task
 from ui.base.components.buttons import CancelButton, SaveButton
 
 
-class ToDoMutateModal(ft.AlertDialog):
+class TaskMutateModal(ft.AlertDialog):
     """
     Модалка создания/изменения объекта ТУДУ
     """
 
-    content: TodoMutateForm
+    content: TaskMutateForm
 
     def __init__(
             self,
-            state: TodoTabState,
-            instance: ToDo | None = None,
-            parent_instance: ToDo | None = None,
+            instance: Task | None = None,
+            parent_instance: Task | None = None,
             **kwargs,
     ):
         if not parent_instance:
@@ -36,12 +34,11 @@ class ToDoMutateModal(ft.AlertDialog):
         )
 
         super().__init__(**kwargs)
-        self._state = state
         self._instance = instance
         self._parent_instance = parent_instance
 
     def build(self):
-        self.content = TodoMutateForm(self._instance, self._parent_instance)
+        self.content = TaskMutateForm(self._instance, self._parent_instance)
 
         self.actions = [
             CancelButton(on_click=lambda e: self.page.pop_dialog()),
@@ -56,7 +53,7 @@ class ToDoMutateModal(ft.AlertDialog):
                 setattr(self._instance, field, value)
             self._instance.save()
         else:
-            ToDo.create(**form_values)
+            Task.create(**form_values)
 
-        refresh_todo_list(self._state)
+        refresh_tasks_tab(self.page)
         self.page.pop_dialog()

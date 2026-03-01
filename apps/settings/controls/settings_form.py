@@ -17,8 +17,8 @@ class SettingsFormData:
     enable_pomodoro: bool
     pomodoro_work_time: int | None
     pomodoro_rest_time: int | None
-    enable_todo_deadline_sound_notifications: bool
-    todo_deadline_sound: str | None
+    enable_task_deadline_sound_notifications: bool
+    task_deadline_sound: str | None
     enable_idle_start_sound_notifications: bool
     idle_start_sound: str | None
     client_timezone: str
@@ -51,8 +51,8 @@ class SettingsForm(ft.Container):
         self._pomodoro_work_time: ft.TextField | None = None
         self._pomodoro_rest_time: ft.TextField | None = None
 
-        self._enable_todo_deadline_sound_switch: ft.Switch | None = None
-        self._todo_deadline_sound_dropdown: ft.Dropdown | None = None
+        self._enable_task_deadline_sound_switch: ft.Switch | None = None
+        self._task_deadline_sound_dropdown: ft.Dropdown | None = None
 
         self._enable_idle_start_sound_switch: ft.Switch | None = None
         self._idle_start_sound_dropdown: ft.Dropdown | None = None
@@ -66,8 +66,8 @@ class SettingsForm(ft.Container):
         self._build_enable_pomodoro_switch()
         self._build_pomodoro_work_time()
         self._build_pomodoro_rest_time()
-        self._build_enable_todo_deadline_sound_switch()
-        self._build_todo_deadline_sound_dropdown()
+        self._build_enable_task_deadline_sound_switch()
+        self._build_task_deadline_sound_dropdown()
         self._build_enable_idle_start_sound_switch()
         self._build_idle_start_sound_dropdown()
         self._build_timezone_dropdown()
@@ -81,8 +81,8 @@ class SettingsForm(ft.Container):
                 self._pomodoro_work_time,
                 self._pomodoro_rest_time,
                 ft.Divider(),
-                self._enable_todo_deadline_sound_switch,
-                self._todo_deadline_sound_dropdown,
+                self._enable_task_deadline_sound_switch,
+                self._task_deadline_sound_dropdown,
                 self._enable_idle_start_sound_switch,
                 self._idle_start_sound_dropdown,
                 ft.Divider(),
@@ -115,8 +115,8 @@ class SettingsForm(ft.Container):
             enable_pomodoro=self._enable_pomodoro_switch.value,
             pomodoro_work_time=pomodoro_work_time,
             pomodoro_rest_time=pomodoro_rest_time,
-            enable_todo_deadline_sound_notifications=self._enable_todo_deadline_sound_switch.value,
-            todo_deadline_sound=self._todo_deadline_sound_dropdown.value,
+            enable_task_deadline_sound_notifications=self._enable_task_deadline_sound_switch.value,
+            task_deadline_sound=self._task_deadline_sound_dropdown.value,
             enable_idle_start_sound_notifications=self._enable_idle_start_sound_switch.value,
             idle_start_sound=self._idle_start_sound_dropdown.value,
             client_timezone=self._timezone_dropdown.value,
@@ -158,16 +158,16 @@ class SettingsForm(ft.Container):
             visible=self._app_settings.enable_pomodoro,
         )
 
-    def _build_enable_todo_deadline_sound_switch(self):
-        self._enable_todo_deadline_sound_switch = ft.Switch(
+    def _build_enable_task_deadline_sound_switch(self):
+        self._enable_task_deadline_sound_switch = ft.Switch(
             label='Включить звуковые уведомления для задач',
-            value=self._app_settings.enable_todo_deadline_sound_notifications,
-            on_change=self._on_change_todo_deadline_sound_switch,
+            value=self._app_settings.enable_task_deadline_sound_notifications,
+            on_change=self._on_change_task_deadline_sound_switch,
         )
 
-    def _on_change_todo_deadline_sound_switch(self, e):
+    def _on_change_task_deadline_sound_switch(self, e):
         enabled = e.control.value
-        self._todo_deadline_sound_dropdown.visible = enabled
+        self._task_deadline_sound_dropdown.visible = enabled
         self.update()
 
     def _build_enable_idle_start_sound_switch(self):
@@ -182,10 +182,10 @@ class SettingsForm(ft.Container):
         self._idle_start_sound_dropdown.visible = enabled
         self.update()
 
-    def _build_todo_deadline_sound_dropdown(self):
-        self._todo_deadline_sound_dropdown = self.get_notification_sound_dropdown()
-        self._todo_deadline_sound_dropdown.visible = self._app_settings.enable_todo_deadline_sound_notifications
-        self._todo_deadline_sound_dropdown.value = self._app_settings.todo_deadline_sound
+    def _build_task_deadline_sound_dropdown(self):
+        self._task_deadline_sound_dropdown = self.get_notification_sound_dropdown()
+        self._task_deadline_sound_dropdown.visible = self._app_settings.enable_task_deadline_sound_notifications
+        self._task_deadline_sound_dropdown.value = self._app_settings.task_deadline_sound
 
     def _build_idle_start_sound_dropdown(self):
         self._idle_start_sound_dropdown = self.get_notification_sound_dropdown()

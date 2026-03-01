@@ -6,7 +6,6 @@ from peewee import fn
 
 from apps.time_tracker.controls.view.statistics.one_app_view import OneAppView, WindowTitleSessionData
 from apps.time_tracker.controls.view.statistics.statistics_list import StatisticsListView
-from core.state import ActivityTabState
 from apps.time_tracker.models import WindowSession, IdleSession
 from core.utils import to_current_tz
 
@@ -16,11 +15,8 @@ class ActivityStatisticsView(ft.Column):
     Компонент статистики активности пользователя
     """
 
-    page: ft.Page
-
-    def __init__(self, state: ActivityTabState, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._state = state
 
         self._date_filter_btn: ft.TextButton | None = None
         self._date_filter_modal: ft.DatePicker | None = None
@@ -87,7 +83,6 @@ class ActivityStatisticsView(ft.Column):
         if self._idle_sessions:
             self._app_statistics.controls.append(
                 OneAppView(
-                    self._state,
                     'Бездействие',
                     sum([it.duration for it in self._idle_sessions]),
                 )
@@ -106,7 +101,6 @@ class ActivityStatisticsView(ft.Column):
 
             self._app_statistics.controls.append(
                 OneAppView(
-                    self._state,
                     app_name,
                     duration,
                     [it for it in sessions_data if it.get('window_title')],

@@ -4,12 +4,12 @@ from typing import Any, Collection
 
 import flet as ft
 
-from apps.to_do.models import ToDo
+from apps.tasks.models import Task
 from core.utils import to_current_tz
 
 
 @dataclass
-class ToDoFormData:
+class TaskFormData:
     title: str
     description: str | None
     parent_id: int | None
@@ -17,7 +17,7 @@ class ToDoFormData:
     deadline_time: datetime.time | None
 
 
-class TodoMutateForm(ft.Container):
+class TaskMutateForm(ft.Container):
     """
     Форма создания/редактирования задачи
     """
@@ -26,8 +26,8 @@ class TodoMutateForm(ft.Container):
 
     def __init__(
         self,
-        instance: ToDo | None = None,
-        parent_instance: ToDo | None = None,
+        instance: Task | None = None,
+        parent_instance: Task | None = None,
         **kwargs
     ):
         kwargs.update(
@@ -73,10 +73,10 @@ class TodoMutateForm(ft.Container):
             ]
         )
 
-    def collect_form_fields(self) -> ToDoFormData:
+    def collect_form_fields(self) -> TaskFormData:
         parent_id = self._parent_dropdown.value
 
-        return ToDoFormData(
+        return TaskFormData(
             title=self._title_field.value,
             description=self._description_field.value,
             parent_id=parent_id and int(parent_id),
@@ -99,7 +99,7 @@ class TodoMutateForm(ft.Container):
         )
 
     def _build_parent_dropdown(self):
-        root_todos = self._get_root_todos()
+        root_tasks = self._get_root_tasks()
 
         parent_id = self._get_value_from_instance('parent_id')
         if not parent_id and self._parent_instance:
@@ -110,17 +110,17 @@ class TodoMutateForm(ft.Container):
             value=parent_id and str(parent_id),
             options=[
                 ft.DropdownOption(
-                    key=str(root_todo.id),
-                    text=str(root_todo)
+                    key=str(root_task.id),
+                    text=str(root_task)
                 )
-                for root_todo in root_todos
+                for root_task in root_tasks
             ],
-            visible=len(root_todos) > 0,
+            visible=len(root_tasks) > 0,
             disabled=self._parent_instance is not None,
         )
 
-    def _get_root_todos(self) -> Collection[ToDo]:
-        return ToDo().select().where(ToDo.parent == None, ToDo.id != self._get_value_from_instance('id'))
+    def _get_root_tasks(self) -> Collection[Task]:
+        return Task().select().where(Task.parent == None, Task.id != self._get_value_from_instance('id'))
 
     def _get_value_from_instance(self, field_name: str) -> Any | None:
         if self._instance:
