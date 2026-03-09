@@ -10,10 +10,10 @@ def remove_spaces(value: str | None) -> str | None:
     )
 
 
-def to_current_tz(value: datetime.datetime) -> datetime.datetime:
-    from .settings import AppSettings
+async def to_current_tz(value: datetime.datetime) -> datetime.datetime:
+    from apps.settings.models import AppSettings
 
-    tz = AppSettings.get_solo().get_tz()
+    tz = (await AppSettings.get_solo()).get_tz()
     return value.astimezone(tz)
 
 

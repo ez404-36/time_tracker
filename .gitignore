@@ -1,6 +1,7 @@
 .venv
 .idea
 *.db
+*.sqlite*
 TODO.md
 build/**
 dist/**

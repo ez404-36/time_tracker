@@ -14,7 +14,7 @@ class AppNameAndWindowTitleTransformerBase:
         self.executable_name = remove_spaces(executable_name)
         self.window_title = remove_spaces(window_title)
 
-    def transform(self) -> tuple[str, str]:
+    def transform(self) -> tuple[str, str | None]:
         return self.transform_app_name(), self.transform_window_title()
 
     def transform_app_name(self) -> str:
@@ -29,7 +29,8 @@ class TelegramTransform(AppNameAndWindowTitleTransformerBase):
         return 'Telegram'
 
     def transform_window_title(self) -> str:
-        user_or_channel_name = self.window_title.split('@')[0].strip()
+        window_title = self.window_title or ''
+        user_or_channel_name = window_title.split('@')[0].strip()
         return telegram_msg_count_regex.sub('', user_or_channel_name)
 
 
@@ -38,12 +39,14 @@ class YandexBrowserTransform(AppNameAndWindowTitleTransformerBase):
         return 'Яндекс Браузер'
 
     def transform_window_title(self) -> str:
-        return self.window_title.split(' — Яндекс Браузер')[0].replace(' вкладка закреплена', '')
+        window_title = self.window_title or ''
+        return window_title.split(' — Яндекс Браузер')[0].replace(' вкладка закреплена', '')
 
 
 class WindowsSteamGameTransform(AppNameAndWindowTitleTransformerBase):
     def transform_app_name(self) -> str:
-        return self.window_title.split('PID')[0].strip()
+        window_title = self.window_title or ''
+        return window_title.split('PID')[0].strip()
 
     def transform_window_title(self) -> str | None:
         return None

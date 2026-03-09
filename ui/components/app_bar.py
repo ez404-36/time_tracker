@@ -1,6 +1,6 @@
 import flet as ft
 
-from apps.settings.controls.modal import SettingsModal
+from apps.app_settings.controls.modal import SettingsModal
 from ui.consts import Icons
 
 

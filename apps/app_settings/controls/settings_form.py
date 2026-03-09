@@ -5,8 +5,8 @@ import flet as ft
 import pytz
 from playsound3 import playsound
 
-from core.settings import AppSettings
-from apps.settings.utils import get_available_notification_sounds
+from apps.app_settings.models import AppSettings
+from apps.app_settings.utils import get_available_notification_sounds
 from core.consts import AUDIO_DIR
 from ui.consts import Colors
 

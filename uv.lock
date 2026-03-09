@@ -3551,6 +3551,7 @@ dependencies = [
     { name = "pyinstaller" },
     { name = "pytz" },
     { name = "pywinctl" },
+    { name = "ty" },
 ]
 
 [package.dev-dependencies]
@@ -3568,6 +3569,7 @@ requires-dist = [
     { name = "pyinstaller", specifier = ">=6.18.0" },
     { name = "pytz", specifier = ">=2025.2" },
     { name = "pywinctl", specifier = ">=0.4.1" },
+    { name = "ty", specifier = ">=0.0.12" },
 ]
 
 [package.metadata.requires-dev]

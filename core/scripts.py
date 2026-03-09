@@ -1,8 +1,8 @@
 from playhouse.migrate import SqliteMigrator, migrate
 
 from apps.time_tracker.models import *
-from apps.to_do.models import *
-from core.settings import AppSettings
+from apps.tasks.models import *
+from apps.app_settings.models import AppSettings
 
 
 def drop_tables(_db):

@@ -49,15 +49,15 @@ class TaskListItem(ft.ExpansionTile):
             for child in children_tasks
         ]
 
-    def _on_change_checkbox(self, e):
+    async def _on_change_checkbox(self, e):
         is_done = e.control.value
         self._instance.is_done = is_done
-        self._instance.save(only=['is_done'])
-        refresh_tasks_tab(self.page)
+        await self._instance.save()
+        await refresh_tasks_tab(self.page)
 
-    def _on_click_delete(self, e):
-        self._instance.delete_instance()
-        refresh_tasks_tab(self.page)
+    async def _on_click_delete(self, e):
+        await self._instance.delete()
+        await refresh_tasks_tab(self.page)
 
     def get_text_label(self) -> ft.Row:
         instance = self._instance

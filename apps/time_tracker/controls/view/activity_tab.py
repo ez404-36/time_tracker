@@ -3,6 +3,7 @@ import datetime
 
 import flet as ft
 
+from apps.app_settings.models import AppSettings
 from apps.time_tracker.controls.view.statistics.view import ActivityStatisticsView
 from apps.time_tracker.controls.view.timer import TimerComponent
 from apps.time_tracker.models import IdleSession, WindowSession
@@ -10,7 +11,6 @@ from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.flet_helpers import add_to_store, remove_from_store
-from core.settings import AppSettings
 from ui.base.components.stored_component import StoredComponent
 from ui.consts import Colors
 

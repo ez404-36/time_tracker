@@ -45,15 +45,15 @@ class TaskMutateModal(ft.AlertDialog):
             SaveButton(on_click=self._on_save),
         ]
 
-    def _on_save(self):
+    async def _on_save(self):
         form_values = asdict(self.content.collect_form_fields())
 
         if self._instance:
             for field, value in form_values.items():
                 setattr(self._instance, field, value)
-            self._instance.save()
+            await self._instance.save()
         else:
-            Task.create(**form_values)
+            await Task.create(**form_values)
 
-        refresh_tasks_tab(self.page)
+        await refresh_tasks_tab(self.page)
         self.page.pop_dialog()

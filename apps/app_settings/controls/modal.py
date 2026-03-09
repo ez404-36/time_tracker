@@ -2,10 +2,10 @@ from dataclasses import asdict
 
 import flet as ft
 
-from apps.settings.controls.settings_form import SettingsForm
+from apps.app_settings.controls.settings_form import SettingsForm
+from apps.app_settings.models import AppSettings
 from apps.time_tracker.consts import EventType, EventInitiator
 from apps.time_tracker.models import Event
-from core.settings import AppSettings
 from ui.base.components.buttons import CancelButton, SaveButton
 
 

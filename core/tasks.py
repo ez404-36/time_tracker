@@ -3,10 +3,10 @@ import datetime
 
 import flet as ft
 
+from apps.app_settings.models import AppSettings
 from apps.notifications.services.notification_sender import NotificationSender
 from apps.tasks.models import Task
 from apps.tasks.services.deadline_checker import TaskDeadlineChecker
-from core.settings import AppSettings
 
 
 async def check_tasks_deadline(page: ft.Page):
