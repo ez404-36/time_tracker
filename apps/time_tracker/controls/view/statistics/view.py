@@ -5,9 +5,9 @@ import flet as ft
 from peewee import fn
 
 from apps.time_tracker.controls.view.statistics.one_app_view import OneAppView, WindowTitleSessionData
-from apps.time_tracker.controls.view.statistics.sort_dropdown import StatisticsSortDropdown
-from core.state import ActivityTabState
+from apps.time_tracker.controls.view.statistics.statistics_list import StatisticsListView
 from apps.time_tracker.models import WindowSession, IdleSession
+from core.utils import to_current_tz
 
 
 class ActivityStatisticsView(ft.Column):
@@ -15,16 +15,12 @@ class ActivityStatisticsView(ft.Column):
     Компонент статистики активности пользователя
     """
 
-    page: ft.Page
-
-    def __init__(self, state: ActivityTabState, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._state = state
 
         self._date_filter_btn: ft.TextButton | None = None
         self._date_filter_modal: ft.DatePicker | None = None
-        self._app_statistics: ft.Column | None = None
-        self._sort_dropdown: StatisticsSortDropdown | None = None
+        self._app_statistics: StatisticsListView | None = None
         self._show_button: ft.TextButton | None = None
         self._refresh_button: ft.IconButton | None = None
         self._params_row: ft.Row | None = None
@@ -41,12 +37,9 @@ class ActivityStatisticsView(ft.Column):
         self._build_date_filter_modal()
         self._build_app_statistics()
 
-        self._sort_dropdown = StatisticsSortDropdown(border_width=0)
-
         self._params_row = ft.Row(
             controls=[
                 self._date_filter_btn,
-                # self._sort_dropdown,
             ],
             visible=False,
         )
@@ -67,10 +60,8 @@ class ActivityStatisticsView(ft.Column):
         self._rebuild_app_statistics()
 
     def _build_app_statistics(self):
-        self._app_statistics = ft.Column(
+        self._app_statistics = StatisticsListView(
             visible=False,
-            scroll=ft.ScrollMode.ADAPTIVE,
-            height=600,
         )
 
     def _rebuild_app_statistics(self, with_update=False):
@@ -123,14 +114,16 @@ class ActivityStatisticsView(ft.Column):
         self._idle_sessions = list(
             IdleSession.select()
             .where(
-                fn.date(IdleSession.start_ts) == self._filter_date_value
+                fn.date(IdleSession.start_ts) == self._filter_date_value,
+                IdleSession.duration > 0,
             )
             .order_by(IdleSession.duration.desc())
         )
         self._window_sessions = list(
             WindowSession.select()
             .where(
-                fn.date(WindowSession.start_ts) == self._filter_date_value
+                fn.date(WindowSession.start_ts) == self._filter_date_value,
+                WindowSession.duration > 0,
             )
         )
 
@@ -141,10 +134,10 @@ class ActivityStatisticsView(ft.Column):
             text = 'Показать'
 
         if self._show_button:
-            self._show_button.text = text
+            self._show_button.content = text
         else:
             self._show_button = ft.TextButton(
-                text=text,
+                content=text,
                 on_click=self._on_click_show_button,
             )
 
@@ -157,10 +150,16 @@ class ActivityStatisticsView(ft.Column):
         )
 
     def _on_click_refresh(self, e):
-        self._rebuild_app_statistics(with_update=True)
+        self.refresh_statistics()
 
     def _on_click_show_button(self, e):
-        self._is_showed = not self._is_showed
+        self.toggle_show_statistics()
+
+    def refresh_statistics(self):
+        self._rebuild_app_statistics(with_update=True)
+
+    def toggle_show_statistics(self, force_show=False):
+        self._is_showed = not self._is_showed or force_show
 
         for children in [self._params_row, self._app_statistics, self._refresh_button]:
             children.visible = self._is_showed
@@ -174,11 +173,11 @@ class ActivityStatisticsView(ft.Column):
         text = f'По дате: {self._filter_date_value.strftime("%d.%m.%y")}'
 
         if self._date_filter_btn:
-            self._date_filter_btn.text = text
+            self._date_filter_btn.content = text
         else:
             self._date_filter_btn = ft.TextButton(
-                text=text,
-                on_click=lambda e: self.page.open(
+                content=text,
+                on_click=lambda e: self.page.show_dialog(
                     self._date_filter_modal
                 ),
             )
@@ -196,7 +195,8 @@ class ActivityStatisticsView(ft.Column):
         )
 
     def _on_change_date_filter_modal(self, e):
-        self._filter_date_value = e.control.value.date()
+        date: datetime.date = to_current_tz(e.control.value).date()
+        self._filter_date_value = date
         self._build_filter_btn()
         self._rebuild_app_statistics(with_update=False)
         self.update()

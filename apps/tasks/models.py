@@ -1,5 +1,5 @@
 __all__ = (
-    'ToDo',
+    'Task',
 )
 
 import datetime
@@ -10,20 +10,25 @@ from peewee import *
 from core.models import BaseModel
 
 
-class ToDo(BaseModel):
+class Task(BaseModel):
     """
-    Пункт "что сделать ?"
+    Задача
     """
 
-    title: str = CharField(max_length=50)
-    created_at = DateTimeField(default=datetime.datetime.now)
+    title: str = CharField(max_length=50, help_text='Название задачи')
+    description: str = TextField(null=True, help_text='Описание задачи')
+    created_at = DateTimeField(default=lambda: datetime.datetime.now(datetime.UTC))
     parent: Self | None = ForeignKeyField('self', null=True, backref='children')
     deadline_date: datetime.date | None = DateField(null=True, help_text='Дедлайн (дата)')
     deadline_time: datetime.time | None = TimeField(null=True, help_text='Дедлайн (время)')
     is_done: bool = BooleanField(default=False, help_text='Готово')
+    is_expired: bool = BooleanField(default=False, help_text='Просрочено')
 
     class Meta:
-        table_name = 'todo'
+        table_name = 'task'
+
+    def __str__(self):
+        return f'(#{self.id}) {self.title}'
 
     @property
     def deadline_date_str(self) -> str:

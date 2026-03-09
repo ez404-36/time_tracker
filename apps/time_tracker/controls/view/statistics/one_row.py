@@ -2,8 +2,16 @@ import time
 
 import flet as ft
 
+from core.flet_helpers import get_from_store, get_or_create_from_store
+from ui.consts import Colors
+
 
 class StatisticsOneRow(ft.Container):
+    """
+    Компонент отображения одного пункта статистики:
+    конкретной вкладки приложения или название приложения, по которому сгруппированы дочерние вкладки
+    """
+
     def __init__(
             self,
             title: str,
@@ -14,7 +22,6 @@ class StatisticsOneRow(ft.Container):
     ):
         if has_parent:
             kwargs.setdefault('margin', ft.Margin(left=50, top=0, bottom=0, right=0))
-        kwargs.setdefault('visible', not has_parent)
         kwargs.setdefault('width', 500)
         super().__init__(**kwargs)
         self.has_parent = has_parent
@@ -24,13 +31,16 @@ class StatisticsOneRow(ft.Container):
         self.is_expanded = False
         self.text_width = 14 if not self.has_parent else 12
         self.text_bold = True if not self.has_parent else False
-        self.text_color = ft.Colors.RED_300 if title == 'Бездействие' else ft.Colors.BLACK
+        self.text_color = Colors.RED_LIGHT if title == 'Бездействие' else Colors.BLACK
 
         self._text: ft.Text | None = None
         self._duration_text: ft.Text | None = None
         self._expand_children_icon: ft.IconButton | None = None
 
     def build(self):
+        expanded_statistics = get_from_store(self.page, 'expanded_statistics')
+        self.is_expanded = expanded_statistics and self.title in expanded_statistics
+
         if self.has_children:
             self.build_expand_children_icon()
         self.build_text()
@@ -44,7 +54,6 @@ class StatisticsOneRow(ft.Container):
         controls.append(self._duration_text)
 
         self.content = ft.Row(controls)
-        # self.controls = controls
 
     def build_text(self):
         self._text = ft.Text(
@@ -88,12 +97,18 @@ class StatisticsOneRow(ft.Container):
 
     def on_click_expand_children_icon(self, e):
         self.is_expanded = not self.is_expanded
+
+        expanded_statistics: set[str] = get_or_create_from_store(self.page, 'expanded_statistics', set())
+
+        if self.is_expanded:
+            expanded_statistics.add(self.title)
+        else:
+            expanded_statistics.discard(self.title)
+
         self.build_expand_children_icon()
 
-        parent = self.parent.parent
+        parent = self.parent
 
-        show_children = self.is_expanded
-        for control in parent.controls:
-            control.visible = show_children or isinstance(control, ft.Row)
+        parent._children_component.visible = self.is_expanded
 
         parent.update()

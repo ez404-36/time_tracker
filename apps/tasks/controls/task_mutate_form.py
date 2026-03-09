@@ -1,0 +1,185 @@
+import datetime
+from dataclasses import dataclass
+from typing import Any, Collection
+
+import flet as ft
+
+from apps.tasks.models import Task
+from core.utils import to_current_tz
+
+
+@dataclass
+class TaskFormData:
+    title: str
+    description: str | None
+    parent_id: int | None
+    deadline_date: datetime.date | None
+    deadline_time: datetime.time | None
+
+
+class TaskMutateForm(ft.Container):
+    """
+    Форма создания/редактирования задачи
+    """
+
+    content: ft.ListView
+
+    def __init__(
+        self,
+        instance: Task | None = None,
+        parent_instance: Task | None = None,
+        **kwargs
+    ):
+        kwargs.update(
+            dict(
+                padding=10,
+                width=500,
+                height=400,
+            )
+        )
+
+        super().__init__(**kwargs)
+        self._instance = instance
+        self._parent_instance = parent_instance
+
+        self._new_deadline_date: datetime.date | None = self._get_value_from_instance('deadline_date')
+        self._new_deadline_time: datetime.time | None = self._get_value_from_instance('deadline_time')
+
+        self._title_field: ft.TextField | None = None
+        self._description_field: ft.TextField | None = None
+        self._parent_dropdown: ft.Dropdown | None = None
+        self._edit_date_button: ft.TextButton | None = None
+        self._date_picker: ft.DatePicker | None = None
+        self._edit_time_button: ft.TextButton | None = None
+        self._time_picker: ft.TimePicker | None = None
+
+    def build(self):
+        self._build_title_field()
+        self._build_description_field()
+        self._build_parent_dropdown()
+        self._build_date_picker()
+        self._build_time_picker()
+        self._build_edit_date_button()
+        self._build_edit_time_button()
+
+        self.content = ft.ListView(
+            spacing=10,
+            controls=[
+                self._title_field,
+                self._description_field,
+                self._parent_dropdown,
+                self._edit_date_button,
+                self._edit_time_button,
+            ]
+        )
+
+    def collect_form_fields(self) -> TaskFormData:
+        parent_id = self._parent_dropdown.value
+
+        return TaskFormData(
+            title=self._title_field.value,
+            description=self._description_field.value,
+            parent_id=parent_id and int(parent_id),
+            deadline_date=self._new_deadline_date,
+            deadline_time=self._new_deadline_time,
+        )
+
+    def _build_title_field(self):
+        self._title_field = ft.TextField(
+            hint_text='Название задачи',
+            value=self._get_value_from_instance('title'),
+        )
+
+    def _build_description_field(self):
+        self._description_field = ft.TextField(
+            hint_text='Описание задачи',
+            multiline=True,
+            shift_enter=True,
+            value=self._get_value_from_instance('description'),
+        )
+
+    def _build_parent_dropdown(self):
+        root_tasks = self._get_root_tasks()
+
+        parent_id = self._get_value_from_instance('parent_id')
+        if not parent_id and self._parent_instance:
+            parent_id = self._parent_instance.id
+
+        self._parent_dropdown = ft.Dropdown(
+            text='Связать с задачей',
+            value=parent_id and str(parent_id),
+            options=[
+                ft.DropdownOption(
+                    key=str(root_task.id),
+                    text=str(root_task)
+                )
+                for root_task in root_tasks
+            ],
+            visible=len(root_tasks) > 0,
+            disabled=self._parent_instance is not None,
+        )
+
+    def _get_root_tasks(self) -> Collection[Task]:
+        return Task().select().where(Task.parent == None, Task.id != self._get_value_from_instance('id'))
+
+    def _get_value_from_instance(self, field_name: str) -> Any | None:
+        if self._instance:
+            assert hasattr(self._instance, field_name)
+            return getattr(self._instance, field_name)
+        return None
+
+    def _build_edit_date_button(self):
+        selected_date = getattr(self._instance, 'deadline_date_str', None) or "Не выбрана"
+        button_label = f'Дата: ({selected_date})'
+
+        self._edit_date_button = ft.TextButton(
+            content=button_label,
+            on_click=self._on_click_date_button,
+        )
+
+    def _on_click_date_button(self, e):
+        if not self._date_picker.open:
+            self.page.show_dialog(
+                self._date_picker
+            )
+
+    def _build_date_picker(self):
+        self._date_picker = ft.DatePicker(
+            first_date=datetime.datetime.now().date(),
+            current_date=datetime.datetime.now().date(),
+            value=self._get_value_from_instance('deadline_date'),
+            on_change=self._on_change_deadline_date,
+        )
+
+    def _on_change_deadline_date(self, e):
+        value: datetime.date = to_current_tz(e.control.value).date()
+        self._new_deadline_date = value
+        if edit_date_button := self._edit_date_button:
+            edit_date_button.content = f'Дата: ({value.strftime("%d.%m.%Y")})'
+            edit_date_button.update()
+
+    def _build_edit_time_button(self):
+        selected_time = getattr(self._instance, 'deadline_time_str', None) or "Не выбрано"
+        button_label = f'Время: ({selected_time})'
+
+        self._edit_time_button = ft.TextButton(
+            content=button_label,
+            on_click=self._on_click_edit_time_button,
+        )
+
+    def _on_click_edit_time_button(self, e):
+        if not self._time_picker.open:
+            self.page.show_dialog(self._time_picker)
+
+    def _build_time_picker(self):
+        self._time_picker = ft.TimePicker(
+            value=self._get_value_from_instance('deadline_time') or datetime.datetime.now().time(),
+            on_change=self._on_change_deadline_time,
+        )
+
+    def _on_change_deadline_time(self, e):
+        value = e.control.value
+        self._new_deadline_time = value
+        if edit_time_button := self._edit_time_button:
+            edit_time_button.content = f'Время: ({value.strftime('%H:%M')})'
+            edit_time_button.update()

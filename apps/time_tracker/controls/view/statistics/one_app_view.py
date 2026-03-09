@@ -3,7 +3,7 @@ from typing import Any, TypedDict
 import flet as ft
 
 from apps.time_tracker.controls.view.statistics.one_row import StatisticsOneRow
-from apps.time_tracker.controls.view.statistics.sort_dropdown import StatisticsSortDropdown
+from core.flet_helpers import get_from_store
 
 
 class WindowTitleSessionData(TypedDict):
@@ -28,26 +28,31 @@ class OneAppView(ft.Column):
         self._sessions = sessions
         self._total_time = total_time
 
-        self._sort_component: StatisticsSortDropdown | None = None
         self._main_row: StatisticsOneRow | None = None
+        self._children_component: ft.ListView | None = None
 
     def build(self):
-        self._sort_component = StatisticsSortDropdown(text_size=12)
         self._main_row = StatisticsOneRow(self._app_name, self._total_time, False, bool(self._sessions))
 
+        expanded_statistics = get_from_store(self.page, 'expanded_statistics')
+        self._children_component = ft.ListView(
+            visible=bool(expanded_statistics and self._app_name in expanded_statistics),
+        )
+
         controls: list[Any] = [
-            ft.Row(
-                controls=[
-                    self._main_row,
-                    # self._sort_component,
-                ]
-            ),
+            self._main_row,
+            self._children_component,
         ]
 
         if self._sessions:
             for session in self._sessions:
-                controls.append(
-                    StatisticsOneRow(session['window_title'], session['duration'], True, False)
+                self._children_component.controls.append(
+                    StatisticsOneRow(
+                        title=session['window_title'],
+                        duration=session['duration'],
+                        has_parent=True,
+                        has_children=False,
+                    )
                 )
 
         self.controls = controls

@@ -79,14 +79,15 @@ class WindowControlLinux(WindowControlAbstract):
                     pass
         return outList
 
-    def get_executable_path(self, window: LinuxWindow) -> str:
+    @staticmethod
+    def get_executable_path(window: LinuxWindow) -> str:
         pid = window.getPID()
         p = psutil.Process(pid)
         return p.exe()
 
-    @staticmethod
-    def _as_window_data(window: LinuxWindow) -> WindowData:
+    def _as_window_data(self, window: LinuxWindow) -> WindowData:
         return WindowData(
-            app_name=window.getAppName(),
-            title=window.title,
+            executable_name=window.getAppName(),
+            window_title=window.title,
+            executable_path=self.get_executable_path(window),
         )
