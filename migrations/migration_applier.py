@@ -1,4 +1,5 @@
 import importlib
+import uuid
 from pathlib import Path
 from typing import Callable, Generator
 
@@ -56,6 +57,33 @@ class MigrationsApplier:
 
             OneMigrationApplier(file_index_map.get(applied_migration.index)).downgrade()
             rest_downgrade_migrations -= 1
+
+    def create_new(self, title: str):
+        EXAMPLE = '''"""{migration_uuid}"""
+
+import peewee
+
+
+def migrate(db: peewee.Database):
+    pass
+    # paste your migration code here
+    
+
+def downgrade(db: peewee.Database):
+    pass
+    # paste your revert migration code here
+
+        '''
+
+        if self._applied_migrations:
+            new_migration_index = self._applied_migrations[0].index + 1
+        else:
+            new_migration_index = 0
+
+        file_name = f'{new_migration_index}_{title}.py'
+
+        with open(Path(MIGRATIONS_DIR / file_name), 'w') as f_obj:
+            f_obj.write(EXAMPLE.format(migration_uuid=uuid.uuid4()))
 
     def traverse(self) -> Generator[Path]:
         for file in Path(self._root).rglob('*.py'):

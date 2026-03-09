@@ -1,6 +1,7 @@
 """fbef9a86-957d-4c5e-a941-a26fa1739331"""
 
-from migrations.migration_applier import OneMigrationApplier
+import peewee
+
 
 CREATE_MIGRATIONS_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS "migrations"
@@ -12,13 +13,9 @@ CREATE TABLE IF NOT EXISTS "migrations"
 """
 
 
-def migrate(db):
+def migrate(db: peewee.Database):
     db.execute_sql(CREATE_MIGRATIONS_TABLE_SQL)
 
 
-def downgrade(db):
+def downgrade(db: peewee.Database):
     db.execute_sql("""DROP TABLE IF EXISTS migrations""")
-
-
-if __name__ == '__main__':
-    OneMigrationApplier(__file__).migrate()

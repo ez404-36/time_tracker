@@ -1,6 +1,6 @@
 """1754c198-392f-4c2c-afed-7bf7ca324d2d"""
 
-from migrations.migration_applier import OneMigrationApplier
+import peewee
 
 CREATE_APP_SETTINGS_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS "settings"
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS "window_session"
 )
 """
 
-def migrate(db):
+def migrate(db: peewee.Database):
     db.execute_sql(CREATE_APP_SETTINGS_TABLE_SQL)
     db.execute_sql(CREATE_EVENT_TABLE_SQL)
     db.execute_sql(CREATE_IDLE_SESSION_TABLE_SQL)
@@ -81,14 +81,9 @@ def migrate(db):
     db.execute_sql(CREATE_WINDOW_SESSION_TABLE_SQL)
 
 
-def downgrade(db):
+def downgrade(db: peewee.Database):
     db.execute_sql("""DROP TABLE IF EXISTS window_session""")
     db.execute_sql("""DROP TABLE IF EXISTS task""")
     db.execute_sql("""DROP TABLE IF EXISTS idle_session""")
     db.execute_sql("""DROP TABLE IF EXISTS event""")
     db.execute_sql("""DROP TABLE IF EXISTS settings""")
-
-
-
-if __name__ == '__main__':
-    OneMigrationApplier(__file__).migrate()

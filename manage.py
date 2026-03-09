@@ -6,6 +6,7 @@ from migrations.migration_applier import MigrationsApplier
 parser = argparse.ArgumentParser(
     epilog='''
     Примеры:
+    - Создать миграцию: python manage.py new_migration create_some_table
     - Применить все миграции: python manage.py migrate
     - Применить миграции вплоть до 5-ой включительно: python manage.py migrate 5
     - Отменить все миграции вплоть до 2-ой включительно: python manage.py downgrade 2
@@ -29,6 +30,9 @@ downgrade_parser.add_argument(
     ''')
 )
 
+new_migration_parser = subparsers.add_parser('new_migration', help='Создать новую миграцию')
+new_migration_parser.add_argument('title', type=str, nargs='*', help='Название миграции (англ. язык)')
+
 
 def migrate(_index: int | None):
     applier = MigrationsApplier()
@@ -38,6 +42,11 @@ def migrate(_index: int | None):
 def downgrade(_index: int):
     applier = MigrationsApplier()
     applier.downgrade(_index)
+
+
+def create_new_migration(title: str):
+    applier = MigrationsApplier()
+    applier.create_new(title)
 
 
 def main():
@@ -55,6 +64,8 @@ def main():
         migrate(index)
     elif args.command == 'downgrade':
         downgrade(args.index[0])
+    elif args.command == 'new_migration':
+        create_new_migration(args.title[0])
 
 
 if __name__ == '__main__':
