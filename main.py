@@ -10,7 +10,7 @@ from apps.tasks.helpers import refresh_tasks_tab
 from apps.time_tracker.models import IdleSession
 from apps.time_tracker.models import WindowSession
 from core.flet_helpers import get_from_store
-from core.models import db
+from core.database import db
 from core.scripts import create_tables
 from core.tasks import check_tasks_deadline
 from ui.components.app_bar import AppBar
