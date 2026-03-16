@@ -4,10 +4,11 @@ from collections import Counter, defaultdict
 import flet as ft
 from peewee import fn
 
-from apps.time_tracker.controls.view.statistics.one_app_view import OneAppView, WindowTitleSessionData
-from apps.time_tracker.controls.view.statistics.statistics_list import StatisticsListView
 from apps.time_tracker.models import WindowSession, IdleSession
 from core.utils import to_current_tz
+
+from .one_app_view import OneAppView, WindowTitleSessionData
+from .statistics_list import StatisticsListView
 
 
 class ActivityStatisticsView(ft.Column):

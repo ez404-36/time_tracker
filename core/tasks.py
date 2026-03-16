@@ -5,6 +5,7 @@ import flet as ft
 
 from apps.app_settings.models import AppSettings
 from apps.notifications.services.notification_sender import NotificationSender
+from apps.tasks.helpers import refresh_tasks_tab
 from apps.tasks.models import Task
 from apps.tasks.services.deadline_checker import TaskDeadlineChecker
 
@@ -31,7 +32,7 @@ async def check_tasks_deadline(page: ft.Page):
                     expired_before.append(task)
 
             if expired_at_now:
-                notification_sender.send(
+                notification_sender.send_error(
                     f'Время выполнить задачи:\n{_pretty_task_list(expired_at_now)}'
                 )
 
@@ -39,9 +40,11 @@ async def check_tasks_deadline(page: ft.Page):
 
                 Task.update(is_expired=True).where(Task.id in [it.id for it in expired_before]).execute()
 
-                notification_sender.send(
+                notification_sender.send_error(
                     f'Просрочен срок исполнения следующих задач:\n{_pretty_task_list(expired_before)}'
                 )
+
+                refresh_tasks_tab(page, with_update_controls=True)
 
         await asyncio.sleep(60)
 

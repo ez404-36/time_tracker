@@ -4,7 +4,10 @@ import flet as ft
 class Colors:
     RED_LIGHT = ft.Colors.RED_300
     RED = ft.Colors.RED
+    BLUE_LIGHT = ft.Colors.BLUE_300
     BLUE = ft.Colors.BLUE
+    GREEN_LIGHT = ft.Colors.GREEN_300
+    GREEN = ft.Colors.GREEN
     BLACK = ft.Colors.BLACK
     WHITE = ft.Colors.WHITE
     GREY = ft.Colors.GREY
@@ -21,8 +24,12 @@ class Icons:
     TIMER = ft.Icons.TIMER
     MENU = ft.Icons.MENU
     SETTINGS = ft.Icons.SETTINGS_OUTLINED
+    START = ft.Icons.PLAY_CIRCLE_OUTLINE
+    STOP = ft.Icons.PAUSE_CIRCLE_OUTLINE
     SAVE = ft.Icons.SAVE
     CANCEL = ft.Icons.CANCEL
+    ERROR = ft.Icons.ERROR
+    INFO = ft.Icons.INFO
 
 
 class FontSize:

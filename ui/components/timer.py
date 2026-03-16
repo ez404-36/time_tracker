@@ -42,12 +42,3 @@ class CountdownComponent(TimerComponent):
             self.update_value()
             self.seconds -= 1
             await asyncio.sleep(1)
-
-
-class TimerStaticComponent(TimerComponent):
-    def update_value(self, with_refresh=True):
-        self.value = f'(Всего сегодня: {datetime.timedelta(seconds=self.seconds)})'
-        self.update()
-
-    def did_mount(self):
-        self.update_value()

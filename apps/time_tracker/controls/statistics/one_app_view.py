@@ -2,8 +2,9 @@ from typing import Any, TypedDict
 
 import flet as ft
 
-from apps.time_tracker.controls.view.statistics.one_row import StatisticsOneRow
 from core.flet_helpers import get_from_store
+
+from .one_row import StatisticsOneRow
 
 
 class WindowTitleSessionData(TypedDict):
