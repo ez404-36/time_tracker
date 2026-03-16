@@ -2,7 +2,7 @@ from peewee import JOIN
 from flet import Page
 
 from apps.tasks.models import Task
-from core.flet_helpers import get_from_store
+from core.store import get_from_store
 
 
 def refresh_tasks_tab(

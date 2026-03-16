@@ -4,13 +4,13 @@ import datetime
 import flet as ft
 
 from apps.app_settings.models import AppSettings
-from apps.time_tracker.controls.statistics.view import ActivityStatisticsView
+from apps.time_tracker.controls.statistics.index import ActivityStatisticsView
 from ui.components.timer import TimerComponent
 from apps.time_tracker.models import IdleSession, WindowSession
 from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
-from core.flet_helpers import add_to_store, remove_from_store
+from core.store import add_to_store, remove_from_store, get_from_store, get_or_create_from_store
 from ui.base.components.stored_component import StoredComponent
 from ui.consts import Colors, Icons
 
@@ -38,13 +38,16 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
 
         self._window_session: WindowSession | None = None
         self._idle_session: IdleSession | None = None
-        self._is_activity_tracker_enabled = False
         self._is_active_windows_showed = False
         self._autorefresh_statistics_task: asyncio.Task | None = None
         self._current_window_data: WindowData | None = None  # данные текущего окна, полученные из трекера
 
         self._app_settings = AppSettings.get_solo()
         self.tracker: ActivityTracker | None = None
+
+    @property
+    def is_activity_tracker_enabled(self) -> bool:
+        return get_or_create_from_store(self.page, 'is_activity_tracker_enabled', False)
 
     def build(self):
         self.tracker = ActivityTracker(self.page)
@@ -118,7 +121,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
             self._tracking_status.value = title
 
     def get_status_title(self):
-        if self._is_activity_tracker_enabled:
+        if self.is_activity_tracker_enabled:
             return 'Отслеживание активности...'
         else:
             return 'Отслеживание активности выключено'
@@ -136,7 +139,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
         self._opened_windows_text.visible = value
         self.all_window_sessions.visible = value
 
-        if not self._is_activity_tracker_enabled:
+        if not self.is_activity_tracker_enabled:
             # Если отслеживание активности не включено, включим трекер вручную
             if value:
                 await self.tracker.start()
@@ -146,7 +149,8 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
         self.update()
 
     async def _on_click_start(self, e):
-        self._is_activity_tracker_enabled = True
+        add_to_store(self.page, 'is_activity_tracker_enabled', True)
+
         if self._is_active_windows_showed:
             if self._current_window_data:
                 self.switch_window_session(self._current_window_data, datetime.datetime.now(datetime.UTC))
@@ -162,7 +166,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
             await self.tracker.stop()
 
     async def _toggle_affected_on_start_stop(self):
-        is_start = self._is_activity_tracker_enabled
+        is_start = self.is_activity_tracker_enabled
 
         self._start_button.visible = not is_start
         self._stop_button.visible = is_start
@@ -182,12 +186,12 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
     # TODO: большая нагрузка при рефреше статистики: каждую секунду перезапрос в БД и отрисовка.
     #  Пока некритично
     async def _run_auto_refresh_statistics(self):
-        while self._is_activity_tracker_enabled:
+        while self.is_activity_tracker_enabled:
             self._statistics_view.refresh_statistics()
             await asyncio.sleep(1)
 
     def create_idle_session(self, ts: datetime.datetime):
-        if not self._is_activity_tracker_enabled:
+        if not self.is_activity_tracker_enabled:
             return
 
         self._idle_session = IdleSession.create(start_ts=ts)
@@ -208,7 +212,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
 
     def switch_window_session(self, window: WindowData, ts: datetime.datetime):
         self._current_window_data = window
-        if not self._is_activity_tracker_enabled:
+        if not self.is_activity_tracker_enabled:
             return
 
         _, title = get_app_name_and_transform_window_title(window['executable_name'], window['window_title'])
@@ -242,7 +246,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
         window_session_control.update()
 
     def stop_idle_session(self, ts: datetime.datetime):
-        if not self._is_activity_tracker_enabled:
+        if not self.is_activity_tracker_enabled:
             return
 
         if self._idle_session:
@@ -256,11 +260,11 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
     async def stop_tracking(self, ts: datetime.datetime):
         self.stop_window_session(ts)
         self.stop_idle_session(ts)
-        self._is_activity_tracker_enabled = False
+        add_to_store(self.page, 'is_activity_tracker_enabled', False)
         await self._toggle_affected_on_start_stop()
 
     def stop_window_session(self, ts: datetime.datetime):
-        if not self._is_activity_tracker_enabled:
+        if not self.is_activity_tracker_enabled:
             return
 
         if self._window_session:

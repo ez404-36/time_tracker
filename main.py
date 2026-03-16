@@ -3,13 +3,13 @@ import datetime
 import flet as ft
 
 from apps.time_tracker.consts import EventType, EventInitiator
-from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
+from apps.time_tracker.controls.view.index import ActivityTabViewControl
 from apps.time_tracker.models import Event
 from apps.tasks.controls.tasks_tab.main_container import TasksTabViewControl
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.time_tracker.models import IdleSession
 from apps.time_tracker.models import WindowSession
-from core.flet_helpers import get_from_store
+from core.store import get_from_store
 from core.tasks import check_tasks_deadline
 from manage import migrate
 from ui.components.app_bar import AppBar

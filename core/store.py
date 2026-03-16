@@ -2,6 +2,15 @@ from typing import Any
 
 import flet as ft
 
+
+class Store:
+    def __init__(self, page: ft.Page):
+        self._store = page.session.store
+
+    def add(self, key: str, value: Any) -> None:
+        self._store.set(key, value)
+
+
 def add_to_store(page: ft.Page, key: str, value: Any) -> None:
     page.session.store.set(key, value)
 

@@ -1,6 +1,6 @@
 import flet as ft
 
-from core.flet_helpers import add_to_store
+from core.store import add_to_store
 
 
 class StoredComponent(ft.Control):

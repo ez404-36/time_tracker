@@ -2,7 +2,7 @@ from typing import Any, TypedDict
 
 import flet as ft
 
-from core.flet_helpers import get_from_store
+from core.store import get_from_store
 
 from .one_row import StatisticsOneRow
 

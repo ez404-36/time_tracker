@@ -6,7 +6,7 @@ from flet import Page
 from apps.app_settings.models import AppSettings
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.services.window_control.base import WindowControl
-from core.flet_helpers import get_from_store
+from core.store import get_from_store
 
 
 class ActivityTracker:

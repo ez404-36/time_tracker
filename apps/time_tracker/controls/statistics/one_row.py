@@ -2,7 +2,7 @@ import time
 
 import flet as ft
 
-from core.flet_helpers import get_from_store, get_or_create_from_store
+from core.store import get_from_store, get_or_create_from_store
 from ui.consts import Colors
 
 
