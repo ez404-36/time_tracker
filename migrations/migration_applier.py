@@ -52,7 +52,7 @@ class MigrationsApplier:
             rest_downgrade_migrations = 0
 
         for applied_migration in self._applied_migrations:
-            if _index < applied_migration.index and rest_downgrade_migrations == 0:
+            if _index >= applied_migration.index and rest_downgrade_migrations == 0:
                 continue
 
             OneMigrationApplier(file_index_map.get(applied_migration.index)).downgrade()

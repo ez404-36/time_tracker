@@ -2,7 +2,7 @@ from dataclasses import asdict
 
 import flet as ft
 
-from apps.tasks.controls.task_mutate_form import TaskMutateForm
+from apps.tasks.controls.task_mutate.form import TaskMutateForm
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.tasks.models import Task
 from ui.base.components.buttons import CancelButton, SaveButton
@@ -51,9 +51,9 @@ class TaskMutateModal(ft.AlertDialog):
         if self._instance:
             for field, value in form_values.items():
                 setattr(self._instance, field, value)
-            await self._instance.save()
+            self._instance.save()
         else:
-            await Task.create(**form_values)
+            Task.create(**form_values)
 
-        await refresh_tasks_tab(self.page)
+        refresh_tasks_tab(self.page)
         self.page.pop_dialog()
