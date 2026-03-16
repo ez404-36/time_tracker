@@ -5,14 +5,13 @@ import flet as ft
 from apps.time_tracker.consts import EventType, EventInitiator
 from apps.time_tracker.controls.view.activity_tab import ActivityTabViewControl
 from apps.time_tracker.models import Event
-from apps.tasks.controls.tasks_tab import TasksTabViewControl
+from apps.tasks.controls.tasks_tab.main_container import TasksTabViewControl
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.time_tracker.models import IdleSession
 from apps.time_tracker.models import WindowSession
 from core.flet_helpers import get_from_store
-from core.models import db
-from core.scripts import create_tables
 from core.tasks import check_tasks_deadline
+from manage import migrate
 from ui.components.app_bar import AppBar
 from ui.consts import Icons
 
@@ -113,7 +112,7 @@ class DesktopApp:
 
 
 async def main(page: ft.Page):
-    create_tables(db)
+    migrate(None)
     Event.create(type=EventType.OPEN_APP, initiator=EventInitiator.USER)
     app = DesktopApp(page)
     app.init()

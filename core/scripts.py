@@ -35,6 +35,6 @@ def run_migration(_db):
 
 
 if __name__ == '__main__':
-    from core.models import db
+    from core.database import db
 
     create_tables(db)

@@ -1,8 +1,8 @@
 import flet as ft
 
-from apps.tasks.controls.tasks_active_tab import TaskActiveTab
-from apps.tasks.controls.tasks_list import TaskListActive, TaskListDone
-from apps.tasks.controls.task_mutate_modal import TaskMutateModal
+from .tasks_active_tab import TaskActiveTab
+from .tasks_list import TaskListActive, TaskListDone
+from ..task_mutate.modal import TaskMutateModal
 
 
 class TasksTabViewControl(ft.Container):

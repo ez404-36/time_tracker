@@ -13,7 +13,7 @@ def refresh_tasks_tab(
     Производит выборку задач из БД и обновление компонентов на основе этих данных
     """
 
-    from apps.tasks.controls.task_list_item import TaskListItem
+    from apps.tasks.controls.task_detail.main import TaskListItem
 
     ChildrenTask = Task.alias()
 
