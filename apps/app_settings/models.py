@@ -90,3 +90,7 @@ class AppSettings(BaseModel):
                         'file': file,
                     }
                 )
+
+
+def get_settings() -> AppSettings:
+    return AppSettings.get_solo()

@@ -9,7 +9,8 @@ from apps.tasks.controls.tasks_tab.main_container import TasksTabViewControl
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.time_tracker.models import IdleSession
 from apps.time_tracker.models import WindowSession
-from core.store import get_from_store
+from core.di import container
+from core.store import Store
 from core.tasks import check_tasks_deadline
 from manage import migrate
 from ui.components.app_bar import AppBar
@@ -22,6 +23,7 @@ TASKS_NAV_INDEX = 1
 class DesktopApp:
     def __init__(self, page: ft.Page):
         self.page: ft.Page = page
+        self._store = container.store
 
         self._activity_tab_control: ActivityTabViewControl | None = None
         self._tasks_tab_control: TasksTabViewControl | None = None
@@ -67,7 +69,7 @@ class DesktopApp:
 
         page.drawer = nav_bar
 
-        refresh_tasks_tab(self.page, with_update_controls=False)
+        refresh_tasks_tab(with_update_controls=False)
 
         page.run_task(check_tasks_deadline, page=page)
 
@@ -100,11 +102,11 @@ class DesktopApp:
 
         now = datetime.datetime.now(datetime.UTC)
 
-        window_session: WindowSession | None = get_from_store(self.page, 'window_session')
+        window_session: WindowSession | None = self._store.get('window_session')
         if window_session:
             window_session.stop(now)
 
-        idle_session: IdleSession | None = get_from_store(self.page, 'idle_session')
+        idle_session: IdleSession | None = self._store.get('idle_session')
         if idle_session:
             idle_session.stop(now)
 
@@ -113,6 +115,10 @@ class DesktopApp:
 
 async def main(page: ft.Page):
     migrate(None)
+
+    container.page = page
+    container.store = Store(page)
+
     Event.create(type=EventType.OPEN_APP, initiator=EventInitiator.USER)
     app = DesktopApp(page)
     app.init()

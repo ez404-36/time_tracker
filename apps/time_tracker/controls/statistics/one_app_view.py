@@ -2,7 +2,7 @@ from typing import Any, TypedDict
 
 import flet as ft
 
-from core.store import get_from_store
+from core.di import container
 
 from .one_row import StatisticsOneRow
 
@@ -25,6 +25,7 @@ class OneAppView(ft.Column):
             **kwargs,
     ):
         super().__init__(**kwargs)
+        self._store = container.store
         self._app_name = app_name
         self._sessions = sessions
         self._total_time = total_time
@@ -35,7 +36,7 @@ class OneAppView(ft.Column):
     def build(self):
         self._main_row = StatisticsOneRow(self._app_name, self._total_time, False, bool(self._sessions))
 
-        expanded_statistics = get_from_store(self.page, 'expanded_statistics')
+        expanded_statistics = self._store.get('expanded_statistics')
         self._children_component = ft.ListView(
             visible=bool(expanded_statistics and self._app_name in expanded_statistics),
         )

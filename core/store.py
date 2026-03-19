@@ -7,26 +7,24 @@ class Store:
     def __init__(self, page: ft.Page):
         self._store = page.session.store
 
+    def __repr__(self) -> str:
+        return f'Store({self._store.get_keys()})'
+
     def add(self, key: str, value: Any) -> None:
         self._store.set(key, value)
 
+    def get(self, key: str) -> Any:
+        return self._store.get(key)
 
-def add_to_store(page: ft.Page, key: str, value: Any) -> None:
-    page.session.store.set(key, value)
+    def contains(self, key: str) -> bool:
+        return self._store.contains_key(key)
 
-def get_from_store(page: ft.Page, key: str) -> Any | None:
-    return page.session.store.get(key)
+    def remove(self, key: str) -> None:
+        if self.contains(key):
+            self._store.remove(key)
 
-def get_or_create_from_store(page: ft.Page, key: str, default_value: Any) -> Any:
-    if not is_in_store(page, key):
-        add_to_store(page, key, default_value)
+    def get_or_create(self, key: str, default_value: Any) -> Any:
+        if not self.contains(key):
+            self.add(key, default_value)
 
-    return get_from_store(page, key)
-
-def remove_from_store(page: ft.Page, key: str) -> None:
-    if is_in_store(page, key):
-        page.session.store.remove(key)
-
-def is_in_store(page: ft.Page, key: str) -> bool:
-    return page.session.store.contains_key(key)
-
+        return self.get(key)

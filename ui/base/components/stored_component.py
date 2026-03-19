@@ -1,6 +1,7 @@
 import flet as ft
 
-from core.store import add_to_store
+from core.di import container
+from core.store import Store
 
 
 class StoredComponent(ft.Control):
@@ -10,7 +11,8 @@ class StoredComponent(ft.Control):
 
     def build(self):
         super().build()
-        add_to_store(self.page, self.get_stored_name(), self)
+        store: Store = container.store
+        store.add(self.get_stored_name(), self)
 
     def get_stored_name(self) -> str:
         return self.__class__.__name__

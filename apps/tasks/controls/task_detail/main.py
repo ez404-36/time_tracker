@@ -55,11 +55,11 @@ class TaskListItem(ft.ExpansionTile):
         is_done = e.control.value
         self._instance.is_done = is_done
         self._instance.save()
-        refresh_tasks_tab(self.page)
+        refresh_tasks_tab()
 
     async def _on_click_delete(self, e):
         self._instance.delete_instance()
-        refresh_tasks_tab(self.page)
+        refresh_tasks_tab()
 
     def get_popup_menu_items(self) -> list[ft.PopupMenuItem]:
         edit_menu_item = ft.PopupMenuItem(

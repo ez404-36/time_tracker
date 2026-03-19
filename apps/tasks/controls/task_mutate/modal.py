@@ -55,5 +55,5 @@ class TaskMutateModal(ft.AlertDialog):
         else:
             Task.create(**form_values)
 
-        refresh_tasks_tab(self.page)
+        refresh_tasks_tab()
         self.page.pop_dialog()

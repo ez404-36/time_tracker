@@ -5,12 +5,12 @@ import flet as ft
 
 from apps.app_settings.models import AppSettings
 from apps.time_tracker.controls.statistics.index import ActivityStatisticsView
+from core.di import container
 from ui.components.timer import TimerComponent
 from apps.time_tracker.models import IdleSession, WindowSession
 from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
-from core.store import add_to_store, remove_from_store, get_from_store, get_or_create_from_store
 from ui.base.components.stored_component import StoredComponent
 from ui.consts import Colors, Icons
 
@@ -24,6 +24,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
     def __init__(self, **kwargs):
         kwargs.setdefault('padding', 20)
         super().__init__(**kwargs)
+        self._store = container.store
 
         self._tracking_status: ft.Text | None = None
         self._start_button: ft.IconButton | None = None
@@ -47,10 +48,10 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
 
     @property
     def is_activity_tracker_enabled(self) -> bool:
-        return get_or_create_from_store(self.page, 'is_activity_tracker_enabled', False)
+        return self._store.get_or_create('is_activity_tracker_enabled', False)
 
     def build(self):
-        self.tracker = ActivityTracker(self.page)
+        self.tracker = ActivityTracker()
 
         self.rebuild_tracking_status_text()
         self._start_button = ft.IconButton(
@@ -149,7 +150,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
         self.update()
 
     async def _on_click_start(self, e):
-        add_to_store(self.page, 'is_activity_tracker_enabled', True)
+        self._store.add('is_activity_tracker_enabled', True)
 
         if self._is_active_windows_showed:
             if self._current_window_data:
@@ -195,7 +196,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
             return
 
         self._idle_session = IdleSession.create(start_ts=ts)
-        add_to_store(self.page, 'idle_session', self._idle_session)
+        self._store.add('idle_session', self._idle_session)
         self._app_settings.play_idle_start_sound()
 
         idle_session_control = self.idle_session_ctrl
@@ -227,7 +228,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
             start_ts=ts,
         )
 
-        add_to_store(self.page, 'window_session', self._window_session)
+        self._store.add('window_session', self._window_session)
 
         window_session_control = self.window_session_ctrl
 
@@ -253,14 +254,14 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
             self._idle_session.stop(ts)
 
         self._idle_session = None
-        remove_from_store(self.page, 'idle_session')
+        self._store.remove('idle_session')
         self.idle_session_ctrl.controls.clear()
         self.idle_session_ctrl.update()
 
     async def stop_tracking(self, ts: datetime.datetime):
         self.stop_window_session(ts)
         self.stop_idle_session(ts)
-        add_to_store(self.page, 'is_activity_tracker_enabled', False)
+        self._store.add('is_activity_tracker_enabled', False)
         await self._toggle_affected_on_start_stop()
 
     def stop_window_session(self, ts: datetime.datetime):
@@ -271,7 +272,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
             self._window_session.stop(ts)
 
         self._window_session = None
-        remove_from_store(self.page, 'window_session')
+        self._store.remove('window_session')
         self.window_session_ctrl.controls.clear()
         self.window_session_ctrl.update()
 

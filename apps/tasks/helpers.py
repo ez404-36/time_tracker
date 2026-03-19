@@ -1,25 +1,23 @@
 from peewee import JOIN
-from flet import Page
 
 from apps.tasks.models import Task
-from core.store import get_from_store
+from core.di import container
 
 
-def refresh_tasks_tab(
-        page: Page,
-        with_update_controls=True,
-):
+def refresh_tasks_tab(with_update_controls=True):
     """
     Производит выборку задач из БД и обновление компонентов на основе этих данных
     """
 
     from apps.tasks.controls.task_detail.main import TaskListItem
 
+    store = container.store
+
     ChildrenTask = Task.alias()
 
-    tasks_active_tab = get_from_store(page, 'TaskActiveTab')
-    tasks_list_active_component = get_from_store(page, 'TaskListActive')
-    tasks_list_done_component = get_from_store(page, 'TaskListDone')
+    tasks_active_tab = store.get('TaskActiveTab')
+    tasks_list_active_component = store.get('TaskListActive')
+    tasks_list_done_component = store.get('TaskListDone')
 
     tasks = (
         Task.select()

@@ -44,7 +44,7 @@ async def check_tasks_deadline(page: ft.Page):
                     f'Просрочен срок исполнения следующих задач:\n{_pretty_task_list(expired_before)}'
                 )
 
-                refresh_tasks_tab(page, with_update_controls=True)
+                refresh_tasks_tab(with_update_controls=True)
 
         await asyncio.sleep(60)
 
