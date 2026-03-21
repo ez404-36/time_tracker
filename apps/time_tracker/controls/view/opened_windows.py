@@ -1,8 +1,10 @@
 import flet as ft
 
 from apps.time_tracker.services.activity_tracker import ActivityTracker
+from apps.time_tracker.services.window_control.abstract import WindowData
+from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.di import container
-from ui.consts import FontSize, FontWeight
+from ui.consts import FontSize, FontWeight, Icons
 
 
 class OpenedWindowsComponent(ft.Column):
@@ -16,7 +18,7 @@ class OpenedWindowsComponent(ft.Column):
         self._opened_windows_text: ft.Text | None = None
         self.all_window_sessions: ft.ListView | None = None
 
-        self._is_active_windows_showed = False
+        self.is_active_windows_showed = False
 
     def build(self):
         self.build_show_opened_windows_checkbox()
@@ -26,6 +28,12 @@ class OpenedWindowsComponent(ft.Column):
             expand=True,
         )
 
+        self.controls = [
+            self._show_opened_windows,
+            self._opened_windows_text,
+            self.all_window_sessions,
+        ]
+
     def build_show_opened_windows_checkbox(self):
         self._show_opened_windows = ft.Checkbox(
             label='Показать открытые окна',
@@ -34,7 +42,7 @@ class OpenedWindowsComponent(ft.Column):
 
     async def on_click_show_opened_windows(self, e):
         value: bool = e.control.value
-        self._is_active_windows_showed = value
+        self.is_active_windows_showed = value
 
         self._opened_windows_text.visible = value
         self.all_window_sessions.visible = value
@@ -47,5 +55,42 @@ class OpenedWindowsComponent(ft.Column):
                 await tracker.start()
             else:
                 await tracker.stop()
+
+        self.update()
+
+    def update_all_active_window_sessions(self, active_windows: list[WindowData]):
+        if not self.is_active_windows_showed:
+            return
+
+        self._opened_windows_text.value = f'Открытые окна ({len(active_windows)})'
+        all_windows_component = self.all_window_sessions
+        all_windows_component.controls.clear()
+        for active_window in active_windows:
+            app_name, window_title = get_app_name_and_transform_window_title(
+                active_window['executable_name'],
+                active_window['window_title']
+            )
+            title = app_name
+            if window_title:
+                app_name += f' ({window_title})'
+
+            executable_title = active_window['executable_name']
+            if active_window['executable_path']:
+                executable_title += f' ({active_window['executable_path']}'
+
+            row = ft.Row(
+                controls=[
+                    ft.Icon(Icons.APPS),
+                    ft.Text(
+                        value=title,
+                        tooltip=ft.Tooltip(
+                            message=executable_title,
+                            # TODO: тултип мигает
+                        ),
+                    )
+                ]
+            )
+
+            all_windows_component.controls.append(row)
 
         self.update()

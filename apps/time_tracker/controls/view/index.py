@@ -5,6 +5,7 @@ import flet as ft
 
 from apps.app_settings.models import AppSettings
 from apps.time_tracker.controls.statistics.index import ActivityStatisticsView
+from apps.time_tracker.controls.view.opened_windows import OpenedWindowsComponent
 from core.di import container
 from ui.components.timer import TimerComponent
 from apps.time_tracker.models import IdleSession, WindowSession
@@ -12,7 +13,7 @@ from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from ui.base.components.stored_component import StoredComponent
-from ui.consts import Colors, Icons, FontWeight
+from ui.consts import Colors, Icons
 
 
 class ActivityTabViewControl(ft.Container, StoredComponent):
@@ -29,17 +30,14 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
         self._tracking_status: ft.Text | None = None
         self._start_button: ft.IconButton | None = None
         self._stop_button: ft.IconButton | None = None
-        self._show_opened_windows: ft.Checkbox | None = None
-        self._opened_windows_text: ft.Text | None = None
 
         self.window_session_ctrl: ft.Column | None = None
         self.idle_session_ctrl: ft.Column | None = None
-        self.all_window_sessions: ft.ListView | None = None
         self._statistics_view: ActivityStatisticsView | None = None
+        self.opened_windows_component: OpenedWindowsComponent | None = None
 
         self._window_session: WindowSession | None = None
         self._idle_session: IdleSession | None = None
-        self._is_active_windows_showed = False
         self._autorefresh_statistics_task: asyncio.Task | None = None
         self._current_window_data: WindowData | None = None  # данные текущего окна, полученные из трекера
 
@@ -53,6 +51,8 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
     def build(self):
         self.tracker = ActivityTracker()
         self._store.add('activity_tracker', self.tracker)
+
+        self.opened_windows_component = OpenedWindowsComponent()
 
         self.rebuild_tracking_status_text()
         self._start_button = ft.IconButton(
@@ -73,13 +73,6 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
             tooltip='Выключить',
         )
 
-        self.build_show_opened_windows_checkbox()
-        self._opened_windows_text = ft.Text('Открытые окна', visible=False, size=16, weight=FontWeight.W_400)
-
-        self.all_window_sessions = ft.ListView(
-            expand=True,
-        )
-
         self.window_session_ctrl = ft.Column(visible=False)
         self.idle_session_ctrl = ft.Column(visible=False)
 
@@ -94,9 +87,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
                 self.window_session_ctrl,
                 self.idle_session_ctrl,
                 ft.Divider(),
-                self._show_opened_windows,
-                self._opened_windows_text,
-                self.all_window_sessions,
+                self.opened_windows_component,
             ]
         )
 
@@ -128,32 +119,10 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
         else:
             return 'Отслеживание активности выключено'
 
-    def build_show_opened_windows_checkbox(self):
-        self._show_opened_windows = ft.Checkbox(
-            label='Показать открытые окна',
-            on_change=self.on_click_show_opened_windows,
-        )
-
-    async def on_click_show_opened_windows(self, e):
-        value = e.control.value
-        self._is_active_windows_showed = value
-
-        self._opened_windows_text.visible = value
-        self.all_window_sessions.visible = value
-
-        if not self.is_activity_tracker_enabled:
-            # Если отслеживание активности не включено, включим трекер вручную
-            if value:
-                await self.tracker.start()
-            else:
-                await self.tracker.stop()
-
-        self.update()
-
     async def _on_click_start(self, e):
         self._store.add('is_activity_tracker_enabled', True)
 
-        if self._is_active_windows_showed:
+        if self.opened_windows_component.is_active_windows_showed:
             if self._current_window_data:
                 self.switch_window_session(self._current_window_data, datetime.datetime.now(datetime.UTC))
         else:
@@ -162,7 +131,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
         await self._toggle_affected_on_start_stop()
 
     async def _on_click_stop(self, e):
-        if self._is_active_windows_showed:
+        if self.opened_windows_component.is_active_windows_showed:
             await self.stop_tracking(datetime.datetime.now(datetime.UTC))
         else:
             await self.tracker.stop()
@@ -276,40 +245,3 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
         self._store.remove('window_session')
         self.window_session_ctrl.controls.clear()
         self.window_session_ctrl.update()
-
-    def update_all_active_window_sessions(self, active_windows: list[WindowData]):
-        if not self._is_active_windows_showed:
-            return
-
-        self._opened_windows_text.value = f'Открытые окна ({len(active_windows)})'
-        all_windows_component = self.all_window_sessions
-        all_windows_component.controls.clear()
-        for active_window in active_windows:
-            app_name, window_title = get_app_name_and_transform_window_title(
-                active_window['executable_name'],
-                active_window['window_title']
-            )
-            title = app_name
-            if window_title:
-                app_name += f' ({window_title})'
-
-            executable_title = active_window['executable_name']
-            if active_window['executable_path']:
-                executable_title += f' ({active_window['executable_path']}'
-
-            row = ft.Row(
-                controls=[
-                    ft.Icon(Icons.APPS),
-                    ft.Text(
-                        value=title,
-                        tooltip=ft.Tooltip(
-                            message=executable_title,
-                            # TODO: тултип мигает
-                        ),
-                    )
-                ]
-            )
-
-            all_windows_component.controls.append(row)
-
-        self.update()

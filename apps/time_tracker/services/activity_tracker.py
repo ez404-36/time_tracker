@@ -69,7 +69,7 @@ class ActivityTracker:
                     self._switch_window(window, now)
 
         active_windows = self.service.get_all_windows()
-        self.activity_tab.update_all_active_window_sessions(active_windows)
+        self.activity_tab.opened_windows_component.update_all_active_window_sessions(active_windows)
 
     def _start_idle(self, ts: datetime.datetime):
         self.is_idle = True
