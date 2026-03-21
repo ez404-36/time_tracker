@@ -1,7 +1,7 @@
 import datetime
 
 
-def remove_spaces(value: str | None) -> str | None:
+def remove_spaces(value: str) -> str:
     return value and (
         value
         .replace(' ', ' ')

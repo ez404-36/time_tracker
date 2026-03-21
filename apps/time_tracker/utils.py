@@ -12,7 +12,7 @@ class AppNameAndWindowTitleTransformerBase:
 
     def __init__(self, executable_name: str, window_title: str | None):
         self.executable_name = remove_spaces(executable_name)
-        self.window_title = remove_spaces(window_title)
+        self.window_title = window_title and remove_spaces(window_title)
 
     def transform(self) -> tuple[str, str | None]:
         return self.transform_app_name(), self.transform_window_title()
@@ -52,7 +52,7 @@ class WindowsSteamGameTransform(AppNameAndWindowTitleTransformerBase):
         return None
 
 
-def get_app_name_and_transform_window_title(executable_name: str, window_title: str) -> tuple[str, str]:
+def get_app_name_and_transform_window_title(executable_name: str, window_title: str | None) -> tuple[str, str | None]:
     """
     :param executable_name: название исполняемого файла
     :param window_title: заголовок окна
@@ -66,7 +66,7 @@ def get_app_name_and_transform_window_title(executable_name: str, window_title: 
             transform_cls = TelegramTransform
         case 'yandex_browser' | 'browser.exe':
             transform_cls = YandexBrowserTransform
-        case str() if 'steamapps' in window_title:
+        case str() if window_title and 'steamapps' in window_title:
             transform_cls = WindowsSteamGameTransform
         case _:
             transform_cls = AppNameAndWindowTitleTransformerBase

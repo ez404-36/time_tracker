@@ -6,7 +6,7 @@ from ui.consts import Colors, Icons, FontSize
 
 
 class BasePopup(ft.AlertDialog, metaclass=abc.ABCMeta):
-    def __init__(self, message: str, actions: list[ft.Control] = None, **kwargs):
+    def __init__(self, message: str, actions: list[ft.Control] | None = None, **kwargs):
         super().__init__(**kwargs)
         self._msg: str = message
         self._actions: list[ft.Control] | None = actions

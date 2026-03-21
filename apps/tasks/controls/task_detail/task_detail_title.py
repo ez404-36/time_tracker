@@ -1,7 +1,7 @@
 import flet as ft
 
 from apps.tasks.models import Task
-from ui.consts import FontSize, Colors
+from ui.consts import FontSize, Colors, Icons, FontWeight
 
 
 class TaskDetailTitle(ft.Row):
@@ -22,7 +22,7 @@ class TaskDetailTitle(ft.Row):
         if deadline_str := self.task.deadline_str:
             deadline = ft.Text(
                 f'[{deadline_str}]',
-                weight=ft.FontWeight.W_500,
+                weight=FontWeight.W_500,
                 size=font_size
             )
             controls.append(deadline)
@@ -31,7 +31,7 @@ class TaskDetailTitle(ft.Row):
         if is_any_children_expired and not self.task.is_expired:
             controls.append(
                 ft.Icon(
-                    icon=ft.Icons.WARNING,
+                    icon=Icons.WARNING,
                     color=Colors.RED_LIGHT,
                     tooltip='Одна или несколько вложенных задач просрочены',
                 ),

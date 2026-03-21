@@ -3,7 +3,7 @@ import time
 import flet as ft
 
 from core.di import container
-from ui.consts import Colors
+from ui.consts import Colors, Icons, FontWeight
 
 
 class StatisticsOneRow(ft.Container):
@@ -60,7 +60,7 @@ class StatisticsOneRow(ft.Container):
         self._text = ft.Text(
             self.title,
             size=self.text_width,
-            weight=ft.FontWeight.W_500 if self.text_bold else ft.FontWeight.NORMAL,
+            weight=FontWeight.W_500 if self.text_bold else FontWeight.NORMAL,
             color=self.text_color,
             width=120 if not self.has_parent else 200,
         )
@@ -71,17 +71,17 @@ class StatisticsOneRow(ft.Container):
 
         self._duration_text = ft.Text(
             value=txt,
-            weight=ft.FontWeight.W_500 if self.text_bold else ft.FontWeight.NORMAL,
+            weight=FontWeight.W_500 if self.text_bold else FontWeight.NORMAL,
             color=self.text_color,
             size=self.text_width,
         )
 
     def build_expand_children_icon(self):
         if self.is_expanded:
-            icon = ft.Icons.KEYBOARD_ARROW_DOWN
+            icon = Icons.KEYBOARD_ARROW_DOWN
             tooltip = 'Скрыть подробности'
         else:
-            icon = ft.Icons.KEYBOARD_ARROW_RIGHT
+            icon = Icons.KEYBOARD_ARROW_RIGHT
             tooltip = 'Показать подробности'
 
         if self._expand_children_icon:

@@ -3,7 +3,7 @@ import uuid
 from pathlib import Path
 from typing import Callable, Generator
 
-from peewee import OperationalError
+from peewee import OperationalError, Database
 
 from core.database import db
 from core.consts import MIGRATIONS_DIR
@@ -33,6 +33,8 @@ class MigrationsApplier:
         for file in self.traverse():
             file_index = self._get_file_index(file)
 
+            assert file_index is not None
+
             index_condition = _index is None or file_index <= _index
             applied_condition = file_index not in self._applied_migrations_map
 
@@ -55,7 +57,11 @@ class MigrationsApplier:
             if _index >= applied_migration.index and rest_downgrade_migrations == 0:
                 continue
 
-            OneMigrationApplier(file_index_map.get(applied_migration.index)).downgrade()
+            file_path = file_index_map.get(applied_migration.index)
+
+            assert file_path is not None
+
+            OneMigrationApplier(file_path).downgrade()
             rest_downgrade_migrations -= 1
 
     def create_new(self, title: str):
@@ -109,12 +115,14 @@ class OneMigrationApplier:
         self.file_path = file_path
 
         self._module = None
-        self._migration_uuid = None
-        self._migration_index = None
+        self._migration_uuid: str | None = None
+        self._migration_index: int | None = None
 
     @db.atomic()
     def migrate(self):
         self.prepare()
+
+        assert self._migration_index is not None
 
         if self._migration_index > 0:
             migration_row = (
@@ -130,7 +138,7 @@ class OneMigrationApplier:
             # Применение нулевой миграции означает создание таблицы migrations
             pass
 
-        migrate_method: Callable[[db], None] = getattr(self._module, 'migrate')
+        migrate_method: Callable[[Database], None] = getattr(self._module, 'migrate')
         migrate_method(db)
 
         MigrationModel.create(
@@ -141,6 +149,8 @@ class OneMigrationApplier:
     @db.atomic()
     def downgrade(self):
         self.prepare()
+
+        assert self._migration_index is not None
 
         migration_row = (
             MigrationModel.select()
@@ -153,7 +163,7 @@ class OneMigrationApplier:
 
         assert migration_row is not None, f'Миграция {self._migration_uuid} не применена'
 
-        downgrade_method: Callable[[db], None] = getattr(self._module, 'downgrade')
+        downgrade_method: Callable[[Database], None] = getattr(self._module, 'downgrade')
         downgrade_method(db)
 
         if self._migration_index > 0:

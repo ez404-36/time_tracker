@@ -6,6 +6,7 @@ from peewee import fn
 
 from apps.time_tracker.models import WindowSession, IdleSession
 from core.utils import to_current_tz
+from ui.consts import Icons, FontWeight
 
 from .one_app_view import OneAppView, WindowTitleSessionData
 from .statistics_list import StatisticsListView
@@ -48,7 +49,7 @@ class ActivityStatisticsView(ft.Column):
         self.controls = [
             ft.Row(
                 controls=[
-                    ft.Text('Статистика', size=20, weight=ft.FontWeight.BOLD),
+                    ft.Text('Статистика', size=20, weight=FontWeight.BOLD),
                     self._show_button,
                     self._refresh_button,
                 ]
@@ -144,7 +145,7 @@ class ActivityStatisticsView(ft.Column):
 
     def _build_refresh_button(self):
         self._refresh_button = ft.IconButton(
-            icon=ft.Icons.REFRESH,
+            icon=Icons.REFRESH,
             tooltip='Обновить',
             visible=False,
             on_click=self._on_click_refresh,

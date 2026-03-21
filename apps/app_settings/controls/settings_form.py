@@ -8,7 +8,7 @@ from playsound3 import playsound
 from apps.app_settings.models import AppSettings
 from apps.app_settings.utils import get_available_notification_sounds
 from core.consts import AUDIO_DIR
-from ui.consts import Colors
+from ui.consts import Colors, Icons
 
 
 @dataclass(frozen=True)
@@ -219,7 +219,7 @@ class SettingsForm(ft.Container):
                 content=ft.Row(
                     controls=[
                         ft.IconButton(
-                            icon=ft.Icons.PLAY_ARROW,
+                            icon=Icons.PLAY_ARROW,
                             on_click=on_click,
                         ),
                         ft.Text(Path(sound_file_path).name)

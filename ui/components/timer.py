@@ -8,6 +8,7 @@ class TimerComponent(ft.Text):
     """
     Счетчик времени
     """
+    page: ft.Page
 
     def __init__(self, seconds: int = 0, **kwargs):
         super().__init__(**kwargs)

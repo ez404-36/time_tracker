@@ -12,7 +12,7 @@ from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from ui.base.components.stored_component import StoredComponent
-from ui.consts import Colors, Icons
+from ui.consts import Colors, Icons, FontWeight
 
 
 class ActivityTabViewControl(ft.Container, StoredComponent):
@@ -52,6 +52,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
 
     def build(self):
         self.tracker = ActivityTracker()
+        self._store.add('activity_tracker', self.tracker)
 
         self.rebuild_tracking_status_text()
         self._start_button = ft.IconButton(
@@ -73,7 +74,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
         )
 
         self.build_show_opened_windows_checkbox()
-        self._opened_windows_text = ft.Text('Открытые окна', visible=False, size=16, weight=ft.FontWeight.W_400)
+        self._opened_windows_text = ft.Text('Открытые окна', visible=False, size=16, weight=FontWeight.W_400)
 
         self.all_window_sessions = ft.ListView(
             expand=True,
@@ -298,7 +299,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
 
             row = ft.Row(
                 controls=[
-                    ft.Icon(ft.Icons.APPS),
+                    ft.Icon(Icons.APPS),
                     ft.Text(
                         value=title,
                         tooltip=ft.Tooltip(

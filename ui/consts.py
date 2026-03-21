@@ -12,6 +12,7 @@ class Colors:
     WHITE = ft.Colors.WHITE
     GREY = ft.Colors.GREY
     GREY_LIGHT = ft.Colors.GREY_300
+    SYSTEM_BACKGROUND = ft.CupertinoColors.SYSTEM_BACKGROUND
 
 
 class Icons:
@@ -19,6 +20,7 @@ class Icons:
     EDIT = ft.Icons.EDIT
     DELETE = ft.Icons.DELETE
     CHECK = ft.Icons.CHECK
+    WARNING = ft.Icons.WARNING
     EYE = ft.Icons.REMOVE_RED_EYE
     MORE_ACTIONS = ft.Icons.MORE_VERT
     TIMER = ft.Icons.TIMER
@@ -27,9 +29,15 @@ class Icons:
     START = ft.Icons.PLAY_CIRCLE_OUTLINE
     STOP = ft.Icons.PAUSE_CIRCLE_OUTLINE
     SAVE = ft.Icons.SAVE
+    PLAY_ARROW = ft.Icons.PLAY_ARROW
     CANCEL = ft.Icons.CANCEL
     ERROR = ft.Icons.ERROR
+    REFRESH = ft.Icons.REFRESH
     INFO = ft.Icons.INFO
+    APPS = ft.Icons.APPS
+    KEYBOARD_ARROW_DOWN = ft.Icons.KEYBOARD_ARROW_DOWN
+    KEYBOARD_ARROW_RIGHT = ft.Icons.KEYBOARD_ARROW_RIGHT
+
 
 
 class FontSize:
@@ -40,3 +48,10 @@ class FontSize:
     H3 = 24
     H2 = 36
     H1 = 48
+
+
+class FontWeight:
+    NORMAL = ft.FontWeight.NORMAL
+    BOLD = ft.FontWeight.BOLD
+    W_400 = ft.FontWeight.W_400
+    W_500 = ft.FontWeight.W_500
