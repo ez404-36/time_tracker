@@ -1,10 +1,10 @@
 import flet as ft
 
 from core.di import container
-from ui.base.components.stored_component import StoredComponent
+from ui.base.components.session_stored_component import SessionStoredComponent
 
 
-class TaskActiveTab(ft.Tab, StoredComponent):
+class TaskActiveTab(ft.Tab, SessionStoredComponent):
     """
     Компонент таба "Активные задачи"
     """
@@ -18,7 +18,7 @@ class TaskActiveTab(ft.Tab, StoredComponent):
         super().update()
 
     def get_label(self) -> str:
-        store = container.store
+        store = container.session_store
         if active_tasks_list_component := store.get('TaskListActive'):
             active_tasks_len = len(active_tasks_list_component.controls)
         else:

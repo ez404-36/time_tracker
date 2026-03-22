@@ -5,10 +5,10 @@ from apps.time_tracker.controls.view.opened_windows import OpenedWindowsComponen
 from apps.time_tracker.controls.view.time_tracking import TimeTrackingComponent
 from apps.time_tracker.services.activity_tracker import ActivityTracker
 from core.di import container
-from ui.base.components.stored_component import StoredComponent
+from ui.base.components.session_stored_component import SessionStoredComponent
 
 
-class ActivityTabViewControl(ft.Container, StoredComponent):
+class ActivityTabViewControl(ft.Container, SessionStoredComponent):
     """Таб активности"""
 
     parent: ft.Tab
@@ -17,7 +17,7 @@ class ActivityTabViewControl(ft.Container, StoredComponent):
     def __init__(self, **kwargs):
         kwargs.setdefault('padding', 20)
         super().__init__(**kwargs)
-        self._store = container.store
+        self._store = container.session_store
         self._app_settings = container.app_settings
 
         self.time_tracking_component: TimeTrackingComponent | None = None

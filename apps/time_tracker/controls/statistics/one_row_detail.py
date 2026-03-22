@@ -24,7 +24,7 @@ class StatisticsOneRow(ft.Container):
             kwargs.setdefault('margin', ft.Margin(left=50, top=0, bottom=0, right=0))
         kwargs.setdefault('width', 500)
         super().__init__(**kwargs)
-        self._store = container.store
+        self._store = container.session_store
         self.has_parent = has_parent
         self.has_children = has_children
         self.title = title

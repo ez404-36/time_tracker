@@ -5,12 +5,12 @@ from apps.app_settings.models import AppSettings
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.services.window_control.base import WindowControl
 from core.di import container
-from core.store import Store
+from core.store import SessionStore
 
 
 class ActivityTracker:
     def __init__(self):
-        self._store: Store = container.store
+        self._store: SessionStore = container.session_store
         self._app_settings: AppSettings = container.app_settings
 
         self.running = False
@@ -43,9 +43,7 @@ class ActivityTracker:
         if self.task:
             await self.task
 
-        now = datetime.datetime.now(datetime.UTC)
-
-        await self.time_tracking_component.stop_tracking(now)
+        await self.time_tracking_component.stop_tracking()
 
         self._reset_state()
 

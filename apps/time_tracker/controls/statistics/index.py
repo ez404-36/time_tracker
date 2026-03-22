@@ -8,7 +8,7 @@ from peewee import fn
 
 from apps.time_tracker.models import WindowSession, IdleSession
 from core.utils.date_utils import to_current_tz
-from ui.base.components.stored_component import StoredComponent
+from ui.base.components.session_stored_component import SessionStoredComponent
 from ui.consts import Icons, FontWeight
 
 from .one_app_view import OneAppView, WindowTitleSessionData
@@ -17,7 +17,7 @@ from .statistics_list import StatisticsListView
 T = TypeVar('T')
 
 
-class ActivityStatisticsView(ft.Column, StoredComponent):
+class ActivityStatisticsView(ft.Column, SessionStoredComponent):
     """
     Компонент статистики активности пользователя
     """

@@ -6,28 +6,28 @@ import flet as ft
 from apps.notifications.services.notification_sender import NotificationSender
 from apps.time_tracker.controls.statistics.index import ActivityStatisticsView
 from apps.time_tracker.controls.view.opened_windows import OpenedWindowsComponent
-from apps.time_tracker.controls.view.total_time import TotalTimeComponent
+from apps.time_tracker.controls.view.total_time import PomodoroTimerComponent, TotalTimeComponent
 from apps.time_tracker.models import WindowSession, IdleSession
 from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.di import container
-from ui.base.components.stored_component import StoredComponent
+from ui.base.components.session_stored_component import SessionStoredComponent
 from ui.components.timer import TimerComponent
 from ui.consts import Icons, Colors, FontSize
 
 
-class TimeTrackingComponent(ft.Column, StoredComponent):
+class TimeTrackingComponent(ft.Column, SessionStoredComponent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._store = container.store
+        self._store = container.session_store
         self._app_settings = container.app_settings
 
         self._tracking_status: ft.Text | None = None
         self._start_button: ft.IconButton | None = None
         self._stop_button: ft.IconButton | None = None
 
-        self._total_time_component: TotalTimeComponent | None = None
+        self._total_time_component: PomodoroTimerComponent | TotalTimeComponent | None = None
 
         self._main_row: ft.Row | None = None
 
@@ -101,7 +101,7 @@ class TimeTrackingComponent(ft.Column, StoredComponent):
         if self._total_time_component and self._total_time_component in self._main_row.controls:
             self._main_row.controls.remove(self._total_time_component)
 
-        self._total_time_component = TotalTimeComponent(
+        self._total_time_component = PomodoroTimerComponent(
             label_text='Отдыхайте: ',
             on_end=self.start_working(),
         )
@@ -116,10 +116,20 @@ class TimeTrackingComponent(ft.Column, StoredComponent):
         if self._total_time_component and self._total_time_component in self._main_row.controls:
             self._main_row.controls.remove(self._total_time_component)
 
-        self._total_time_component = TotalTimeComponent(
+        self._total_time_component = PomodoroTimerComponent(
             label_text='Сосредоточьтесь: ',
             on_end=self.start_resting()
         )
+        self._main_row.controls.append(self._total_time_component)
+
+        self.update()
+
+    async def start_total_timer(self):
+        if self._total_time_component and self._total_time_component in self._main_row.controls:
+            self._main_row.controls.remove(self._total_time_component)
+
+        self._total_time_component = TotalTimeComponent()
+
         self._main_row.controls.append(self._total_time_component)
 
         self.update()
@@ -155,9 +165,10 @@ class TimeTrackingComponent(ft.Column, StoredComponent):
 
         await self._toggle_affected_on_start_stop()
 
-    async def stop_tracking(self, ts: datetime.datetime = datetime.datetime.now(datetime.UTC)):
-        self.stop_window_session(ts)
-        self.stop_idle_session(ts)
+    async def stop_tracking(self):
+        now = datetime.datetime.now(datetime.UTC)
+        self.stop_window_session(now)
+        self.stop_idle_session(now)
         self._store.set('is_activity_tracker_enabled', False)
         await self._toggle_affected_on_start_stop()
 
@@ -179,7 +190,10 @@ class TimeTrackingComponent(ft.Column, StoredComponent):
         if is_start:
             self.activity_statistics_component.toggle_show_statistics(force_show=True)
 
-            await self.start_working(show_popup=False)
+            if self._app_settings.enable_pomodoro:
+                await self.start_working(show_popup=False)
+            else:
+                await self.start_total_timer()
 
             self._autorefresh_statistics_task = asyncio.create_task(self._run_auto_refresh_statistics())
         else:

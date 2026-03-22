@@ -11,7 +11,7 @@ def refresh_tasks_tab(with_update_controls=True):
 
     from apps.tasks.controls.task_detail.main import TaskListItem
 
-    store = container.store
+    store = container.session_store
 
     ChildrenTask = Task.alias()
 

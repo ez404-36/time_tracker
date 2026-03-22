@@ -25,7 +25,7 @@ class OneAppView(ft.Column):
             **kwargs,
     ):
         super().__init__(**kwargs)
-        self._store = container.store
+        self._store = container.session_store
         self._app_name = app_name
         self._sessions = sessions
         self._total_time = total_time
