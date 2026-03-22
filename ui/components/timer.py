@@ -1,5 +1,7 @@
 import asyncio
 import datetime
+from inspect import isawaitable
+from typing import Callable, Coroutine
 
 import flet as ft
 
@@ -38,8 +40,26 @@ class CountdownComponent(TimerComponent):
     Обратный отсчёт
     """
 
+    def __init__(
+            self,
+            seconds: int = 0,
+            on_end: Coroutine[None, None, None] | Callable[[], None] = None,
+            **kwargs,
+    ):
+        super().__init__(seconds=seconds, **kwargs)
+        self.on_end = on_end
+
     async def update_timer(self):
         while self.running:
             self.update_value()
+
+            if self.seconds == 0:
+                self.running = False
+                if self.on_end:
+                    if isawaitable(self.on_end):
+                        await self.on_end
+                    else:
+                        self.on_end()
+
             self.seconds -= 1
             await asyncio.sleep(1)

@@ -72,7 +72,7 @@ class DesktopApp:
 
         refresh_tasks_tab(with_update_controls=False)
 
-        page.run_task(check_tasks_deadline, page=page)
+        page.run_task(check_tasks_deadline)
 
     async def _on_change_navigation_drawer(self, e: ft.Event[ft.NavigationDrawer]):
         new_nav_index = int(e.data)

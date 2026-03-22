@@ -3,8 +3,10 @@ import datetime
 
 import flet as ft
 
+from apps.notifications.services.notification_sender import NotificationSender
 from apps.time_tracker.controls.statistics.index import ActivityStatisticsView
 from apps.time_tracker.controls.view.opened_windows import OpenedWindowsComponent
+from apps.time_tracker.controls.view.total_time import TotalTimeComponent
 from apps.time_tracker.models import WindowSession, IdleSession
 from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
@@ -24,6 +26,10 @@ class TimeTrackingComponent(ft.Column, StoredComponent):
         self._tracking_status: ft.Text | None = None
         self._start_button: ft.IconButton | None = None
         self._stop_button: ft.IconButton | None = None
+
+        self._total_time_component: TotalTimeComponent | None = None
+
+        self._main_row: ft.Row | None = None
 
         self.window_session_ctrl: ft.Column | None = None
         self.idle_session_ctrl: ft.Column | None = None
@@ -72,19 +78,51 @@ class TimeTrackingComponent(ft.Column, StoredComponent):
         self.window_session_ctrl = ft.Column(visible=False)
         self.idle_session_ctrl = ft.Column(visible=False)
 
+        self._main_row = ft.Row(
+            controls=[
+                self._start_button,
+                self._stop_button,
+                self._tracking_status,
+            ]
+        )
+
         self.controls = [
-            ft.Row(
-                controls=[
-                    self._start_button,
-                    self._stop_button,
-                    self._tracking_status,
-                ]
-            ),
+            self._main_row,
             self.window_session_ctrl,
             self.idle_session_ctrl,
         ]
 
         super().build()
+
+    async def start_resting(self, show_popup=True) -> None:
+        if show_popup:
+            NotificationSender().send_info('Время отдохнуть')
+
+        if self._total_time_component and self._total_time_component in self._main_row.controls:
+            self._main_row.controls.remove(self._total_time_component)
+
+        self._total_time_component = TotalTimeComponent(
+            label_text='Отдыхайте: ',
+            on_end=self.start_working(),
+        )
+        self._main_row.controls.append(self._total_time_component)
+
+        self.update()
+
+    async def start_working(self, show_popup=True) -> None:
+        if show_popup:
+            NotificationSender().send_info('Пора работать')
+
+        if self._total_time_component and self._total_time_component in self._main_row.controls:
+            self._main_row.controls.remove(self._total_time_component)
+
+        self._total_time_component = TotalTimeComponent(
+            label_text='Сосредоточьтесь: ',
+            on_end=self.start_resting()
+        )
+        self._main_row.controls.append(self._total_time_component)
+
+        self.update()
 
     def rebuild_tracking_status_text(self):
         title = self.get_status_title()
@@ -103,6 +141,9 @@ class TimeTrackingComponent(ft.Column, StoredComponent):
             return 'Отслеживание активности выключено'
 
     async def _on_click_start(self, e):
+        await self.start_tracking()
+
+    async def start_tracking(self):
         self._store.set('is_activity_tracker_enabled', True)
 
         if self.opened_windows_component.is_active_windows_showed:
@@ -114,7 +155,7 @@ class TimeTrackingComponent(ft.Column, StoredComponent):
 
         await self._toggle_affected_on_start_stop()
 
-    async def stop_tracking(self, ts: datetime.datetime):
+    async def stop_tracking(self, ts: datetime.datetime = datetime.datetime.now(datetime.UTC)):
         self.stop_window_session(ts)
         self.stop_idle_session(ts)
         self._store.set('is_activity_tracker_enabled', False)
@@ -122,7 +163,7 @@ class TimeTrackingComponent(ft.Column, StoredComponent):
 
     async def _on_click_stop(self, e):
         if self.opened_windows_component.is_active_windows_showed:
-            await self.stop_tracking(datetime.datetime.now(datetime.UTC))
+            await self.stop_tracking()
         else:
             await self.tracker.stop()
 
@@ -137,8 +178,14 @@ class TimeTrackingComponent(ft.Column, StoredComponent):
 
         if is_start:
             self.activity_statistics_component.toggle_show_statistics(force_show=True)
+
+            await self.start_working(show_popup=False)
+
             self._autorefresh_statistics_task = asyncio.create_task(self._run_auto_refresh_statistics())
         else:
+            if self._total_time_component and self._total_time_component in self._main_row.controls:
+                self._main_row.controls.remove(self._total_time_component)
+
             if self._autorefresh_statistics_task:
                 await self._autorefresh_statistics_task
 
