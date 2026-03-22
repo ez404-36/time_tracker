@@ -2,6 +2,7 @@ import datetime
 
 import flet as ft
 
+from apps.app_settings.models import AppSettings
 from apps.time_tracker.consts import EventType, EventInitiator
 from apps.time_tracker.controls.view.index import ActivityTabViewControl
 from apps.time_tracker.models import Event
@@ -118,6 +119,7 @@ async def main(page: ft.Page):
 
     container.page = page
     container.store = Store(page)
+    container.app_settings = AppSettings.get_solo()
 
     Event.create(type=EventType.OPEN_APP, initiator=EventInitiator.USER)
     app = DesktopApp(page)

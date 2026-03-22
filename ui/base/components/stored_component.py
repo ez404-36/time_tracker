@@ -12,7 +12,7 @@ class StoredComponent(ft.Control):
     def build(self):
         super().build()
         store: Store = container.store
-        store.add(self.get_stored_name(), self)
+        store.set(self.get_stored_name(), self)
 
     def get_stored_name(self) -> str:
         return self.__class__.__name__

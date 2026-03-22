@@ -1,18 +1,23 @@
 import datetime
 from collections import Counter, defaultdict
+from collections.abc import Sequence
+from typing import TypeVar
 
 import flet as ft
 from peewee import fn
 
 from apps.time_tracker.models import WindowSession, IdleSession
-from core.utils import to_current_tz
+from core.utils.date_utils import to_current_tz
+from ui.base.components.stored_component import StoredComponent
 from ui.consts import Icons, FontWeight
 
 from .one_app_view import OneAppView, WindowTitleSessionData
 from .statistics_list import StatisticsListView
 
+T = TypeVar('T')
 
-class ActivityStatisticsView(ft.Column):
+
+class ActivityStatisticsView(ft.Column, StoredComponent):
     """
     Компонент статистики активности пользователя
     """
@@ -37,7 +42,8 @@ class ActivityStatisticsView(ft.Column):
         self._build_refresh_button()
         self._build_filter_btn()
         self._build_date_filter_modal()
-        self._build_app_statistics()
+
+        self._app_statistics = StatisticsListView(visible=False)
 
         self._params_row = ft.Row(
             controls=[
@@ -60,11 +66,7 @@ class ActivityStatisticsView(ft.Column):
         ]
 
         self._rebuild_app_statistics()
-
-    def _build_app_statistics(self):
-        self._app_statistics = StatisticsListView(
-            visible=False,
-        )
+        super().build()
 
     def _rebuild_app_statistics(self, with_update=False):
         self._app_statistics.controls.clear()
@@ -113,19 +115,15 @@ class ActivityStatisticsView(ft.Column):
             self._app_statistics.update()
 
     def _refresh_sessions_db(self):
-        self._idle_sessions = list(
-            IdleSession.select()
+        self._idle_sessions = list(self._filter_sessions(IdleSession))
+        self._window_sessions = list(self._filter_sessions(WindowSession))
+
+    def _filter_sessions(self, session_cls: type[T]) -> Sequence[T]:
+        return (
+            session_cls.select()
             .where(
-                fn.date(IdleSession.start_ts) == self._filter_date_value,
-                IdleSession.duration > 0,
-            )
-            .order_by(IdleSession.duration.desc())
-        )
-        self._window_sessions = list(
-            WindowSession.select()
-            .where(
-                fn.date(WindowSession.start_ts) == self._filter_date_value,
-                WindowSession.duration > 0,
+                fn.date(session_cls.start_ts) == self._filter_date_value,
+                session_cls.duration > 0,
             )
         )
 

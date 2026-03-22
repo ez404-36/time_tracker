@@ -4,7 +4,7 @@ import flet as ft
 
 from core.di import container
 
-from .one_row import StatisticsOneRow
+from .one_row_detail import StatisticsOneRow
 
 
 class WindowTitleSessionData(TypedDict):

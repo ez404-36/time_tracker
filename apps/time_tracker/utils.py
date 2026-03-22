@@ -1,7 +1,5 @@
 import re
 
-from core.utils import remove_spaces
-
 telegram_msg_count_regex = re.compile(r'.{1,3}\(\d+\)')
 
 
@@ -72,3 +70,12 @@ def get_app_name_and_transform_window_title(executable_name: str, window_title: 
             transform_cls = AppNameAndWindowTitleTransformerBase
 
     return transform_cls(executable_name, window_title).transform()
+
+
+def remove_spaces(value: str) -> str:
+    return value and (
+        value
+        .replace(' ', ' ')
+        .replace('‎', '')
+        .strip()
+    )

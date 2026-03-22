@@ -10,7 +10,7 @@ class Store:
     def __repr__(self) -> str:
         return f'Store({self._store.get_keys()})'
 
-    def add(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: Any) -> None:
         self._store.set(key, value)
 
     def get(self, key: str) -> Any:
@@ -25,6 +25,6 @@ class Store:
 
     def get_or_create(self, key: str, default_value: Any) -> Any:
         if not self.contains(key):
-            self.add(key, default_value)
+            self.set(key, default_value)
 
         return self.get(key)

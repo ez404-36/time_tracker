@@ -4,10 +4,11 @@ from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.di import container
+from ui.base.components.stored_component import StoredComponent
 from ui.consts import FontSize, FontWeight, Icons
 
 
-class OpenedWindowsComponent(ft.Column):
+class OpenedWindowsComponent(ft.Column, StoredComponent):
     parent: ft.Container
 
     def __init__(self, **kwargs):
@@ -33,6 +34,7 @@ class OpenedWindowsComponent(ft.Column):
             self._opened_windows_text,
             self.all_window_sessions,
         ]
+        super().build()
 
     def build_show_opened_windows_checkbox(self):
         self._show_opened_windows = ft.Checkbox(

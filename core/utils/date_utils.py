@@ -1,19 +1,12 @@
 import datetime
 
-
-def remove_spaces(value: str) -> str:
-    return value and (
-        value
-        .replace(' ', ' ')
-        .replace('‎', '')
-        .strip()
-    )
+from core.di import container
 
 
 def to_current_tz(value: datetime.datetime) -> datetime.datetime:
-    from apps.app_settings.models import AppSettings
+    app_settings = container.app_settings
 
-    tz = AppSettings.get_solo().get_tz()
+    tz = app_settings.get_tz()
     return value.astimezone(tz)
 
 

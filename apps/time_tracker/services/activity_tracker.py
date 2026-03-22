@@ -11,6 +11,8 @@ from core.store import Store
 class ActivityTracker:
     def __init__(self):
         self._store: Store = container.store
+        self._app_settings: AppSettings = container.app_settings
+
         self.running = False
         self.idle_threshold: int | None = None
         self.task: asyncio.Task | None = None
@@ -19,13 +21,17 @@ class ActivityTracker:
         self.service = WindowControl()
 
     @property
-    def activity_tab(self):
-        return self._store.get('ActivityTabViewControl')
+    def time_tracking_component(self):
+        return self._store.get('TimeTrackingComponent')
+
+    @property
+    def opened_windows_component(self):
+        return self._store.get('OpenedWindowsComponent')
 
     async def start(self):
         if self.running:
             return
-        self.idle_threshold = AppSettings.get_solo().idle_threshold
+        self.idle_threshold = self._app_settings.idle_threshold
         self.running = True
         self.task = asyncio.create_task(self._run())
 
@@ -39,7 +45,7 @@ class ActivityTracker:
 
         now = datetime.datetime.now(datetime.UTC)
 
-        await self.activity_tab.stop_tracking(now)
+        await self.time_tracking_component.stop_tracking(now)
 
         self._reset_state()
 
@@ -69,20 +75,20 @@ class ActivityTracker:
                     self._switch_window(window, now)
 
         active_windows = self.service.get_all_windows()
-        self.activity_tab.opened_windows_component.update_all_active_window_sessions(active_windows)
+        self.opened_windows_component.update_all_active_window_sessions(active_windows)
 
     def _start_idle(self, ts: datetime.datetime):
         self.is_idle = True
-        self.activity_tab.create_idle_session(ts)
+        self.time_tracking_component.create_idle_session(ts)
 
     def _end_idle(self, ts: datetime.datetime):
         self.is_idle = False
-        self.activity_tab.stop_idle_session(ts)
+        self.time_tracking_component.stop_idle_session(ts)
 
     def _switch_window(self, window: WindowData, ts: datetime.datetime):
         self.current_window = window
 
-        self.activity_tab.switch_window_session(window, ts)
+        self.time_tracking_component.switch_window_session(window, ts)
 
     def _reset_state(self):
         self.current_window = None

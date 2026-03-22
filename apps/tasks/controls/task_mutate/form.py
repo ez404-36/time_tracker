@@ -5,7 +5,7 @@ from typing import Any, Collection
 import flet as ft
 
 from apps.tasks.models import Task
-from core.utils import to_current_tz
+from core.utils.date_utils import to_current_tz
 
 
 @dataclass
