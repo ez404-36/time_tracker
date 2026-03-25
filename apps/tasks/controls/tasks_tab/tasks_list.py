@@ -1,6 +1,6 @@
 import flet as ft
 
-from ui.base.components.session_stored_component import SessionStoredComponent
+from core.mixins import SessionStoredComponent
 
 
 class TaskListBase(ft.Column):

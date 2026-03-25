@@ -1,5 +1,4 @@
 __all__ = (
-    'Event',
     'WindowSession',
     'IdleSession',
 )
@@ -7,26 +6,9 @@ __all__ = (
 import datetime
 
 from peewee import *
-from playhouse.sqlite_ext import JSONField
 
-from apps.time_tracker.consts import EventInitiator, EventType
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.models import BaseModel
-
-
-
-class Event(BaseModel):
-    """
-    Любое событие
-    """
-
-    ts = DateTimeField(help_text='Дата и время события (UTC)', default=lambda: datetime.datetime.now(datetime.UTC))
-    type = IntegerField(help_text='Тип события', choices=EventType.choices)
-    initiator = IntegerField(help_text='Инициатор события', choices=EventInitiator.choices)
-    data = JSONField(help_text='Опциональные данные', default=dict)
-
-    class Meta:
-        table_name = 'event'
 
 
 class SessionAbstract(BaseModel):

@@ -4,7 +4,8 @@ from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.di import container
-from ui.base.components.session_stored_component import SessionStoredComponent
+from core.mixins import SessionStoredComponent
+from ui.base.components.containers import BorderedContainer
 from ui.consts import FontSize, FontWeight, Icons
 
 
@@ -13,10 +14,12 @@ class OpenedWindowsComponent(ft.Column, SessionStoredComponent):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
         self._store = container.session_store
 
         self._show_opened_windows: ft.Checkbox | None = None
         self._opened_windows_text: ft.Text | None = None
+        self.all_window_sessions_wrap: ft.Container | None = None
         self.all_window_sessions: ft.ListView | None = None
 
         self.is_active_windows_showed = False
@@ -29,10 +32,16 @@ class OpenedWindowsComponent(ft.Column, SessionStoredComponent):
             expand=True,
         )
 
+        self.all_window_sessions_wrap = BorderedContainer(
+            content=self.all_window_sessions,
+            padding=10,
+            visible=False,
+        )
+
         self.controls = [
             self._show_opened_windows,
             self._opened_windows_text,
-            self.all_window_sessions,
+            self.all_window_sessions_wrap,
         ]
         super().build()
 
@@ -47,7 +56,7 @@ class OpenedWindowsComponent(ft.Column, SessionStoredComponent):
         self.is_active_windows_showed = value
 
         self._opened_windows_text.visible = value
-        self.all_window_sessions.visible = value
+        self.all_window_sessions_wrap.visible = value
 
         if not self._store.get('is_activity_tracker_enabled'):
             # Если отслеживание активности не включено, включим трекер вручную

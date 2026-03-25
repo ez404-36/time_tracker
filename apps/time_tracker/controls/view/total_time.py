@@ -39,14 +39,19 @@ class PomodoroTimerComponent(ft.Row):
         ]
 
 
-class TotalTimeComponent(ft.Row):
-    def __init__(self, **kwargs):
+class TotalTimerComponent(ft.Row):
+    def __init__(
+            self,
+            label_text: str = 'Общее время',
+            **kwargs,
+    ):
         super().__init__(**kwargs)
+        self._label_text = label_text
 
     def build(self):
         _timer = TimerComponent(seconds=0)
         _label = ft.Text(
-            value='Общее время: ',
+            value=f'{self._label_text}: ',
             size=FontSize.H5,
             weight=FontWeight.W_500,
         )

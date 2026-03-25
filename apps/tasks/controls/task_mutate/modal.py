@@ -6,6 +6,7 @@ from apps.tasks.controls.task_mutate.form import TaskMutateForm
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.tasks.models import Task
 from ui.base.components.buttons import CancelButton, SaveButton
+from ui.utils import show_snackbar
 
 
 class TaskMutateModal(ft.AlertDialog):
@@ -46,14 +47,25 @@ class TaskMutateModal(ft.AlertDialog):
         ]
 
     async def _on_save(self):
-        form_values = asdict(self.content.collect_form_fields())
+        form_values = self.content.collect_form_fields()
+
+        if form_values is None:
+            show_snackbar('Ошибка при сохранении задачи')
+            return
+
+        form_values = asdict(form_values)
 
         if self._instance:
             for field, value in form_values.items():
                 setattr(self._instance, field, value)
             self._instance.save()
+            snackbar_message = f'{self._instance} обновлена'
         else:
-            Task.create(**form_values)
+            new_task = Task.create(**form_values)
+            snackbar_message = f'Создана {new_task}'
 
         refresh_tasks_tab()
         self.page.pop_dialog()
+
+        if snackbar_message:
+            show_snackbar(snackbar_message)

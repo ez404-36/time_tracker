@@ -7,8 +7,9 @@ import flet as ft
 from peewee import fn
 
 from apps.time_tracker.models import WindowSession, IdleSession
+from core.mixins import SessionStoredComponent
+from core.settings import DATE_FORMAT
 from core.utils.date_utils import to_current_tz
-from ui.base.components.session_stored_component import SessionStoredComponent
 from ui.consts import Icons, FontWeight
 
 from .one_app_view import OneAppView, WindowTitleSessionData
@@ -170,7 +171,7 @@ class ActivityStatisticsView(ft.Column, SessionStoredComponent):
         self.update()
 
     def _build_filter_btn(self):
-        text = f'По дате: {self._filter_date_value.strftime("%d.%m.%y")}'
+        text = f'По дате: {self._filter_date_value.strftime(DATE_FORMAT)}'
 
         if self._date_filter_btn:
             self._date_filter_btn.content = text

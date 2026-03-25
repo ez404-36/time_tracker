@@ -4,8 +4,8 @@ import flet as ft
 
 from apps.app_settings.controls.settings_form import SettingsForm
 from apps.app_settings.models import AppSettings
-from apps.time_tracker.consts import EventType, EventInitiator
-from apps.time_tracker.models import Event
+from apps.events.consts import EventActor, EventType
+from apps.events.models import Event
 from ui.base.components.buttons import CancelButton, SaveButton
 
 
@@ -22,7 +22,7 @@ class SettingsModal(ft.AlertDialog):
         self.adaptive = True
         self.title = 'Настройки'
 
-        self.content = SettingsForm(self._app_settings)
+        self.content = SettingsForm(self._app_settings, padding=10)
         self.actions = [
             CancelButton(on_click=lambda e: self.page.pop_dialog()),
             SaveButton(on_click=self._save_settings),
@@ -33,5 +33,5 @@ class SettingsModal(ft.AlertDialog):
         for field, value in settings_form_values.items():
             setattr(self._app_settings, field, value)
         self._app_settings.save()
-        Event.create(type=EventType.CHANGE_SETTINGS, initiator=EventInitiator.USER, data=settings_form_values)
+        Event.create(type=EventType.CHANGE_SETTINGS, actor=EventActor.USER, data=settings_form_values)
         self.page.pop_dialog()

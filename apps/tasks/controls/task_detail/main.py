@@ -5,6 +5,7 @@ from apps.tasks.controls.task_mutate.modal import TaskMutateModal
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.tasks.models import Task
 from ui.consts import Colors, Icons, FontSize
+from ui.utils import show_snackbar
 
 
 class TaskListItem(ft.ExpansionTile):
@@ -58,7 +59,9 @@ class TaskListItem(ft.ExpansionTile):
         refresh_tasks_tab()
 
     async def _on_click_delete(self, e):
+        instance_str = str(self._instance)
         self._instance.delete_instance()
+        show_snackbar(f'{instance_str} удалена')
         refresh_tasks_tab()
 
     def get_popup_menu_items(self) -> list[ft.PopupMenuItem]:

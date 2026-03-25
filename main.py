@@ -2,10 +2,13 @@ import datetime
 
 import flet as ft
 
+from apps.app_settings.controls.modal import SettingsModal
+from apps.app_settings.controls.settings_form import SettingsForm
+from apps.app_settings.controls.view import SettingsView
 from apps.app_settings.models import AppSettings
-from apps.time_tracker.consts import EventType, EventInitiator
+from apps.events.consts import EventActor, EventType
 from apps.time_tracker.controls.view.index import ActivityTabViewControl
-from apps.time_tracker.models import Event
+from apps.events.models import Event
 from apps.tasks.controls.tasks_tab.main_container import TasksTabViewControl
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.time_tracker.models import IdleSession
@@ -19,6 +22,7 @@ from ui.consts import Icons
 
 ACTIVITY_TRACK_NAV_INDEX = 0
 TASKS_NAV_INDEX = 1
+APP_SETTINGS_INDEX = 2
 
 
 class DesktopApp:
@@ -28,6 +32,7 @@ class DesktopApp:
 
         self._activity_tab_control: ActivityTabViewControl | None = None
         self._tasks_tab_control: TasksTabViewControl | None = None
+        self._app_settings_control: SettingsView | None = None
 
         self._selected_nav_index: int = ACTIVITY_TRACK_NAV_INDEX
 
@@ -53,11 +58,15 @@ class DesktopApp:
         self._tasks_tab_control = TasksTabViewControl(
             visible=self._selected_nav_index == TASKS_NAV_INDEX,
         )
+        self._app_settings_control = SettingsView(
+            visible=self._selected_nav_index == APP_SETTINGS_INDEX,
+        )
 
         page.appbar = AppBar(title='Трекер активности')
 
         page.add(self._activity_tab_control)
         page.add(self._tasks_tab_control)
+        page.add(self._app_settings_control)
 
         nav_bar = ft.NavigationDrawer(
             on_change=self._on_change_navigation_drawer,
@@ -65,6 +74,7 @@ class DesktopApp:
             controls=[
                 ft.NavigationDrawerDestination(label='Трекер активности', icon=Icons.TIMER),
                 ft.NavigationDrawerDestination(label='Задачи', icon=Icons.CHECK),
+                ft.NavigationDrawerDestination(label='Настройки', icon=Icons.SETTINGS),
             ]
         )
 
@@ -84,22 +94,27 @@ class DesktopApp:
 
         if self._selected_nav_index == ACTIVITY_TRACK_NAV_INDEX:
             to_show_view = self._activity_tab_control
-            to_hide_view = self._tasks_tab_control
+            to_hide_views = [self._tasks_tab_control, self._app_settings_control]
             app_bar_title = 'Трекер активности'
-        else:
+        elif self._selected_nav_index == TASKS_NAV_INDEX:
             to_show_view = self._tasks_tab_control
-            to_hide_view = self._activity_tab_control
+            to_hide_views = [self._activity_tab_control, self._app_settings_control]
             app_bar_title = 'Задачи'
+        else:
+            to_show_view = self._app_settings_control
+            to_hide_views = [self._activity_tab_control, self._tasks_tab_control]
+            app_bar_title = 'Настройки'
 
         to_show_view.visible = True
-        to_hide_view.visible = False
+        for to_hide_view in to_hide_views:
+            to_hide_view.visible = False
 
         self.page.appbar.title = app_bar_title
 
         await self.page.close_drawer()
 
     def on_close_page(self):
-        Event.create(type=EventType.CLOSE_APP, initiator=EventInitiator.USER)
+        Event.create(type=EventType.CLOSE_APP, actor=EventActor.USER)
 
         now = datetime.datetime.now(datetime.UTC)
 
@@ -121,7 +136,7 @@ async def main(page: ft.Page):
     container.session_store = SessionStore(page)
     container.app_settings = AppSettings.get_solo()
 
-    Event.create(type=EventType.OPEN_APP, initiator=EventInitiator.USER)
+    Event.create(type=EventType.OPEN_APP, actor=EventActor.USER)
     app = DesktopApp(page)
     app.init()
 

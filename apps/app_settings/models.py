@@ -4,8 +4,8 @@ import pytz
 from peewee import IntegerField, BooleanField, SmallIntegerField, CharField
 from playsound3 import playsound
 
-from apps.time_tracker.consts import EventType, EventInitiator
-from apps.time_tracker.models import Event
+from apps.events.consts import EventActor, EventType
+from apps.events.models import Event
 from core.consts import AUDIO_DIR
 from core.models import BaseModel
 
@@ -57,7 +57,7 @@ class AppSettings(BaseModel):
             else:
                 Event.create(
                     type=EventType.WRONG_CONFIG,
-                    initiator=EventInitiator.SYSTEM,
+                    actor=EventActor.SYSTEM,
                     data={
                         'task_deadline_sound': 'File not specified',
                     }
@@ -70,7 +70,7 @@ class AppSettings(BaseModel):
             else:
                 Event.create(
                     type=EventType.WRONG_CONFIG,
-                    initiator=EventInitiator.SYSTEM,
+                    actor=EventActor.SYSTEM,
                     data={
                         'idle_start_sound': 'File not specified',
                     }
@@ -85,7 +85,7 @@ class AppSettings(BaseModel):
             else:
                 Event.create(
                     type=EventType.FILE_NOT_FOUND,
-                    initiator=EventInitiator.SYSTEM,
+                    actor=EventActor.SYSTEM,
                     data={
                         'file': file,
                     }

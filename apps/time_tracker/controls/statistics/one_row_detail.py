@@ -3,6 +3,7 @@ import time
 import flet as ft
 
 from core.di import container
+from core.settings import TIME_WITH_SECONDS_FORMAT
 from ui.consts import Colors, Icons, FontWeight
 
 
@@ -67,7 +68,7 @@ class StatisticsOneRow(ft.Container):
 
     def build_duration_text(self):
         struct_time = time.gmtime(self.duration)
-        txt = time.strftime("%H:%M:%S", struct_time)
+        txt = time.strftime(TIME_WITH_SECONDS_FORMAT, struct_time)
 
         self._duration_text = ft.Text(
             value=txt,

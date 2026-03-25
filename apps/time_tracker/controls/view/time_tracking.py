@@ -3,18 +3,21 @@ import datetime
 
 import flet as ft
 
-from apps.notifications.services.notification_sender import NotificationSender
+from apps.events.models import Event
+from apps.events.consts import EventActor, EventType
 from apps.time_tracker.controls.statistics.index import ActivityStatisticsView
 from apps.time_tracker.controls.view.opened_windows import OpenedWindowsComponent
-from apps.time_tracker.controls.view.total_time import PomodoroTimerComponent, TotalTimeComponent
-from apps.time_tracker.models import WindowSession, IdleSession
+from apps.time_tracker.controls.view.pomodoro import PomodoroComponent
+from apps.time_tracker.controls.view.total_time import TotalTimerComponent
+from apps.time_tracker.models import IdleSession, WindowSession
 from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.di import container
-from ui.base.components.session_stored_component import SessionStoredComponent
+from core.mixins import SessionStoredComponent
 from ui.components.timer import TimerComponent
-from ui.consts import Icons, Colors, FontSize
+from ui.consts import Colors, FontSize, Icons
+from ui.utils import show_snackbar
 
 
 class TimeTrackingComponent(ft.Column, SessionStoredComponent):
@@ -27,7 +30,8 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
         self._start_button: ft.IconButton | None = None
         self._stop_button: ft.IconButton | None = None
 
-        self._total_time_component: PomodoroTimerComponent | TotalTimeComponent | None = None
+        self._total_time_component: TotalTimerComponent | None = None
+        self._pomodoro_component: PomodoroComponent | None = None
 
         self._main_row: ft.Row | None = None
 
@@ -77,62 +81,41 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
         self.rebuild_tracking_status_text()
         self.window_session_ctrl = ft.Column(visible=False)
         self.idle_session_ctrl = ft.Column(visible=False)
+        self._total_time_component = TotalTimerComponent(visible=False)
+        self._pomodoro_component = PomodoroComponent(visible=self._app_settings.enable_pomodoro)
 
         self._main_row = ft.Row(
             controls=[
                 self._start_button,
                 self._stop_button,
                 self._tracking_status,
+                self._total_time_component,
             ]
         )
 
         self.controls = [
             self._main_row,
+            self._pomodoro_component,
             self.window_session_ctrl,
             self.idle_session_ctrl,
         ]
 
         super().build()
 
-    async def start_resting(self, show_popup=True) -> None:
-        if show_popup:
-            NotificationSender().send_info('Время отдохнуть')
-
-        if self._total_time_component and self._total_time_component in self._main_row.controls:
-            self._main_row.controls.remove(self._total_time_component)
-
-        self._total_time_component = PomodoroTimerComponent(
-            label_text='Отдыхайте: ',
-            on_end=self.start_working(),
-        )
-        self._main_row.controls.append(self._total_time_component)
-
-        self.update()
-
-    async def start_working(self, show_popup=True) -> None:
-        if show_popup:
-            NotificationSender().send_info('Пора работать')
-
-        if self._total_time_component and self._total_time_component in self._main_row.controls:
-            self._main_row.controls.remove(self._total_time_component)
-
-        self._total_time_component = PomodoroTimerComponent(
-            label_text='Сосредоточьтесь: ',
-            on_end=self.start_resting()
-        )
-        self._main_row.controls.append(self._total_time_component)
-
-        self.update()
-
     async def start_total_timer(self):
+        self._delete_total_time_component()
+        self._main_row.controls.append(self._total_time_component)
+        self.update()
+
+    async def stop_total_timer(self):
+        self._delete_total_time_component()
+        self.update()
+
+    def _delete_total_time_component(self):
         if self._total_time_component and self._total_time_component in self._main_row.controls:
             self._main_row.controls.remove(self._total_time_component)
 
-        self._total_time_component = TotalTimeComponent()
-
-        self._main_row.controls.append(self._total_time_component)
-
-        self.update()
+        self._total_time_component = TotalTimerComponent()
 
     def rebuild_tracking_status_text(self):
         title = self.get_status_title()
@@ -155,11 +138,20 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
 
     async def start_tracking(self):
         self._store.set('is_activity_tracker_enabled', True)
+        now = datetime.datetime.now(datetime.UTC)
+
+        Event.create(
+            ts=now,
+            type=EventType.START_TRACKING,
+            actor=EventActor.USER,
+        )
+
+        show_snackbar('Запущено отслеживание активности')
 
         if self.opened_windows_component.is_active_windows_showed:
             # Уже есть данные о текущем открытом окне, записываем информацию в БД
             if self._current_window_data:
-                self.switch_window_session(self._current_window_data, datetime.datetime.now(datetime.UTC))
+                self.switch_window_session(self._current_window_data, now)
         else:
             await self.tracker.start()
 
@@ -167,9 +159,18 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
 
     async def stop_tracking(self):
         now = datetime.datetime.now(datetime.UTC)
+
         self.stop_window_session(now)
         self.stop_idle_session(now)
-        self._store.set('is_activity_tracker_enabled', False)
+        if self._store.get('is_activity_tracker_enabled'):
+            self._store.set('is_activity_tracker_enabled', False)
+            Event.create(
+                ts=now,
+                type=EventType.STOP_TRACKING,
+                actor=EventActor.USER,
+            )
+            show_snackbar('Отслеживание активности остановлено')
+
         await self._toggle_affected_on_start_stop()
 
     async def _on_click_stop(self, e):
@@ -190,15 +191,17 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
         if is_start:
             self.activity_statistics_component.toggle_show_statistics(force_show=True)
 
-            if self._app_settings.enable_pomodoro:
-                await self.start_working(show_popup=False)
-            else:
-                await self.start_total_timer()
+            await self.start_total_timer()
+
+            # if self._app_settings.enable_pomodoro:
+            #     self._pomodoro_component.start()
 
             self._autorefresh_statistics_task = asyncio.create_task(self._run_auto_refresh_statistics())
         else:
-            if self._total_time_component and self._total_time_component in self._main_row.controls:
-                self._main_row.controls.remove(self._total_time_component)
+            await self.stop_total_timer()
+
+            # if self._app_settings.enable_pomodoro:
+            #     self._pomodoro_component.stop()
 
             if self._autorefresh_statistics_task:
                 await self._autorefresh_statistics_task

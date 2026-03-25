@@ -12,10 +12,16 @@ class TimerComponent(ft.Text):
     """
     page: ft.Page
 
-    def __init__(self, seconds: int = 0, **kwargs):
+    def __init__(
+            self,
+            seconds: int = 0,
+            on_update_value: Coroutine[int, None, None] | Callable[[int], None] = None,
+            **kwargs,
+    ):
         super().__init__(**kwargs)
         self.running = False
         self.seconds = seconds
+        self.on_update_value = on_update_value
 
     def did_mount(self):
         self.running = True
@@ -27,6 +33,8 @@ class TimerComponent(ft.Text):
     def update_value(self):
         self.value = str(datetime.timedelta(seconds=self.seconds))
         self.update()
+        if self.on_update_value:
+            self.on_update_value(self.seconds)
 
     async def update_timer(self):
         while self.running:
@@ -43,10 +51,11 @@ class CountdownComponent(TimerComponent):
     def __init__(
             self,
             seconds: int = 0,
+            on_update_value: Coroutine[int, None, None] | Callable[[int], None] = None,
             on_end: Coroutine[None, None, None] | Callable[[], None] = None,
             **kwargs,
     ):
-        super().__init__(seconds=seconds, **kwargs)
+        super().__init__(seconds=seconds, on_update_value=on_update_value, **kwargs)
         self.on_end = on_end
 
     async def update_timer(self):

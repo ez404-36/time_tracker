@@ -1,7 +1,7 @@
 import flet as ft
 
 from core.di import container
-from ui.base.components.session_stored_component import SessionStoredComponent
+from core.mixins import SessionStoredComponent
 
 
 class TaskActiveTab(ft.Tab, SessionStoredComponent):

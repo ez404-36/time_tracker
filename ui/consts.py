@@ -28,6 +28,7 @@ class Icons:
     SETTINGS = ft.Icons.SETTINGS_OUTLINED
     START = ft.Icons.PLAY_CIRCLE_OUTLINE
     STOP = ft.Icons.PAUSE_CIRCLE_OUTLINE
+    PAUSE = ft.Icons.PAUSE_CIRCLE_OUTLINE
     SAVE = ft.Icons.SAVE
     PLAY_ARROW = ft.Icons.PLAY_ARROW
     CANCEL = ft.Icons.CANCEL

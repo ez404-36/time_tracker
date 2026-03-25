@@ -8,6 +8,8 @@ from playsound3 import playsound
 from apps.app_settings.models import AppSettings
 from apps.app_settings.utils import get_available_notification_sounds
 from core.consts import AUDIO_DIR
+from core.di import container
+from ui.base.components.containers import BorderedContainer
 from ui.consts import Colors, Icons
 
 
@@ -24,24 +26,13 @@ class SettingsFormData:
     client_timezone: str
 
 
-class SettingsForm(ft.Container):
+class SettingsForm(BorderedContainer):
     """
     Форма изменения настроек
     """
     content: ft.ListView
 
     def __init__(self, app_settings: AppSettings, **kwargs):
-        kwargs.update(
-            dict(
-                padding=10,
-                border=ft.Border.all(1, Colors.GREY),
-                border_radius=10,
-                bgcolor=Colors.WHITE,
-                width=500,
-                height=400,
-            )
-        )
-
         super().__init__(**kwargs)
         self._app_settings = app_settings
 
@@ -160,7 +151,7 @@ class SettingsForm(ft.Container):
 
     def _build_enable_task_deadline_sound_switch(self):
         self._enable_task_deadline_sound_switch = ft.Switch(
-            label='Включить звуковые уведомления для задач',
+            label='Звуковые уведомления для задач',
             value=self._app_settings.enable_task_deadline_sound_notifications,
             on_change=self._on_change_task_deadline_sound_switch,
         )
@@ -172,7 +163,7 @@ class SettingsForm(ft.Container):
 
     def _build_enable_idle_start_sound_switch(self):
         self._enable_idle_start_sound_switch = ft.Switch(
-            label='Включить звуковые уведомления о начале бездействия',
+            label='Звуковые уведомления о начале бездействия',
             value=self._app_settings.enable_idle_start_sound_notifications,
             on_change=self._on_change_idle_start_sound_switch,
         )

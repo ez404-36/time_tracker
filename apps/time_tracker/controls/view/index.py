@@ -5,7 +5,7 @@ from apps.time_tracker.controls.view.opened_windows import OpenedWindowsComponen
 from apps.time_tracker.controls.view.time_tracking import TimeTrackingComponent
 from apps.time_tracker.services.activity_tracker import ActivityTracker
 from core.di import container
-from ui.base.components.session_stored_component import SessionStoredComponent
+from core.mixins import SessionStoredComponent
 
 
 class ActivityTabViewControl(ft.Container, SessionStoredComponent):

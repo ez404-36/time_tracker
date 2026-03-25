@@ -5,6 +5,7 @@ from typing import Any, Collection
 import flet as ft
 
 from apps.tasks.models import Task
+from core.settings import DATE_FORMAT, TIME_FORMAT
 from core.utils.date_utils import to_current_tz
 
 
@@ -73,8 +74,11 @@ class TaskMutateForm(ft.Container):
             ]
         )
 
-    def collect_form_fields(self) -> TaskFormData:
+    def collect_form_fields(self) -> TaskFormData | None:
         parent_id = self._parent_dropdown.value
+
+        if not self.validate():
+            return None
 
         return TaskFormData(
             title=self._title_field.value,
@@ -83,6 +87,17 @@ class TaskMutateForm(ft.Container):
             deadline_date=self._new_deadline_date,
             deadline_time=self._new_deadline_time,
         )
+
+
+    def validate(self) -> bool:
+        has_errors = False
+
+        if not self._title_field.value:
+            has_errors = True
+            self._title_field.error = 'Обязательное поле'
+
+        self.update()
+        return not has_errors
 
     def _build_title_field(self):
         self._title_field = ft.TextField(
@@ -155,7 +170,7 @@ class TaskMutateForm(ft.Container):
         value: datetime.date = to_current_tz(e.control.value).date()
         self._new_deadline_date = value
         if edit_date_button := self._edit_date_button:
-            edit_date_button.content = f'Дата: ({value.strftime("%d.%m.%Y")})'
+            edit_date_button.content = f'Дата: ({value.strftime(DATE_FORMAT)})'
             edit_date_button.update()
 
     def _build_edit_time_button(self):
@@ -181,5 +196,5 @@ class TaskMutateForm(ft.Container):
         value = e.control.value
         self._new_deadline_time = value
         if edit_time_button := self._edit_time_button:
-            edit_time_button.content = f'Время: ({value.strftime('%H:%M')})'
+            edit_time_button.content = f'Время: ({value.strftime(TIME_FORMAT)})'
             edit_time_button.update()

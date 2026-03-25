@@ -2,6 +2,8 @@ import asyncio
 import datetime
 
 from apps.app_settings.models import AppSettings
+from apps.events.models import Event
+from apps.events.consts import EventActor, EventType
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.services.window_control.base import WindowControl
 from core.di import container
@@ -77,14 +79,31 @@ class ActivityTracker:
 
     def _start_idle(self, ts: datetime.datetime):
         self.is_idle = True
+        Event.create(
+            type=EventType.DETECT_IDLE,
+            actor=EventActor.SYSTEM,
+            ts=ts,
+        )
         self.time_tracking_component.create_idle_session(ts)
 
     def _end_idle(self, ts: datetime.datetime):
         self.is_idle = False
+        Event.create(
+            type=EventType.END_IDLE,
+            actor=EventActor.SYSTEM,
+            ts=ts,
+        )
         self.time_tracking_component.stop_idle_session(ts)
 
     def _switch_window(self, window: WindowData, ts: datetime.datetime):
         self.current_window = window
+
+        Event.create(
+            type=EventType.SWITCH_WINDOW,
+            actor=EventActor.USER,
+            data=window,
+            ts=ts,
+        )
 
         self.time_tracking_component.switch_window_session(window, ts)
 
