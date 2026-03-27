@@ -8,9 +8,8 @@ from playsound3 import playsound
 from apps.app_settings.models import AppSettings
 from apps.app_settings.utils import get_available_notification_sounds
 from core.consts import AUDIO_DIR
-from core.di import container
 from ui.base.components.containers import BorderedContainer
-from ui.consts import Colors, Icons
+from ui.consts import Icons
 
 
 @dataclass(frozen=True)

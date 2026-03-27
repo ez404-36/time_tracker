@@ -1,12 +1,8 @@
 from functools import lru_cache
 
 import pytz
-from peewee import IntegerField, BooleanField, SmallIntegerField, CharField
-from playsound3 import playsound
+from peewee import BooleanField, CharField, IntegerField, SmallIntegerField
 
-from apps.events.consts import EventActor, EventType
-from apps.events.models import Event
-from core.consts import AUDIO_DIR
 from core.models import BaseModel
 
 
@@ -49,47 +45,6 @@ class AppSettings(BaseModel):
 
     def get_tz(self) -> pytz.BaseTzInfo:
         return pytz.timezone(self.client_timezone)
-
-    def play_task_deadline_sound(self):
-        if self.enable_task_deadline_sound_notifications:
-            if self.task_deadline_sound:
-                self._play_sound(self.task_deadline_sound)
-            else:
-                Event.create(
-                    type=EventType.WRONG_CONFIG,
-                    actor=EventActor.SYSTEM,
-                    data={
-                        'task_deadline_sound': 'File not specified',
-                    }
-                )
-
-    def play_idle_start_sound(self):
-        if self.enable_idle_start_sound_notifications:
-            if self.idle_start_sound:
-                self._play_sound(self.idle_start_sound)
-            else:
-                Event.create(
-                    type=EventType.WRONG_CONFIG,
-                    actor=EventActor.SYSTEM,
-                    data={
-                        'idle_start_sound': 'File not specified',
-                    }
-                )
-
-    @staticmethod
-    def _play_sound(file_name: str | None):
-        if file_name:
-            file = AUDIO_DIR / file_name
-            if file.exists():
-                playsound(file)
-            else:
-                Event.create(
-                    type=EventType.FILE_NOT_FOUND,
-                    actor=EventActor.SYSTEM,
-                    data={
-                        'file': file,
-                    }
-                )
 
 
 def get_settings() -> AppSettings:

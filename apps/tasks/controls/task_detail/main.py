@@ -4,8 +4,9 @@ from apps.tasks.controls.task_detail.task_detail_title import TaskDetailTitle
 from apps.tasks.controls.task_mutate.modal import TaskMutateModal
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.tasks.models import Task
-from ui.consts import Colors, Icons, FontSize
-from ui.utils import show_snackbar
+from core.di import container
+from core.system_events.types import SystemEvent, SystemEventTaskAction
+from ui.consts import Colors, FontSize, Icons
 
 
 class TaskListItem(ft.ExpansionTile):
@@ -20,6 +21,8 @@ class TaskListItem(ft.ExpansionTile):
 
         super().__init__(**kwargs)
         self._instance = instance
+
+        self._event_bus = container.event_bus
 
     def build(self):
         is_done = self._instance.is_done
@@ -61,7 +64,16 @@ class TaskListItem(ft.ExpansionTile):
     async def _on_click_delete(self, e):
         instance_str = str(self._instance)
         self._instance.delete_instance()
-        show_snackbar(f'{instance_str} удалена')
+
+        self._event_bus.publish(
+            SystemEvent(
+                type='tasks.delete',
+                data=SystemEventTaskAction(
+                    task=instance_str,
+                )
+            )
+        )
+
         refresh_tasks_tab()
 
     def get_popup_menu_items(self) -> list[ft.PopupMenuItem]:

@@ -3,9 +3,8 @@ from dataclasses import asdict
 import flet as ft
 
 from apps.app_settings.controls.settings_form import SettingsForm
-from apps.app_settings.models import AppSettings
-from apps.events.consts import EventActor, EventType
-from apps.events.models import Event
+from core.di import container
+from core.system_events.types import SystemEvent, SystemEventChangeSettingsData
 from ui.base.components.buttons import CancelButton, SaveButton
 
 
@@ -15,7 +14,8 @@ class SettingsModal(ft.AlertDialog):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self._app_settings = AppSettings.get_solo()
+        self._app_settings = container.app_settings
+        self._event_bus = container.event_bus
 
     def build(self):
         self.modal = True
@@ -30,8 +30,19 @@ class SettingsModal(ft.AlertDialog):
 
     def _save_settings(self, e):
         settings_form_values = asdict(self.content.collect_form_fields())
+
         for field, value in settings_form_values.items():
             setattr(self._app_settings, field, value)
+
         self._app_settings.save()
-        Event.create(type=EventType.CHANGE_SETTINGS, actor=EventActor.USER, data=settings_form_values)
+
+        self._event_bus.publish(
+            SystemEvent(
+                type='app.change_settings',
+                data=SystemEventChangeSettingsData(
+                    values=settings_form_values
+                )
+            )
+        )
+
         self.page.pop_dialog()

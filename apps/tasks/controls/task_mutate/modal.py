@@ -5,6 +5,8 @@ import flet as ft
 from apps.tasks.controls.task_mutate.form import TaskMutateForm
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.tasks.models import Task
+from core.di import container
+from core.system_events.types import SystemEvent, SystemEventTaskAction
 from ui.base.components.buttons import CancelButton, SaveButton
 from ui.utils import show_snackbar
 
@@ -37,6 +39,7 @@ class TaskMutateModal(ft.AlertDialog):
         super().__init__(**kwargs)
         self._instance = instance
         self._parent_instance = parent_instance
+        self._event_bus = container.event_bus
 
     def build(self):
         self.content = TaskMutateForm(self._instance, self._parent_instance)
@@ -59,13 +62,25 @@ class TaskMutateModal(ft.AlertDialog):
             for field, value in form_values.items():
                 setattr(self._instance, field, value)
             self._instance.save()
-            snackbar_message = f'{self._instance} обновлена'
+
+            self._event_bus.publish(
+                event=SystemEvent(
+                    type='tasks.update',
+                    data=SystemEventTaskAction(
+                        task=str(self._instance)
+                    )
+                )
+            )
         else:
             new_task = Task.create(**form_values)
-            snackbar_message = f'Создана {new_task}'
+            self._event_bus.publish(
+                event=SystemEvent(
+                    type='tasks.add',
+                    data=SystemEventTaskAction(
+                        task=str(new_task)
+                    )
+                )
+            )
 
         refresh_tasks_tab()
         self.page.pop_dialog()
-
-        if snackbar_message:
-            show_snackbar(snackbar_message)

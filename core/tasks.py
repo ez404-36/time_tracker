@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 
-from apps.app_settings.models import AppSettings
+from apps.notifications.services.audio_notifications import AudioNotificationService
 from apps.notifications.services.notification_sender import NotificationSender
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.tasks.models import Task
@@ -9,16 +9,16 @@ from apps.tasks.services.deadline_checker import TaskDeadlineChecker
 
 
 async def check_tasks_deadline():
-    settings = AppSettings.get_solo()
     checker = TaskDeadlineChecker()
     notification_sender = NotificationSender()
+    audio_notification_sender = AudioNotificationService()
 
     while True:
         now = datetime.datetime.now()
         expired_tasks = await checker.get_expired_tasks(now)
 
         if expired_tasks:
-            settings.play_task_deadline_sound()
+            audio_notification_sender.play_task_deadline_sound()
 
             expired_at_now = []
             expired_before = []

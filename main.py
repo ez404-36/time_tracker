@@ -2,19 +2,17 @@ import datetime
 
 import flet as ft
 
-from apps.app_settings.controls.modal import SettingsModal
-from apps.app_settings.controls.settings_form import SettingsForm
 from apps.app_settings.controls.view import SettingsView
 from apps.app_settings.models import AppSettings
-from apps.events.consts import EventActor, EventType
-from apps.time_tracker.controls.view.index import ActivityTabViewControl
-from apps.events.models import Event
 from apps.tasks.controls.tasks_tab.main_container import TasksTabViewControl
 from apps.tasks.helpers import refresh_tasks_tab
+from apps.time_tracker.controls.view.index import ActivityTabViewControl
 from apps.time_tracker.models import IdleSession
 from apps.time_tracker.models import WindowSession
 from core.di import container
 from core.store import SessionStore
+from core.system_events.event_bus import EventBus
+from core.system_events.types import SystemEvent, SystemEventTimestampData
 from core.tasks import check_tasks_deadline
 from manage import migrate
 from ui.components.app_bar import AppBar
@@ -114,9 +112,14 @@ class DesktopApp:
         await self.page.close_drawer()
 
     def on_close_page(self):
-        Event.create(type=EventType.CLOSE_APP, actor=EventActor.USER)
-
         now = datetime.datetime.now(datetime.UTC)
+
+        container.event_bus.publish(
+            SystemEvent(
+                type='app.close',
+                data=SystemEventTimestampData(ts=now),
+            )
+        )
 
         window_session: WindowSession | None = self._store.get('window_session')
         if window_session:
@@ -134,9 +137,19 @@ async def main(page: ft.Page):
 
     container.page = page
     container.session_store = SessionStore(page)
+
+    event_bus = EventBus()
+
+    container.event_bus = event_bus
     container.app_settings = AppSettings.get_solo()
 
-    Event.create(type=EventType.OPEN_APP, actor=EventActor.USER)
+    event_bus.publish(
+        SystemEvent(
+            type='app.open',
+            data=SystemEventTimestampData(),
+        )
+    )
+
     app = DesktopApp(page)
     app.init()
 

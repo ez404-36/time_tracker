@@ -13,7 +13,7 @@ class EventType:
 
     ADD_TASK = 20
     UPDATE_TASK = 21
-    REMOVE_TASK = 22
+    DELETE_TASK = 22
 
     POMODORO_CHANGE_STATUS = 30
 
@@ -37,7 +37,7 @@ class EventType:
 
         (ADD_TASK, 'Добавление задачи'),
         (UPDATE_TASK, 'Изменение задачи'),
-        (REMOVE_TASK, 'Удаление задачи'),
+        (DELETE_TASK, 'Удаление задачи'),
 
         (POMODORO_CHANGE_STATUS, 'Изменение состояния таймера помодоро'),
 
