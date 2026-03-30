@@ -3,12 +3,12 @@ import flet as ft
 from apps.time_tracker.controls.statistics.index import ActivityStatisticsView
 from apps.time_tracker.controls.view.opened_windows import OpenedWindowsComponent
 from apps.time_tracker.controls.view.time_tracking import TimeTrackingComponent
+from apps.time_tracker.services.activity_tracker import ActivityTracker
 from apps.time_tracker.services.window_tracker import WindowTracker
 from core.di import container
-from core.mixins import SessionStoredComponent
 
 
-class ActivityTabViewControl(ft.Container, SessionStoredComponent):
+class ActivityTabViewControl(ft.Container):
     """Таб активности"""
 
     parent: ft.Tab
@@ -17,32 +17,28 @@ class ActivityTabViewControl(ft.Container, SessionStoredComponent):
     def __init__(self, **kwargs):
         kwargs.setdefault('padding', 20)
         super().__init__(**kwargs)
+
         self._store = container.session_store
         self._app_settings = container.app_settings
 
-        self.time_tracking_component: TimeTrackingComponent | None = None
-        self.opened_windows_component: OpenedWindowsComponent | None = None
+        self._time_tracking_component: TimeTrackingComponent | None = None
+        self._opened_windows_component: OpenedWindowsComponent | None = None
         self._statistics_view: ActivityStatisticsView | None = None
 
-        self.tracker: WindowTracker | None = None
-
-    @property
-    def is_window_tracker_enabled(self) -> bool:
-        return self._store.get_or_create('is_window_tracker_enabled', False)
-
     def build(self):
-        self.tracker = WindowTracker()
-        self._store.set('window_tracker', self.tracker)
 
-        self.time_tracking_component = TimeTrackingComponent()
-        self.opened_windows_component = OpenedWindowsComponent()
+        self._store.set('window_tracker', WindowTracker())
+        self._store.set('idle_tracker', ActivityTracker())
+
+        self._time_tracking_component = TimeTrackingComponent()
+        self._opened_windows_component = OpenedWindowsComponent()
 
         time_tracking_column = ft.Column(
             width=600,
             controls=[
-                self.time_tracking_component,
+                self._time_tracking_component,
                 ft.Divider(),
-                self.opened_windows_component,
+                self._opened_windows_component,
             ]
         )
 

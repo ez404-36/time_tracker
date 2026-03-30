@@ -7,8 +7,10 @@ import flet as ft
 from peewee import fn
 
 from apps.time_tracker.models import WindowSession, IdleSession
+from core.di import container
 from core.mixins import SessionStoredComponent
 from core.settings import DATE_FORMAT
+from core.system_events.types import SystemEventSwitchWindowData
 from core.utils.date_utils import to_current_tz
 from ui.consts import Icons, FontWeight
 
@@ -25,6 +27,7 @@ class ActivityStatisticsView(ft.Column, SessionStoredComponent):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._event_bus = container.event_bus
 
         self._date_filter_btn: ft.TextButton | None = None
         self._date_filter_modal: ft.DatePicker | None = None
@@ -37,6 +40,8 @@ class ActivityStatisticsView(ft.Column, SessionStoredComponent):
         self._is_showed = False
         self._window_sessions: list[WindowSession] = []
         self._idle_sessions: list[IdleSession] = []
+
+        self._event_bus.subscribe('window_tracker.switch_window', self.on_switch_window_event)
 
     def build(self):
         self._build_show_button()
@@ -158,6 +163,9 @@ class ActivityStatisticsView(ft.Column, SessionStoredComponent):
 
     def refresh_statistics(self):
         self._rebuild_app_statistics(with_update=True)
+
+    def on_switch_window_event(self, data: SystemEventSwitchWindowData):
+        self.refresh_statistics()
 
     def toggle_show_statistics(self, force_show=False):
         self._is_showed = not self._is_showed or force_show

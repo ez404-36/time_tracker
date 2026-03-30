@@ -24,21 +24,21 @@ class OpenedWindowsComponent(ft.Column, SessionStoredComponent):
 
         self._show_opened_windows: ft.Checkbox | None = None
         self._opened_windows_text: ft.Text | None = None
-        self.all_window_sessions_wrap: ft.Container | None = None
-        self.all_window_sessions: ft.ListView | None = None
+        self._all_window_sessions_wrap: ft.Container | None = None
+        self._all_window_sessions: ft.ListView | None = None
 
-        self._event_bus.subscribe('tracker.change_opened_windows', self.update_all_active_window_sessions)
+        self._event_bus.subscribe('window_tracker.change_opened_windows', self.update_all_active_window_sessions)
 
     def build(self):
         self.build_show_opened_windows_checkbox()
         self._opened_windows_text = ft.Text('Открытые окна', visible=False, size=FontSize.H5, weight=FontWeight.W_400)
 
-        self.all_window_sessions = ft.ListView(
+        self._all_window_sessions = ft.ListView(
             expand=True,
         )
 
-        self.all_window_sessions_wrap = BorderedContainer(
-            content=self.all_window_sessions,
+        self._all_window_sessions_wrap = BorderedContainer(
+            content=self._all_window_sessions,
             padding=10,
             visible=False,
         )
@@ -46,7 +46,7 @@ class OpenedWindowsComponent(ft.Column, SessionStoredComponent):
         self.controls = [
             self._show_opened_windows,
             self._opened_windows_text,
-            self.all_window_sessions_wrap,
+            self._all_window_sessions_wrap,
         ]
         super().build()
 
@@ -60,7 +60,7 @@ class OpenedWindowsComponent(ft.Column, SessionStoredComponent):
         value: bool = e.control.value
 
         self._opened_windows_text.visible = value
-        self.all_window_sessions_wrap.visible = value
+        self._all_window_sessions_wrap.visible = value
 
         if not self._store.get('is_window_tracker_enabled'):
             # Если отслеживание активности не включено, включим трекер вручную
@@ -77,7 +77,7 @@ class OpenedWindowsComponent(ft.Column, SessionStoredComponent):
         active_windows = data.active_windows
 
         self._opened_windows_text.value = f'Открытые окна ({len(active_windows)})'
-        all_windows_component = self.all_window_sessions
+        all_windows_component = self._all_window_sessions
         all_windows_component.controls.clear()
 
         for active_window in active_windows:

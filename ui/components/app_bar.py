@@ -19,7 +19,7 @@ class AppBar(ft.AppBar):
             ft.IconButton(
                 icon=Icons.SETTINGS,
                 tooltip='Настройки',
-                on_click=lambda e: self.page.show_dialog(SettingsModal()),
+                on_click=lambda e: self.page.show_dialog(SettingsModal(mode='all')),
             )
         ]
 

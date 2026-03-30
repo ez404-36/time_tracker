@@ -23,6 +23,7 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
         self._tracking_status: ft.Text | None = None
         self._start_button: ft.IconButton | None = None
         self._stop_button: ft.IconButton | None = None
+        self._tracking_config_button: ft.IconButton | None = None
 
         self._total_time_component: TotalTimerComponent | None = None
         self._pomodoro_component: PomodoroComponent | None = None
@@ -66,6 +67,15 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
             on_click=self._on_click_stop,
             tooltip='Выключить',
         )
+        self._tracking_config_button = ft.IconButton(
+            icon=ft.Icon(
+                icon=Icons.SETTINGS,
+                color=Colors.BLUE_LIGHT,
+            ),
+            visible=True,
+            # on_click=lambda e: self.page.show_dialog(),
+            tooltip='Параметры контроля активности',
+        )
         self.rebuild_tracking_status_text()
         self.window_session_component = CurrentWindowComponent(visible=False)
         self.idle_session_ctrl = ft.Column(visible=False)
@@ -76,14 +86,19 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
             controls=[
                 self._start_button,
                 self._stop_button,
+                self._tracking_config_button,
                 self._tracking_status,
                 self._total_time_component,
             ]
         )
 
         self.controls = [
-            self._main_row,
-            self._pomodoro_component,
+            ft.Row(
+                controls=[
+                    self._main_row,
+                    self._pomodoro_component,
+                ]
+            ),
             self.window_session_component,
             self.idle_session_ctrl,
         ]

@@ -136,13 +136,12 @@ class DesktopApp:
 async def main(page: ft.Page):
     migrate(None)
 
-    container.page = page
-    container.session_store = SessionStore(page)
-
     event_bus = EventBus()
 
-    container.event_bus = event_bus
+    container.page = page
     container.app_settings = AppSettings.get_solo()
+    container.event_bus = event_bus
+    container.session_store = SessionStore(page)
 
     EventsSubscriber()
 

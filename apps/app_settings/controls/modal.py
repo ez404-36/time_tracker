@@ -3,17 +3,23 @@ from dataclasses import asdict
 import flet as ft
 
 from apps.app_settings.controls.settings_form import SettingsForm
+from apps.app_settings.controls.types import SettingsFormMode
 from core.di import container
 from core.system_events.types import SystemEvent, SystemEventChangeSettingsData
 from ui.base.components.buttons import CancelButton, SaveButton
 
 
 class SettingsModal(ft.AlertDialog):
+    """
+    Модальное окно изменения настроек приложения
+    """
+
     content: SettingsForm
 
-    def __init__(self, **kwargs):
+    def __init__(self, mode: SettingsFormMode, **kwargs):
         super().__init__(**kwargs)
 
+        self._mode = mode
         self._app_settings = container.app_settings
         self._event_bus = container.event_bus
 
@@ -22,7 +28,7 @@ class SettingsModal(ft.AlertDialog):
         self.adaptive = True
         self.title = 'Настройки'
 
-        self.content = SettingsForm(self._app_settings, padding=10)
+        self.content = SettingsForm(padding=10, mode=self._mode)
         self.actions = [
             CancelButton(on_click=lambda e: self.page.pop_dialog()),
             SaveButton(on_click=self._save_settings),

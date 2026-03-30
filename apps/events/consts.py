@@ -3,19 +3,22 @@ class EventType:
     OPEN_APP = 1
     CLOSE_APP = 2
     CHANGE_SETTINGS = 3
+    UPDATE_PERSISTENT_STORE = 4
 
-    SWITCH_WINDOW = 4
-    DETECT_IDLE = 5
-    END_IDLE = 6
+    WINDOW_TRACKER_START = 10
+    WINDOW_TRACKER_STOP = 11
+    WINDOW_TRACKER_SWITCH_WINDOW = 12
 
-    START_TRACKING = 10
-    STOP_TRACKING = 11
+    ACTIVITY_TRACKING_START = 20
+    ACTIVITY_TRACKING_STOP = 21
+    ACTIVITY_TRACKING_DETECT_IDLE = 22
+    ACTIVITY_TRACKING_END_IDLE = 23
 
-    ADD_TASK = 20
-    UPDATE_TASK = 21
-    DELETE_TASK = 22
+    ADD_TASK = 30
+    DELETE_TASK = 31
+    UPDATE_TASK = 32
 
-    POMODORO_CHANGE_STATUS = 30
+    POMODORO_CHANGE_STATUS = 40
 
     # Errors
     WRONG_CONFIG = 100
@@ -28,12 +31,14 @@ class EventType:
         (CLOSE_APP, 'Закрытие приложения'),
         (CHANGE_SETTINGS, 'Изменение настроек'),
 
-        (SWITCH_WINDOW, 'Изменение активного окна'),
-        (DETECT_IDLE, 'Обнаружение бездействия'),
-        (END_IDLE, 'Окончание бездействия'),
+        (WINDOW_TRACKER_START, 'Запуск отслеживания активных окон'),
+        (WINDOW_TRACKER_STOP, 'Окончание отслеживания активных окон'),
+        (WINDOW_TRACKER_SWITCH_WINDOW, 'Изменение активного окна'),
 
-        (START_TRACKING, 'Запуск отслеживания активности'),
-        (STOP_TRACKING, 'Окончание отслеживания активности'),
+        (ACTIVITY_TRACKING_START, 'Запуск отслеживания активности'),
+        (ACTIVITY_TRACKING_STOP, 'Окончание отслеживания активности'),
+        (ACTIVITY_TRACKING_DETECT_IDLE, 'Обнаружение бездействия'),
+        (ACTIVITY_TRACKING_END_IDLE, 'Окончание бездействия'),
 
         (ADD_TASK, 'Добавление задачи'),
         (UPDATE_TASK, 'Изменение задачи'),

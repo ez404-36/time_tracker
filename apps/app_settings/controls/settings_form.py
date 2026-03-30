@@ -5,9 +5,10 @@ import flet as ft
 import pytz
 from playsound3 import playsound
 
-from apps.app_settings.models import AppSettings
+from apps.app_settings.controls.types import SettingsFormMode
 from apps.app_settings.utils import get_available_notification_sounds
 from core.consts import AUDIO_DIR
+from core.di import container
 from ui.base.components.containers import BorderedContainer
 from ui.consts import Icons
 
@@ -31,9 +32,10 @@ class SettingsForm(BorderedContainer):
     """
     content: ft.ListView
 
-    def __init__(self, app_settings: AppSettings, **kwargs):
+    def __init__(self, mode: SettingsFormMode, **kwargs):
         super().__init__(**kwargs)
-        self._app_settings = app_settings
+        self._mode = mode
+        self._app_settings = container.app_settings
 
         self._idle_threshold: ft.TextField | None = None
 

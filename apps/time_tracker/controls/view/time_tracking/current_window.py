@@ -1,16 +1,12 @@
-import datetime
-
 import flet as ft
 
-from apps.notifications.services.audio_notifications import AudioNotificationService
 from apps.time_tracker.models import IdleSession, WindowSession
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.di import container
-from core.system_events.types import SystemEventTimestampData, SystemEventSwitchWindowData
+from core.system_events.types import SystemEventSwitchWindowData, SystemEventTimestampData
 from ui.components.timer import TimerComponent
 from ui.consts import Colors
-from ui.utils import show_snackbar
 
 
 class CurrentWindowComponent(ft.Column):
@@ -20,12 +16,12 @@ class CurrentWindowComponent(ft.Column):
         self._app_settings = container.app_settings
         self._event_bus = container.event_bus
 
-        self._event_bus.subscribe('tracker.start', self.on_start_time_tracking)
-        self._event_bus.subscribe('tracker.switch_window', self.switch_window_session)
-        self._event_bus.subscribe('tracker.detect_idle', self.create_idle_session)
-        self._event_bus.subscribe('tracker.stop', self.stop_idle_session)
-        self._event_bus.subscribe('tracker.stop_idle', self.stop_idle_session)
-        self._event_bus.subscribe('tracker.stop', self.stop_window_session)
+        self._event_bus.subscribe('window_tracker.switch_window', self.switch_window_session)
+        self._event_bus.subscribe('activity_tracker.start', self.on_start_time_tracking)
+        self._event_bus.subscribe('activity_tracker.detect_idle', self.create_idle_session)
+        self._event_bus.subscribe('activity_tracker.stop', self.stop_idle_session)
+        self._event_bus.subscribe('activity_tracker.stop_idle', self.stop_idle_session)
+        self._event_bus.subscribe('activity_tracker.stop', self.stop_window_session)
 
         self._window_session: WindowSession | None = None
         self._idle_session: IdleSession | None = None
@@ -45,10 +41,7 @@ class CurrentWindowComponent(ft.Column):
                 )
             )
 
-    def switch_window_session(
-            self,
-            data: SystemEventSwitchWindowData,
-    ):
+    def switch_window_session(self, data: SystemEventSwitchWindowData):
         window = data.window
         ts = data.ts
 
@@ -92,10 +85,6 @@ class CurrentWindowComponent(ft.Column):
 
         self._idle_session = IdleSession.create(start_ts=data.ts)
         self._store.set('idle_session', self._idle_session)
-
-        AudioNotificationService().play_idle_start_sound()
-
-        show_snackbar(f'Обнаружено бездействие более {self._app_settings.idle_threshold} секунд')
 
         self.controls.clear()
         self.controls.extend([

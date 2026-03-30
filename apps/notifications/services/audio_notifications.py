@@ -17,7 +17,7 @@ class AudioNotificationService:
             else:
                 self._event_bus.publish(
                     event=SystemEvent(
-                        type='app.wrong_config',
+                        type='error.wrong_config',
                         data=SystemEventWrongConfigData(
                             field='task_deadline_sound',
                             error='File not specified'
@@ -32,7 +32,7 @@ class AudioNotificationService:
             else:
                 self._event_bus.publish(
                     event=SystemEvent(
-                        type='app.wrong_config',
+                        type='error.wrong_config',
                         data=SystemEventWrongConfigData(
                             field='idle_start_sound',
                             error='File not specified'
@@ -48,7 +48,7 @@ class AudioNotificationService:
             else:
                 self._event_bus.publish(
                     event=SystemEvent(
-                        type='app.wrong_config',
+                        type='error.wrong_config',
                         data=SystemEventFileNotFound(
                             file=file
                         )

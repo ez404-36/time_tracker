@@ -9,19 +9,24 @@ SystemEventType = Literal[
     'app.open',
     'app.close',
     'app.change_settings',
-    'app.wrong_config',
-    'app.file_not_found',
+    'app.update_persistent_store',
 
-    'tracker.start',
-    'tracker.stop',
-    'tracker.detect_idle',
-    'tracker.stop_idle',
-    'tracker.switch_window',
-    'tracker.change_opened_windows',
+    'activity_tracker.start',
+    'activity_tracker.stop',
+    'activity_tracker.detect_idle',
+    'activity_tracker.stop_idle',
+
+    'window_tracker.start',
+    'window_tracker.stop',
+    'window_tracker.switch_window',
+    'window_tracker.change_opened_windows',
 
     'tasks.add',
     'tasks.update',
     'tasks.delete',
+
+    'error.wrong_config',
+    'error.file_not_found',
 ]
 
 @dataclass
@@ -38,6 +43,12 @@ class SystemEventSwitchWindowData:
 @dataclass
 class SystemEventChangeActiveWindowsData:
     active_windows: list[WindowData]
+
+
+@dataclass
+class SystemEventUpdatePersistentStoreData:
+    key: str
+    value: str
 
 
 @dataclass
@@ -68,7 +79,8 @@ SystemEventData = SystemEventTimestampData \
     | SystemEventWrongConfigData \
     | SystemEventFileNotFound \
     | SystemEventTaskAction \
-    | Any
+    | SystemEventUpdatePersistentStoreData \
+    | Any   # TODO: delete this row
 
 SystemEventCallback = Callable[[SystemEventData], None]
 

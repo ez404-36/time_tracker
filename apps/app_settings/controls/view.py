@@ -11,6 +11,10 @@ from ui.utils import show_snackbar
 
 
 class SettingsView(ft.Container):
+    """
+    Таб изменения настроек
+    """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._app_settings = container.app_settings
@@ -19,7 +23,7 @@ class SettingsView(ft.Container):
 
 
     def build(self):
-        self._form = SettingsForm(self._app_settings, padding=10)
+        self._form = SettingsForm(padding=10, mode='all')
 
         self.content = ft.Column(
             controls=[

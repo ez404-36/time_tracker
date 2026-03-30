@@ -2,12 +2,18 @@ import flet as ft
 
 from apps.time_tracker.services.pomodoro import Pomodoro
 from core.di import container
+from ui.base.components.containers import BorderedContainer
 from ui.components.timer import CountdownComponent
 from ui.consts import Colors, FontSize, FontWeight, Icons
 
 
-class PomodoroComponent(ft.Row):
+class PomodoroComponent(BorderedContainer):
     def __init__(self, **kwargs):
+        kwargs.update({
+            'width': 200,
+            'height': 60,
+        })
+
         super().__init__(**kwargs)
 
         self._store = container.session_store
@@ -29,13 +35,15 @@ class PomodoroComponent(ft.Row):
         self._continue_button = self.get_continue_button(visible=False)
         self._stop_button = self.get_stop_button(visible=False)
 
-        self.controls = [
-            self._label,
-            # self._timer,
-            # self._start_button,
-            # self._pause_button,
-            # self._continue_button,
-        ]
+        self.content = ft.Row(
+            controls=[
+                self._label,
+                self._timer,
+                self._start_button,
+                self._pause_button,
+                self._continue_button,
+            ]
+        )
 
     def get_label(self) -> ft.Text:
         return ft.Text(

@@ -2,6 +2,9 @@ from typing import Any
 
 import flet as ft
 
+from core.system_events.event_bus import EventBus
+from core.system_events.types import SystemEvent, SystemEventUpdatePersistentStoreData
+
 
 class SessionStore:
     """
@@ -10,9 +13,6 @@ class SessionStore:
 
     def __init__(self, page: ft.Page):
         self._store = page.session.store
-
-    def __repr__(self) -> str:
-        return f'SessionStore({self._store.get_keys()})'
 
     def set(self, key: str, value: Any) -> None:
         self._store.set(key, value)
@@ -42,13 +42,23 @@ class PersistentStore:
     Постоянное хранилище
     """
 
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page, event_bus: EventBus):
         self._store = page.shared_preferences
+        self._event_bus = event_bus
 
-    async def set(self, key: str, value: Any) -> None:
+    async def set(self, key: str, value: str) -> None:
         await self._store.set(key, value)
+        self._event_bus.publish(
+            SystemEvent(
+                type='app.update_persistent_store',
+                data=SystemEventUpdatePersistentStoreData(
+                    key=key,
+                    value=value,
+                )
+            )
+        )
 
-    async def get(self, key: str) -> Any:
+    async def get(self, key: str) -> str | None:
         return await self._store.get(key)
 
     async def contains(self, key: str) -> bool:
@@ -57,7 +67,7 @@ class PersistentStore:
     async def remove(self, key: str) -> None:
         await self._store.remove(key)
 
-    async def get_or_create(self, key: str, default_value: Any) -> Any:
+    async def get_or_create(self, key: str, default_value: str) -> str:
         if not await self.contains(key):
             await self.set(key, default_value)
 
