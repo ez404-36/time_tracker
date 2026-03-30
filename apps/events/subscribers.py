@@ -14,6 +14,7 @@ class EventsSubscriber:
 
     def __init__(self):
         self._event_bus = container.event_bus
+        self._store = container.session_store
 
         self._event_bus.subscribe('app.open', self.on_app_open)
         self._event_bus.subscribe('app.close', self.on_app_close)

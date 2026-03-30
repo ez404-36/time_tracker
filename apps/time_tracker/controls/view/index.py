@@ -3,7 +3,7 @@ import flet as ft
 from apps.time_tracker.controls.statistics.index import ActivityStatisticsView
 from apps.time_tracker.controls.view.opened_windows import OpenedWindowsComponent
 from apps.time_tracker.controls.view.time_tracking import TimeTrackingComponent
-from apps.time_tracker.services.activity_tracker import ActivityTracker
+from apps.time_tracker.services.window_tracker import WindowTracker
 from core.di import container
 from core.mixins import SessionStoredComponent
 
@@ -24,15 +24,15 @@ class ActivityTabViewControl(ft.Container, SessionStoredComponent):
         self.opened_windows_component: OpenedWindowsComponent | None = None
         self._statistics_view: ActivityStatisticsView | None = None
 
-        self.tracker: ActivityTracker | None = None
+        self.tracker: WindowTracker | None = None
 
     @property
-    def is_activity_tracker_enabled(self) -> bool:
-        return self._store.get_or_create('is_activity_tracker_enabled', False)
+    def is_window_tracker_enabled(self) -> bool:
+        return self._store.get_or_create('is_window_tracker_enabled', False)
 
     def build(self):
-        self.tracker = ActivityTracker()
-        self._store.set('activity_tracker', self.tracker)
+        self.tracker = WindowTracker()
+        self._store.set('window_tracker', self.tracker)
 
         self.time_tracking_component = TimeTrackingComponent()
         self.opened_windows_component = OpenedWindowsComponent()

@@ -11,7 +11,11 @@ from core.system_events.types import SystemEvent, SystemEventChangeActiveWindows
     SystemEventTimestampData
 
 
-class ActivityTracker:
+class WindowTracker:
+    """
+    Отслеживает открытые окна
+    """
+
     def __init__(self):
         self._store: SessionStore = container.session_store
         self._event_bus: EventBus = container.event_bus

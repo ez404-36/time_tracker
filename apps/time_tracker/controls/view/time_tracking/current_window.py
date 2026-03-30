@@ -32,8 +32,8 @@ class CurrentWindowComponent(ft.Column):
         self._current_window_data: WindowData | None = None  # данные текущего окна, полученные из трекера
 
     @property
-    def is_activity_tracker_enabled(self) -> bool:
-        return self._store.get('is_activity_tracker_enabled')
+    def is_window_tracker_enabled(self) -> bool:
+        return self._store.get('is_window_tracker_enabled')
 
     def on_start_time_tracking(self, data: SystemEventTimestampData):
         # Если уже есть данные о текущем открытом окне, обновляем данные в интерфейсе и в БД
@@ -53,7 +53,7 @@ class CurrentWindowComponent(ft.Column):
         ts = data.ts
 
         self._current_window_data = window
-        if not self.is_activity_tracker_enabled:
+        if not self.is_window_tracker_enabled:
             return
 
         _, title = get_app_name_and_transform_window_title(window['executable_name'], window['window_title'])
@@ -87,7 +87,7 @@ class CurrentWindowComponent(ft.Column):
         self.update()
 
     def create_idle_session(self, data: SystemEventTimestampData):
-        if not self.is_activity_tracker_enabled:
+        if not self.is_window_tracker_enabled:
             return
 
         self._idle_session = IdleSession.create(start_ts=data.ts)
@@ -108,7 +108,7 @@ class CurrentWindowComponent(ft.Column):
         self.update()
 
     def stop_window_session(self, data: SystemEventTimestampData):
-        if not self.is_activity_tracker_enabled:
+        if not self.is_window_tracker_enabled:
             return
 
         if self._window_session:
@@ -120,7 +120,7 @@ class CurrentWindowComponent(ft.Column):
         self.update()
 
     def stop_idle_session(self, data: SystemEventTimestampData):
-        if not self.is_activity_tracker_enabled:
+        if not self.is_window_tracker_enabled:
             return
 
         if self._idle_session:

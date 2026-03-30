@@ -7,7 +7,7 @@ from apps.time_tracker.controls.view.pomodoro import PomodoroComponent
 from apps.time_tracker.controls.view.time_tracking.current_window import CurrentWindowComponent
 from apps.time_tracker.controls.view.total_time import TotalTimerComponent
 from apps.time_tracker.models import IdleSession
-from apps.time_tracker.services.activity_tracker import ActivityTracker
+from apps.time_tracker.services.window_tracker import WindowTracker
 from core.di import container
 from core.mixins import SessionStoredComponent
 from ui.consts import Colors, FontSize, Icons
@@ -37,12 +37,12 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
         self._autorefresh_statistics_task: asyncio.Task | None = None
 
     @property
-    def is_activity_tracker_enabled(self) -> bool:
-        return self._store.get('is_activity_tracker_enabled')
+    def is_window_tracker_enabled(self) -> bool:
+        return self._store.get('is_window_tracker_enabled')
 
     @property
-    def tracker(self) -> ActivityTracker:
-        return self._store.get('activity_tracker')
+    def tracker(self) -> WindowTracker:
+        return self._store.get('window_tracker')
 
     @property
     def activity_statistics_component(self) -> ActivityStatisticsView:
@@ -116,13 +116,13 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
             self._tracking_status.value = title
 
     def get_status_title(self):
-        if self.is_activity_tracker_enabled:
+        if self.is_window_tracker_enabled:
             return 'Отслеживание активности...'
         else:
             return 'Отслеживание активности выключено'
 
     async def _on_click_start(self, e):
-        self._store.set('is_activity_tracker_enabled', True)
+        self._store.set('is_window_tracker_enabled', True)
         await self.tracker.start()
         self._autorefresh_statistics_task = asyncio.create_task(self._run_auto_refresh_statistics())
         await self.start_total_timer()
@@ -139,7 +139,7 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
         await self._update_components_visibility_on_start_stop()
 
     async def _update_components_visibility_on_start_stop(self):
-        is_start = self.is_activity_tracker_enabled
+        is_start = self.is_window_tracker_enabled
 
         self._start_button.visible = not is_start
         self._stop_button.visible = is_start
@@ -159,6 +159,6 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
     # TODO: большая нагрузка при рефреше статистики: каждую секунду перезапрос в БД и отрисовка.
     #  Пока некритично
     async def _run_auto_refresh_statistics(self):
-        while self.is_activity_tracker_enabled:
+        while self.is_window_tracker_enabled:
             self.activity_statistics_component.refresh_statistics()
             await asyncio.sleep(1)
