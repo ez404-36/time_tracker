@@ -11,11 +11,24 @@ class AppSettings(BaseModel):
     Настройки приложения
     """
 
+    # region Общие настройки
+
     client_timezone = CharField(help_text='Таймзона клиента', default='Europe/Moscow')
+
+    # endregion
+
+    # region Отслеживание активности
+
+    enable_window_tracking = BooleanField(help_text='Включить отслеживание активных окон', default=False)
+
+    enable_idle_tracking = BooleanField(help_text='Включить отслеживание бездействия', default=False)
     idle_threshold = IntegerField(help_text='Порог бездействия (секунд)', default=60)
+
     enable_pomodoro = BooleanField(help_text='Включить работу по таймеру', default=False)
     pomodoro_work_time = SmallIntegerField(help_text='Время непрерывной работы (минут)', null=True)
     pomodoro_rest_time = SmallIntegerField(help_text='Время отдыха (минут)', null=True)
+
+    # endregion
 
     # region Звуковые уведомления
 

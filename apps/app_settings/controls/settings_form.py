@@ -26,6 +26,23 @@ class SettingsFormData:
     client_timezone: str
 
 
+class SettingsTrackerFormData:
+    idle_threshold: int
+    enable_pomodoro: bool
+
+
+@dataclass(frozen=True)
+class SettingsAudioFormData:
+    enable_task_deadline_sound_notifications: bool
+    task_deadline_sound: str | None
+    enable_idle_start_sound_notifications: bool
+    idle_start_sound: str | None
+
+
+class SettingsCommonFormData:
+    client_timezone: str
+
+
 class SettingsForm(BorderedContainer):
     """
     Форма изменения настроек
