@@ -11,6 +11,10 @@ SystemEventType = Literal[
     'app.change_settings',
     'app.update_persistent_store',
 
+    'main_tracker.start',
+    'main_tracker.pause',   # Только в таймере Помодоро перед началом следующего таймера или при таймере "Отдых"
+    'main_tracker.stop',
+
     'activity_tracker.start',
     'activity_tracker.stop',
     'activity_tracker.detect_idle',
@@ -20,6 +24,11 @@ SystemEventType = Literal[
     'window_tracker.stop',
     'window_tracker.switch_window',
     'window_tracker.change_opened_windows',
+
+    'pomodoro_tracker.start_work',
+    'pomodoro_tracker.end_work',
+    'pomodoro_tracker.start_rest',
+    'pomodoro_tracker.end_rest',
 
     'tasks.add',
     'tasks.update',
@@ -32,6 +41,13 @@ SystemEventType = Literal[
 @dataclass
 class SystemEventTimestampData:
     ts: datetime.datetime = datetime.datetime.now(datetime.UTC)
+
+
+@dataclass
+class SystemEventStartMainTracker:
+    window_tracking: bool
+    idle_tracking: bool
+    pomodoro_tracking: bool
 
 
 @dataclass
@@ -73,14 +89,14 @@ class SystemEventTaskAction:
 
 
 SystemEventData = SystemEventTimestampData \
+    | SystemEventStartMainTracker \
     | SystemEventChangeSettingsData \
     | SystemEventSwitchWindowData \
     | SystemEventChangeActiveWindowsData \
     | SystemEventWrongConfigData \
     | SystemEventFileNotFound \
     | SystemEventTaskAction \
-    | SystemEventUpdatePersistentStoreData \
-    | Any   # TODO: delete this row
+    | SystemEventUpdatePersistentStoreData
 
 SystemEventCallback = Callable[[SystemEventData], None]
 

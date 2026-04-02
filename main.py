@@ -5,6 +5,7 @@ import flet as ft
 from apps.app_settings.controls.view import SettingsView
 from apps.app_settings.models import AppSettings
 from apps.events.subscribers import EventsSubscriber
+from apps.notifications.subscribers import AudioNotificationSubscriber, SnackbarSubscriber
 from apps.tasks.controls.tasks_tab.main_container import TasksTabViewControl
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.time_tracker.controls.view.index import ActivityTabViewControl
@@ -144,6 +145,8 @@ async def main(page: ft.Page):
     container.session_store = SessionStore(page)
 
     EventsSubscriber()
+    AudioNotificationSubscriber()
+    SnackbarSubscriber()
 
     event_bus.publish(
         SystemEvent(

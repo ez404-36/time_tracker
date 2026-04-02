@@ -2,21 +2,17 @@ from dataclasses import asdict
 
 from apps.events.consts import EventActor, EventType
 from apps.events.models import Event
-from apps.notifications.services.audio_notifications import AudioNotificationService
 from core.di import container
 from core.system_events import types as system_event_type
-from ui.utils import show_snackbar
 
 
 class EventsSubscriber:
     """
-    Создаёт системные ивенты
+    Создаёт объекты Event в БД на основе системных событий
     """
 
     def __init__(self):
         self._event_bus = container.event_bus
-        self._store = container.session_store
-        self._app_settings = container.app_settings
 
         self._event_bus.subscribe('app.open', self.on_app_open)
         self._event_bus.subscribe('app.close', self.on_app_close)
@@ -114,7 +110,6 @@ class EventsSubscriber:
 
     @staticmethod
     def on_activity_tracker_start(data: system_event_type.SystemEventTimestampData):
-        show_snackbar('Запущено отслеживание активности')
         Event.create(
             type=EventType.ACTIVITY_TRACKING_START,
             actor=EventActor.USER,
@@ -123,16 +118,14 @@ class EventsSubscriber:
 
     @staticmethod
     def on_activity_tracker_stop(data: system_event_type.SystemEventTimestampData):
-        show_snackbar('Отслеживание активности остановлено')
         Event.create(
             type=EventType.ACTIVITY_TRACKING_STOP,
             actor=EventActor.USER,
             ts=data.ts,
         )
 
-    def on_activity_tracker_detect_idle(self, data: system_event_type.SystemEventTimestampData):
-        AudioNotificationService().play_idle_start_sound()
-        show_snackbar(f'Обнаружено бездействие более {self._app_settings.idle_threshold} секунд')
+    @staticmethod
+    def on_activity_tracker_detect_idle(data: system_event_type.SystemEventTimestampData):
         Event.create(
             type=EventType.ACTIVITY_TRACKING_DETECT_IDLE,
             actor=EventActor.SYSTEM,
@@ -149,7 +142,6 @@ class EventsSubscriber:
 
     @staticmethod
     def on_task_create(data: system_event_type.SystemEventTaskAction):
-        show_snackbar(f'Создана {data.task}')
         Event.create(
             type=EventType.ADD_TASK,
             actor=EventActor.USER,
@@ -158,7 +150,6 @@ class EventsSubscriber:
 
     @staticmethod
     def on_task_update(data: system_event_type.SystemEventTaskAction):
-        show_snackbar(f'{data.task} обновлена')
         Event.create(
             type=EventType.UPDATE_TASK,
             actor=EventActor.USER,
@@ -167,7 +158,6 @@ class EventsSubscriber:
 
     @staticmethod
     def on_task_delete(data: system_event_type.SystemEventTaskAction):
-        show_snackbar(f'{data.task} удалена')
         Event.create(
             type=EventType.DELETE_TASK,
             actor=EventActor.USER,
