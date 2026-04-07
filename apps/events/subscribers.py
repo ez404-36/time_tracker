@@ -1,4 +1,5 @@
 from dataclasses import asdict
+import json
 
 from apps.events.consts import EventActor, EventType
 from apps.events.models import Event
@@ -17,7 +18,7 @@ class EventsSubscriber:
         self._event_bus.subscribe('app.open', self.on_app_open)
         self._event_bus.subscribe('app.close', self.on_app_close)
         self._event_bus.subscribe('app.change_settings', self.on_app_change_settings)
-        self._event_bus.subscribe('app.update_persistent_store', self.on_app_update_persistent_store)
+        self._event_bus.subscribe('app.update_session_store', self.on_app_update_session_store)
 
         self._event_bus.subscribe('window_tracker.start', self.on_window_tracker_start)
         self._event_bus.subscribe('window_tracker.stop', self.on_window_tracker_stop)
@@ -60,11 +61,21 @@ class EventsSubscriber:
         )
 
     @staticmethod
-    def on_app_update_persistent_store(data: system_event_type.SystemEventUpdatePersistentStoreData):
+    def on_app_update_session_store(data: system_event_type.SystemEventUpdateSessionStoreData):
+        event_data = asdict(data)
+
+        try:
+            event_json_data = json.dumps(event_data)
+        except TypeError:
+            event_json_data = {
+                'key': event_data['key'],
+                'value': str(event_data['value']),
+            }
+
         Event.create(
-            type=EventType.UPDATE_PERSISTENT_STORE,
+            type=EventType.UPDATE_SESSION_STORE,
             actor=EventActor.SYSTEM,
-            data=asdict(data),
+            data=event_json_data,
         )
 
     @staticmethod

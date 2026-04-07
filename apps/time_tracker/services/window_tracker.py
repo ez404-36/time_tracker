@@ -6,8 +6,12 @@ from apps.time_tracker.services.window_control.base import WindowControl
 from core.di import container
 from core.store import SessionStore
 from core.system_events.event_bus import EventBus
-from core.system_events.types import SystemEvent, SystemEventChangeActiveWindowsData, SystemEventSwitchWindowData
-
+from core.system_events.types import (
+    SystemEvent,
+    SystemEventChangeActiveWindowsData,
+    SystemEventSwitchWindowData,
+    SystemEventStartMainTracker,
+)
 
 class WindowTracker:
     """
@@ -24,6 +28,15 @@ class WindowTracker:
         self.active_windows: list[WindowData] = []
 
         self.service = WindowControl()
+
+        self._event_bus.subscribe('main_tracker.start', self.on_main_tracker_start)
+
+    def __str__(self) -> str:
+        return f'WindowTracker(service={self.service})'
+
+    async def on_main_tracker_start(self, data: SystemEventStartMainTracker):
+        if not self.running and data.window_tracking:
+            await self.start()
 
     async def start(self):
         if self.running:

@@ -1,7 +1,7 @@
 import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Literal, Self
 
 from apps.time_tracker.services.window_control.abstract import WindowData
 
@@ -9,10 +9,11 @@ SystemEventType = Literal[
     'app.open',
     'app.close',
     'app.change_settings',
-    'app.update_persistent_store',
+    'app.update_session_store',
 
     'main_tracker.start',
-    'main_tracker.pause',   # Только в таймере Помодоро перед началом следующего таймера или при таймере "Отдых"
+    'main_tracker.pause',
+    'main_tracker.resume',
     'main_tracker.stop',
 
     'activity_tracker.start',
@@ -49,6 +50,14 @@ class SystemEventStartMainTracker:
     idle_tracking: bool
     pomodoro_tracking: bool
 
+    @classmethod
+    def default(cls) -> 'Self':
+        return cls(
+            window_tracking=False,
+            idle_tracking=False,
+            pomodoro_tracking=False,
+        )
+
 
 @dataclass
 class SystemEventSwitchWindowData:
@@ -62,7 +71,7 @@ class SystemEventChangeActiveWindowsData:
 
 
 @dataclass
-class SystemEventUpdatePersistentStoreData:
+class SystemEventUpdateSessionStoreData:
     key: str
     value: str
 
@@ -89,16 +98,16 @@ class SystemEventTaskAction:
 
 
 SystemEventData = SystemEventTimestampData \
-    | SystemEventStartMainTracker \
-    | SystemEventChangeSettingsData \
-    | SystemEventSwitchWindowData \
-    | SystemEventChangeActiveWindowsData \
-    | SystemEventWrongConfigData \
-    | SystemEventFileNotFound \
-    | SystemEventTaskAction \
-    | SystemEventUpdatePersistentStoreData
+                  | SystemEventStartMainTracker \
+                  | SystemEventChangeSettingsData \
+                  | SystemEventSwitchWindowData \
+                  | SystemEventChangeActiveWindowsData \
+                  | SystemEventWrongConfigData \
+                  | SystemEventFileNotFound \
+                  | SystemEventTaskAction \
+                  | SystemEventUpdateSessionStoreData
 
-SystemEventCallback = Callable[[SystemEventData], None]
+SystemEventCallback = Callable[[SystemEventData], None] | Callable[[], None]
 
 
 @dataclass

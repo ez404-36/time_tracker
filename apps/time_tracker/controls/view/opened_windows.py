@@ -4,12 +4,17 @@ from apps.time_tracker.services.window_tracker import WindowTracker
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.di import container
 from core.mixins import SessionStoredComponent
-from core.system_events.types import SystemEventChangeActiveWindowsData
+from core.system_events.types import SystemEventChangeActiveWindowsData, SystemEventChangeSettingsData
 from ui.base.components.containers import BorderedContainer
+from ui.base.components.mixins import ShowHideMixin
 from ui.consts import FontSize, FontWeight, Icons
 
 
-class OpenedWindowsComponent(ft.Column, SessionStoredComponent):
+class OpenedWindowsComponent(
+    ft.Column,
+    SessionStoredComponent,
+    ShowHideMixin,
+):
     """
     Отображает текущие открытые окна
     """
@@ -20,6 +25,7 @@ class OpenedWindowsComponent(ft.Column, SessionStoredComponent):
         super().__init__(**kwargs)
 
         self._store = container.session_store
+        self._app_settings = container.app_settings
         self._event_bus = container.event_bus
 
         self._show_opened_windows: ft.Checkbox | None = None
@@ -27,7 +33,15 @@ class OpenedWindowsComponent(ft.Column, SessionStoredComponent):
         self._all_window_sessions_wrap: ft.Container | None = None
         self._all_window_sessions: ft.ListView | None = None
 
+        self.visible = self._app_settings.enable_window_tracking
+
         self._event_bus.subscribe('window_tracker.change_opened_windows', self.update_all_active_window_sessions)
+        self._event_bus.subscribe('app.change_settings', self.on_event_change_settings)
+
+    @property
+    def is_window_tracker_enabled(self) -> bool:
+        window_tracker = self._store.get('window_tracker')
+        return window_tracker and window_tracker.running
 
     def build(self):
         self.build_show_opened_windows_checkbox()
@@ -62,14 +76,25 @@ class OpenedWindowsComponent(ft.Column, SessionStoredComponent):
         self._opened_windows_text.visible = value
         self._all_window_sessions_wrap.visible = value
 
-        if not self._store.get('is_window_tracker_enabled'):
-            # Если отслеживание активности не включено, включим трекер вручную
-            tracker: WindowTracker = self._store.get('window_tracker')
+        tracker: WindowTracker | None = self._store.get('window_tracker')
 
+        if not tracker:
+            return
+
+        if not tracker.running:
+            # Если отслеживание активности не включено, включим трекер вручную
             if value:
                 await tracker.start()
             else:
                 await tracker.stop()
+
+        self.update()
+
+    def on_event_change_settings(self, data: SystemEventChangeSettingsData):
+        tracker_settings = data.values['tracker']
+        enable_window_tracking = tracker_settings.get('enable_window_tracking', self._app_settings.enable_window_tracking)
+
+        self.visible = enable_window_tracking
 
         self.update()
 

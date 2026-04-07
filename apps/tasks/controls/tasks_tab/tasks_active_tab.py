@@ -17,7 +17,8 @@ class TaskActiveTab(ft.Tab, SessionStoredComponent):
         self.label = self.get_label()
         super().update()
 
-    def get_label(self) -> str:
+    @staticmethod
+    def get_label() -> str:
         store = container.session_store
         if active_tasks_list_component := store.get('TaskListActive'):
             active_tasks_len = len(active_tasks_list_component.controls)

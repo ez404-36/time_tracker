@@ -28,7 +28,7 @@ class SettingsModal(ft.AlertDialog):
         self.adaptive = True
         self.title = 'Настройки'
 
-        self.content = SettingsForm(padding=10, mode=self._mode)
+        self.content = SettingsForm(padding=10, in_modal=True, mode=self._mode)
         self.actions = [
             CancelButton(on_click=lambda e: self.page.pop_dialog()),
             SaveButton(on_click=self._save_settings),
@@ -37,8 +37,12 @@ class SettingsModal(ft.AlertDialog):
     def _save_settings(self, e):
         settings_form_values = asdict(self.content.collect_form_fields())
 
-        for field, value in settings_form_values.items():
-            setattr(self._app_settings, field, value)
+        for values in settings_form_values.values():
+            if values is None:
+                continue
+
+            for field, value in values.items():
+                setattr(self._app_settings, field, value)
 
         self._app_settings.save()
 
@@ -51,4 +55,5 @@ class SettingsModal(ft.AlertDialog):
             )
         )
 
-        self.page.pop_dialog()
+        self.open = False
+        self.update()

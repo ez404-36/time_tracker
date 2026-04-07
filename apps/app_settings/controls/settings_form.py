@@ -14,21 +14,13 @@ from ui.consts import Icons
 
 
 @dataclass(frozen=True)
-class SettingsFormData:
-    idle_threshold: int
-    enable_pomodoro: bool
-    pomodoro_work_time: int | None
-    pomodoro_rest_time: int | None
-    enable_task_deadline_sound_notifications: bool
-    task_deadline_sound: str | None
-    enable_idle_start_sound_notifications: bool
-    idle_start_sound: str | None
-    client_timezone: str
-
-
 class SettingsTrackerFormData:
+    enable_window_tracking: bool
+    enable_idle_tracking: bool
     idle_threshold: int
     enable_pomodoro: bool
+    pomodoro_work_time: int # минут
+    pomodoro_rest_time: int # минут
 
 
 @dataclass(frozen=True)
@@ -38,9 +30,16 @@ class SettingsAudioFormData:
     enable_idle_start_sound_notifications: bool
     idle_start_sound: str | None
 
-
+@dataclass(frozen=True)
 class SettingsCommonFormData:
     client_timezone: str
+
+
+@dataclass(frozen=True)
+class SettingsFormData:
+    common: SettingsCommonFormData | None = None
+    audio: SettingsAudioFormData | None = None
+    tracker: SettingsTrackerFormData | None = None
 
 
 class SettingsForm(BorderedContainer):
@@ -49,11 +48,22 @@ class SettingsForm(BorderedContainer):
     """
     content: ft.ListView
 
-    def __init__(self, mode: SettingsFormMode, **kwargs):
+    def __init__(
+            self,
+            mode: SettingsFormMode,
+            in_modal: bool,
+            **kwargs,
+    ):
+        if in_modal:
+            kwargs.setdefault('width', 400)
+
         super().__init__(**kwargs)
         self._mode = mode
         self._app_settings = container.app_settings
 
+        self._enable_window_tracking_switch: ft.Switch | None = None
+
+        self._enable_idle_tracking_switch: ft.Switch | None = None
         self._idle_threshold: ft.TextField | None = None
 
         self._enable_pomodoro_switch: ft.Switch | None = None
@@ -71,6 +81,8 @@ class SettingsForm(BorderedContainer):
         self._available_notification_sounds = get_available_notification_sounds()
 
     def build(self):
+        self._build_enable_window_tracking_switch()
+        self._build_enable_idle_tracking_switch()
         self._build_idle_threshold()
         self._build_enable_pomodoro_switch()
         self._build_pomodoro_work_time()
@@ -81,26 +93,74 @@ class SettingsForm(BorderedContainer):
         self._build_idle_start_sound_dropdown()
         self._build_timezone_dropdown()
 
-        content = ft.ListView(
-            spacing=10,
-            controls=[
+        if self._mode == 'tracker':
+            controls = [
                 ft.Container(padding=6),
+                self._enable_window_tracking_switch,
+                self._enable_idle_tracking_switch,
+                self._idle_threshold,
+                self._enable_pomodoro_switch,
+                self._pomodoro_work_time,
+                self._pomodoro_rest_time,
+            ]
+        else:
+            controls = [
+                ft.Container(padding=6),
+                ft.Text(value='Общие настройки'),
+                self._timezone_dropdown,
+                ft.Divider(),
+                ft.Text(value='Настройки трекера'),
+                self._enable_window_tracking_switch,
+                self._enable_idle_tracking_switch,
                 self._idle_threshold,
                 self._enable_pomodoro_switch,
                 self._pomodoro_work_time,
                 self._pomodoro_rest_time,
                 ft.Divider(),
+                ft.Text(value='Настройки звука'),
                 self._enable_task_deadline_sound_switch,
                 self._task_deadline_sound_dropdown,
                 self._enable_idle_start_sound_switch,
                 self._idle_start_sound_dropdown,
-                ft.Divider(),
-                self._timezone_dropdown,
             ]
+
+        content = ft.ListView(
+            spacing=10,
+            controls=controls
         )
         self.content = content
 
     def collect_form_fields(self) -> SettingsFormData:
+        tracker_settings = self._collect_tracker_settings()
+
+        if self._mode == 'tracker':
+            audio_settings = None
+            common_settings = None
+        else:
+            audio_settings = self._collect_audio_settings()
+            common_settings = self._collect_common_settings()
+
+        return SettingsFormData(
+            common=common_settings,
+            tracker=tracker_settings,
+            audio=audio_settings,
+        )
+
+    def _collect_common_settings(self) -> SettingsCommonFormData:
+        return SettingsCommonFormData(
+            client_timezone=self._timezone_dropdown.value,
+        )
+
+    def _collect_audio_settings(self) -> SettingsAudioFormData:
+        return SettingsAudioFormData(
+            enable_task_deadline_sound_notifications=self._enable_task_deadline_sound_switch.value,
+            task_deadline_sound=self._task_deadline_sound_dropdown.value,
+            enable_idle_start_sound_notifications=self._enable_idle_start_sound_switch.value,
+            idle_start_sound=self._idle_start_sound_dropdown.value,
+        )
+
+    def _collect_tracker_settings(self) -> SettingsTrackerFormData:
+        enable_idle_tracking = self._enable_idle_tracking_switch.value
         idle_threshold = self._idle_threshold.value
         if idle_threshold:
             idle_threshold = int(idle_threshold)
@@ -119,23 +179,41 @@ class SettingsForm(BorderedContainer):
         else:
             pomodoro_rest_time = None
 
-        return SettingsFormData(
+        return SettingsTrackerFormData(
+            enable_window_tracking=self._enable_window_tracking_switch.value,
+            enable_idle_tracking=enable_idle_tracking,
             idle_threshold=idle_threshold,
             enable_pomodoro=self._enable_pomodoro_switch.value,
             pomodoro_work_time=pomodoro_work_time,
             pomodoro_rest_time=pomodoro_rest_time,
-            enable_task_deadline_sound_notifications=self._enable_task_deadline_sound_switch.value,
-            task_deadline_sound=self._task_deadline_sound_dropdown.value,
-            enable_idle_start_sound_notifications=self._enable_idle_start_sound_switch.value,
-            idle_start_sound=self._idle_start_sound_dropdown.value,
-            client_timezone=self._timezone_dropdown.value,
         )
+
+    def _build_enable_window_tracking_switch(self):
+        self._enable_window_tracking_switch = ft.Switch(
+            label='Отслеживание окон',
+            value=self._app_settings.enable_window_tracking,
+        )
+
+    def _build_enable_idle_tracking_switch(self):
+        self._enable_idle_tracking_switch = ft.Switch(
+            label='Отслеживание бездействия',
+            value=self._app_settings.enable_idle_tracking,
+            on_change=self._on_change_enable_idle_tracking_switch,
+        )
+
+    def _on_change_enable_idle_tracking_switch(self, e):
+        value = e.control.value
+
+        self._idle_threshold.visible = value
+        self.update()
+
 
     def _build_idle_threshold(self):
         self._idle_threshold = ft.TextField(
             label='Порог бездействия (секунд)',
             value=self._app_settings.idle_threshold,
-            input_filter=ft.NumbersOnlyInputFilter()
+            input_filter=ft.NumbersOnlyInputFilter(),
+            visible=self._app_settings.enable_idle_tracking,
         )
 
     def _build_enable_pomodoro_switch(self):

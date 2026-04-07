@@ -28,8 +28,11 @@ class SnackbarSubscriber:
         self._event_bus = container.event_bus
         self._app_settings = container.app_settings
 
+        self._event_bus.subscribe('app.change_settings', self.on_change_settings)
+
         self._event_bus.subscribe('main_tracker.start', self.on_main_tracker_start)
         self._event_bus.subscribe('main_tracker.pause', self.on_main_tracker_pause)
+        self._event_bus.subscribe('main_tracker.resume', self.on_main_tracker_resume)
         self._event_bus.subscribe('main_tracker.stop', self.on_main_tracker_stop)
 
         self._event_bus.subscribe('activity_tracker.detect_idle', self.on_activity_tracker_detect_idle)
@@ -37,6 +40,10 @@ class SnackbarSubscriber:
         self._event_bus.subscribe('tasks.add', self.on_task_create)
         self._event_bus.subscribe('tasks.update', self.on_task_update)
         self._event_bus.subscribe('tasks.delete', self.on_task_delete)
+
+    @staticmethod
+    def on_change_settings(_data: system_event_type.SystemEventChangeSettingsData):
+        show_snackbar('Настройки успешно изменены')
 
     @staticmethod
     def on_main_tracker_start(_data: system_event_type.SystemEventTimestampData):
@@ -49,6 +56,10 @@ class SnackbarSubscriber:
     @staticmethod
     def on_main_tracker_pause(_data: system_event_type.SystemEventTimestampData):
         show_snackbar('Отслеживание активности приостановлено')
+
+    @staticmethod
+    def on_main_tracker_resume(_data: system_event_type.SystemEventTimestampData):
+        show_snackbar('Отслеживание активности возобновлено')
 
     def on_activity_tracker_detect_idle(self, _data: system_event_type.SystemEventTimestampData):
         show_snackbar(f'Обнаружено бездействие более {self._app_settings.idle_threshold} секунд')

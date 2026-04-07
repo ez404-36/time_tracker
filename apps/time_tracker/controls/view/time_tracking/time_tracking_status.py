@@ -14,6 +14,9 @@ class TimeTrackingStatus(ft.Row):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        self._timer: TimerComponent | None = None
+
         self._store = container.session_store
         self._app_settings = container.app_settings
         self._event_bus = container.event_bus
@@ -24,6 +27,8 @@ class TimeTrackingStatus(ft.Row):
         ]
 
         self._event_bus.subscribe('main_tracker.start', self._on_system_event_main_tracker_start)
+        self._event_bus.subscribe('main_tracker.pause', lambda e: self._timer.pause())
+        self._event_bus.subscribe('main_tracker.resume', lambda e: self._timer.resume())
         self._event_bus.subscribe('main_tracker.stop', self._on_system_event_main_tracker_stop)
 
         self._event_bus.subscribe('pomodoro_tracker.start_work', self._on_system_event_pomodoro_start_work)
@@ -73,15 +78,17 @@ class TimeTrackingStatus(ft.Row):
     def _start_with_total_timer(self):
         self.controls.clear()
 
+        self._timer = TimerComponent()
+
         self.controls = [
             self._get_label_component('Общее время:'),
-            TimerComponent(),
+            self._timer,
         ]
 
     def _start_working(self):
         self.controls.clear()
 
-        timer = CountdownComponent(
+        self._timer = CountdownComponent(
             seconds=self._app_settings.pomodoro_work_time * 1,  # TODO: 60
             on_end=lambda: self._event_bus.publish(
                 SystemEvent(
@@ -93,13 +100,13 @@ class TimeTrackingStatus(ft.Row):
 
         self.controls = [
             self._get_label_component('Работа:'),
-            timer,
+            self._timer,
         ]
 
     def _start_resting(self):
         self.controls.clear()
 
-        timer = CountdownComponent(
+        self._timer = CountdownComponent(
             seconds=self._app_settings.pomodoro_rest_time * 1,  # TODO: 60
             on_end=lambda: self._event_bus.publish(
                 SystemEvent(
@@ -111,7 +118,7 @@ class TimeTrackingStatus(ft.Row):
 
         self.controls = [
             self._get_label_component('Отдых:'),
-            timer,
+            self._timer,
         ]
 
     def _get_default_label(self) -> ft.Text:

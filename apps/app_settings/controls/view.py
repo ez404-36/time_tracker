@@ -23,7 +23,7 @@ class SettingsView(ft.Container):
 
 
     def build(self):
-        self._form = SettingsForm(padding=10, mode='all')
+        self._form = SettingsForm(padding=10, in_modal=False, mode='all')
 
         self.content = ft.Column(
             controls=[
@@ -38,8 +38,12 @@ class SettingsView(ft.Container):
     def _save_settings(self, e):
         settings_form_values = asdict(self._form.collect_form_fields())
 
-        for field, value in settings_form_values.items():
-            setattr(self._app_settings, field, value)
+        for values in settings_form_values.values():
+            if values is None:
+                continue
+
+            for field, value in values.items():
+                setattr(self._app_settings, field, value)
 
         self._app_settings.save()
 

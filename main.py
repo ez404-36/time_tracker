@@ -142,7 +142,7 @@ async def main(page: ft.Page):
     container.page = page
     container.app_settings = AppSettings.get_solo()
     container.event_bus = event_bus
-    container.session_store = SessionStore(page)
+    container.session_store = SessionStore(page, event_bus)
 
     EventsSubscriber()
     AudioNotificationSubscriber()

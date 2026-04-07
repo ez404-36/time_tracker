@@ -3,17 +3,25 @@ import asyncio
 import flet as ft
 
 from apps.time_tracker.controls.statistics.index import ActivityStatisticsView
-from apps.time_tracker.controls.view.time_tracking.current_window import CurrentWindowComponent
-from apps.time_tracker.controls.view.time_tracking_status import TimeTrackingStatus
-from apps.time_tracker.models import IdleSession
-from apps.time_tracker.services.window_tracker import WindowTracker
 from core.di import container
 from core.mixins import SessionStoredComponent
+from core.mixins.tracker_info_mixin import TrackerInfoMixin
 from core.system_events.types import SystemEventStartMainTracker
-from ui.consts import Colors, Icons
+
+from .config_button import TimeTrackingConfigButton
+from .current_window import CurrentWindowComponent
+from .pause_button import TimeTrackingPauseButton
+from .resume_button import TimeTrackingResumeButton
+from .start_button import TimeTrackingStartButton
+from .stop_button import TimeTrackerStopButton
+from .time_tracking_status import TimeTrackingStatus
 
 
-class TimeTrackingComponent(ft.Column, SessionStoredComponent):
+class TimeTrackingComponent(
+    ft.Column,
+    SessionStoredComponent,
+    TrackerInfoMixin,
+):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._store = container.session_store
@@ -21,117 +29,70 @@ class TimeTrackingComponent(ft.Column, SessionStoredComponent):
         self._event_bus = container.event_bus
 
         self._tracking_status: TimeTrackingStatus | None = None
-        self._start_button: ft.IconButton | None = None
-        self._stop_button: ft.IconButton | None = None
-        self._tracking_config_button: ft.IconButton | None = None
+        self._start_button: TimeTrackingStartButton | None = None
+        self._pause_button: TimeTrackingPauseButton | None = None
+        self._resume_button: TimeTrackingResumeButton | None = None
+        self._stop_button: TimeTrackerStopButton | None = None
+        self._tracking_config_button: TimeTrackingConfigButton | None = None
 
-        self._main_row: ft.Row | None = None
+        self._buttons_and_status_row: ft.Row | None = None
 
         self.window_session_component: CurrentWindowComponent | None = None
-        self.idle_session_ctrl: ft.Column | None = None
-
-        self._idle_session: IdleSession | None = None
 
         self._autorefresh_statistics_task: asyncio.Task | None = None
 
-    @property
-    def is_window_tracker_enabled(self) -> bool:
-        return self._store.get('is_window_tracker_enabled')
+        self._event_bus.subscribe('main_tracker.start', self.on_main_tracker_start)
+        self._event_bus.subscribe('main_tracker.stop', self.on_main_tracker_stop)
 
     @property
-    def tracker(self) -> WindowTracker:
-        return self._store.get('window_tracker')
+    def is_window_tracker_enabled(self) -> bool:
+        window_tracker = self._store.get('window_tracker')
+        return window_tracker and window_tracker.running
 
     @property
     def activity_statistics_component(self) -> ActivityStatisticsView:
         return self._store.get('ActivityStatisticsView')
 
     def build(self):
-        self._start_button = ft.IconButton(
-            icon=ft.Icon(
-                icon=Icons.START,
-                color=Colors.GREEN_LIGHT,
-            ),
-            on_click=self._on_click_start,
-            tooltip='Включить'
-        )
-        self._stop_button = ft.IconButton(
-            icon=ft.Icon(
-                icon=Icons.STOP,
-                color=Colors.RED_LIGHT,
-            ),
-            visible=False,
-            on_click=self._on_click_stop,
-            tooltip='Выключить',
-        )
-        self._tracking_config_button = ft.IconButton(
-            icon=ft.Icon(
-                icon=Icons.SETTINGS,
-                color=Colors.BLUE_LIGHT,
-            ),
-            visible=True,
-            # on_click=lambda e: self.page.show_dialog(),
-            tooltip='Параметры контроля активности',
-        )
+        self._start_button = TimeTrackingStartButton()
+        self._pause_button = TimeTrackingPauseButton()
+        self._resume_button = TimeTrackingResumeButton()
+        self._stop_button = TimeTrackerStopButton()
+        self._tracking_config_button = TimeTrackingConfigButton()
         self._tracking_status = TimeTrackingStatus()
-        self.window_session_component = CurrentWindowComponent(visible=False)
-        self.idle_session_ctrl = ft.Column(visible=False)
+        self.window_session_component = CurrentWindowComponent(padding=10, visible=False)
 
-        self._main_row = ft.Row(
+        self._buttons_and_status_row = ft.Row(
             controls=[
                 self._start_button,
-                self._stop_button,
+                self._resume_button,
+                self._pause_button,
                 self._tracking_status,
+                self._stop_button,
                 self._tracking_config_button,
             ]
         )
 
         self.controls = [
-            self._main_row,
+            self._buttons_and_status_row,
             self.window_session_component,
-            self.idle_session_ctrl,
         ]
 
         super().build()
 
-    async def _on_click_start(self, e):
-        self._event_bus.publish(
-            'main_tracker.start',
-            SystemEventStartMainTracker(
-                idle_tracking=self._app_settings.enable_idle_tracking,
-                window_tracking=self._app_settings.enable_window_tracking,
-                pomodoro_tracking=self._app_settings.enable_pomodoro,
-            )
-        )
-        self._store.set('is_window_tracker_enabled', True)
-        await self.tracker.start()
-        self._autorefresh_statistics_task = asyncio.create_task(self._run_auto_refresh_statistics())
-        await self._update_components_visibility_on_start_stop()
+    async def on_main_tracker_start(self, data: SystemEventStartMainTracker):
+        self._set_tracker_config_on_start(data)
+        if self._tracker_config.window_tracking:
+            self.activity_statistics_component.toggle_show_statistics(force_show=True)
+            self._autorefresh_statistics_task = asyncio.create_task(self._run_auto_refresh_statistics())
 
-    async def _on_click_stop(self, e):
-        await self.tracker.stop()
-
+    async def on_main_tracker_stop(self):
         if self._autorefresh_statistics_task:
             await self._autorefresh_statistics_task
-
-        await self._update_components_visibility_on_start_stop()
-
-    async def _update_components_visibility_on_start_stop(self):
-        is_start = self.is_window_tracker_enabled
-
-        self._start_button.visible = not is_start
-        self._stop_button.visible = is_start
-        self.window_session_component.visible = is_start
-        self.idle_session_ctrl.visible = is_start
-
-        if is_start:
-            self.activity_statistics_component.toggle_show_statistics(force_show=True)
-
-        self.update()
 
     # TODO: большая нагрузка при рефреше статистики: каждую секунду перезапрос в БД и отрисовка.
     #  Пока некритично
     async def _run_auto_refresh_statistics(self):
-        while self.is_window_tracker_enabled:
+        while self._is_tracker_running and self._tracker_config.window_tracking:
             self.activity_statistics_component.refresh_statistics()
             await asyncio.sleep(1)

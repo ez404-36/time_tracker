@@ -20,6 +20,7 @@ class TimerComponent(ft.Text):
     ):
         super().__init__(**kwargs)
         self.running = False
+        self.paused = False
         self.seconds = seconds
         self.on_update_value = on_update_value
 
@@ -36,10 +37,18 @@ class TimerComponent(ft.Text):
         if self.on_update_value:
             self.on_update_value(self.seconds)
 
+    def pause(self):
+        self.paused = True
+
+    def resume(self):
+        self.paused = False
+
     async def update_timer(self):
         while self.running:
-            self.update_value()
-            self.seconds += 1
+            if not self.paused:
+                self.update_value()
+                self.seconds += 1
+
             await asyncio.sleep(1)
 
 
@@ -62,13 +71,14 @@ class CountdownComponent(TimerComponent):
         while self.running:
             self.update_value()
 
-            if self.seconds == 0:
-                self.running = False
-                if self.on_end:
-                    if isawaitable(self.on_end):
-                        await self.on_end
-                    else:
-                        self.on_end()
+            if not self.paused:
+                if self.seconds == 0:
+                    self.running = False
+                    if self.on_end:
+                        if isawaitable(self.on_end):
+                            await self.on_end
+                        else:
+                            self.on_end()
 
-            self.seconds -= 1
+                self.seconds -= 1
             await asyncio.sleep(1)

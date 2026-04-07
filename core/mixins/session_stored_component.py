@@ -16,3 +16,19 @@ class SessionStoredComponent(ft.Control):
 
     def get_stored_name(self) -> str:
         return self.__class__.__name__
+
+    def __str__(self) -> str:
+        content = getattr(self, 'content', None)
+        controls = getattr(self, 'controls', None)
+
+        data: dict[str, str | None] = {
+            'value': getattr(self, 'value', None),
+            'visible': getattr(self, 'visible', None),
+        }
+
+        if content is not None:
+            data['content'] = content
+        if controls is not None and isinstance(controls, list):
+            data['controls'] = ', '.join([control.__class__.__name__ for control in controls])
+
+        return f'{self.get_stored_name()}({data})'
