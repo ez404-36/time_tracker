@@ -6,32 +6,34 @@ from ui.base.components.mixins import ShowHideMixin
 from ui.consts import Icons, Colors
 
 
-class TimeTrackingPauseButton(ft.IconButton, ShowHideMixin):
+class TimeTrackingPomodoroStartRestButton(ft.IconButton, ShowHideMixin):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self.icon = ft.Icon(
-            icon=Icons.PAUSE,
-            color=Colors.RED_LIGHT,
+            icon=Icons.START,
+            color=Colors.GREEN_LIGHT,
         )
-        self.tooltip = 'Приостановить отслеживание активности'
+        self.tooltip = 'Начать'
         self.visible = False
         self.on_click = self._on_click
 
         self._app_settings = container.app_settings
         self._event_bus = container.event_bus
 
-        self._event_bus.subscribe('main_tracker.start', self.show)
+        self._event_bus.subscribe('main_tracker.start', self.hide)
         self._event_bus.subscribe('main_tracker.pause', self.hide)
-        self._event_bus.subscribe('main_tracker.resume', self.show)
+        self._event_bus.subscribe('main_tracker.resume', self.hide)
         self._event_bus.subscribe('main_tracker.stop', self.hide)
 
-        self._event_bus.subscribe('pomodoro_tracker.end_work', self.hide)
+        self._event_bus.subscribe('pomodoro_tracker.start_work', self.hide)
+        self._event_bus.subscribe('pomodoro_tracker.end_work', self.show)
+        self._event_bus.subscribe('pomodoro_tracker.start_rest', self.hide)
         self._event_bus.subscribe('pomodoro_tracker.end_rest', self.hide)
 
     def _on_click(self, e):
         self._event_bus.publish(
             SystemEvent(
-                type='main_tracker.pause',
+                type='pomodoro_tracker.start_rest',
             )
         )

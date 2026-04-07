@@ -27,6 +27,7 @@ class TimeTrackingStartButton(ft.IconButton, ShowHideMixin):
         self.on_click = self._on_click
 
         self._event_bus.subscribe('main_tracker.start', self.hide)
+        self._event_bus.subscribe('main_tracker.pause', self.hide)
         self._event_bus.subscribe('main_tracker.stop', self.show)
 
         self._event_bus.subscribe('app.change_settings', self.on_event_change_settings)

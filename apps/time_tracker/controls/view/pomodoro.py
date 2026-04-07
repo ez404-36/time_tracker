@@ -1,6 +1,6 @@
 import flet as ft
 
-from apps.time_tracker.services.pomodoro import Pomodoro
+from apps.time_tracker.services.pomodoro_tracker import PomodoroTracker
 from core.di import container
 from ui.base.components.containers import BorderedContainer
 from ui.components.timer import CountdownComponent
@@ -18,7 +18,7 @@ class PomodoroComponent(BorderedContainer):
 
         self._store = container.session_store
         self._app_settings = container.app_settings
-        self._service = Pomodoro()
+        self._service = PomodoroTracker()
 
         self._timer: CountdownComponent | None = None
 

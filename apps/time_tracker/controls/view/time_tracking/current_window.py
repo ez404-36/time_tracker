@@ -33,8 +33,8 @@ class CurrentWindowComponent(
 
         self._event_bus.subscribe('window_tracker.switch_window', self.switch_window_session)
         self._event_bus.subscribe('main_tracker.start', self.on_start_main_tracker)
-        self._event_bus.subscribe('main_tracker.pause', self.hide)
-        self._event_bus.subscribe('main_tracker.resume', self.show)
+        self._event_bus.subscribe('main_tracker.pause', self.on_pause_main_tracker)
+        self._event_bus.subscribe('main_tracker.resume', self.on_resume_main_tracker)
         self._event_bus.subscribe('main_tracker.stop', self.on_stop_main_tracker)
         self._event_bus.subscribe('activity_tracker.detect_idle', self.on_detect_idle)
         self._event_bus.subscribe('activity_tracker.stop_idle', self.stop_idle_session)
@@ -42,7 +42,7 @@ class CurrentWindowComponent(
     def on_start_main_tracker(self, data: SystemEventStartMainTracker):
         self._set_tracker_config_on_start(data)
 
-        if data.window_tracking:
+        if self._tracker_config.window_tracking:
             # Если уже есть данные о текущем открытом окне, обновляем данные в интерфейсе и в БД
             if self._current_window_data:
                 self.switch_window_session(
@@ -50,14 +50,29 @@ class CurrentWindowComponent(
                         window=self._current_window_data,
                     )
                 )
-            else:
+
+            self.show()
+
+    def on_pause_main_tracker(self, data: SystemEventTimestampData):
+        self.stop_window_session(data)
+        self.stop_idle_session(data)
+        self._is_tracker_running = False
+        self._rebuild_component(
+            top_label_text=None,
+            timer=None,
+            main_label_text=None,
+            bg_color=Colors.WHITE,
+        )
+        self.hide()
+
+    def on_resume_main_tracker(self):
+        self._is_tracker_running = True
+
+        if self._tracker_config.window_tracking:
+            if self._current_window_data:
                 self.switch_window_session(
                     SystemEventSwitchWindowData(
-                        window={
-                            'executable_name': 'Нет данных',
-                            'window_title': None,
-                            'executable_path': None,
-                        }
+                        window=self._current_window_data,
                     )
                 )
 

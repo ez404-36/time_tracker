@@ -61,7 +61,7 @@ class ActivityStatisticsView(ft.Column, SessionStoredComponent):
         self.controls = [
             ft.Row(
                 controls=[
-                    ft.Text('Статистика', size=20, weight=FontWeight.BOLD),
+                    ft.Text('Статистика используемых приложений', size=20, weight=FontWeight.BOLD),
                     self._show_button,
                     self._refresh_button,
                 ]

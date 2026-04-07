@@ -58,7 +58,7 @@ class TimeTrackingStatus(ft.Row):
         self.controls.clear()
 
         self.controls = [
-            self._get_label_component('Начать отдыхать'),
+            self._get_label_component('Отдых'),
         ]
 
         self.update()
@@ -70,7 +70,7 @@ class TimeTrackingStatus(ft.Row):
         self.controls.clear()
 
         self.controls = [
-            self._get_label_component('Начать работать'),
+            self._get_label_component('Работа'),
         ]
 
         self.update()

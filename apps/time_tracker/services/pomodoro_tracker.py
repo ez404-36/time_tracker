@@ -1,5 +1,5 @@
 __all__ = (
-    'Pomodoro',
+    'PomodoroTracker',
     'PomodoroTimerStatus',
 )
 
@@ -9,6 +9,7 @@ from apps.events.models import Event
 from apps.notifications.services.notification_sender import NotificationSender
 from apps.events.consts import EventActor, EventType
 from core.di import container
+from core.system_events.types import SystemEvent, SystemEventPomodoroChangeStatus, SystemEventAppError
 
 PomodoroTimerStatus = Literal[
     'disabled',
@@ -33,7 +34,7 @@ pomodoro_status_to_next_status_map: dict[PomodoroTimerStatus, list[PomodoroTimer
 }
 
 
-class Pomodoro:
+class PomodoroTracker:
     """
     Сервис по взаимодействию с таймером Помодоро.
     Принцип работы: поочередный запуск таймеров работы/отдыха
@@ -41,7 +42,9 @@ class Pomodoro:
 
     def __init__(self):
         self._store = container.session_store
+        self._event_bus = container.event_bus
         self._app_settings = container.app_settings
+
         self._notification_sender = NotificationSender()
 
         self._status: PomodoroTimerStatus = 'disabled'
@@ -49,6 +52,9 @@ class Pomodoro:
 
         self._current_timer_total_seconds: int | None = None
         self._current_timer_rest_seconds: int | None = None
+
+    def __str__(self):
+        return f'PomodoroTracker(status={self.status})'
 
     @property
     def status(self) -> PomodoroTimerStatus:
@@ -142,7 +148,6 @@ class Pomodoro:
             self._create_error_change_status_event(prev_status, new_status)
         else:
             self._status = new_status
-            self._store.set('pomodoro', self._status)
             self._create_change_status_event(prev_status, new_status)
 
     def _set_total_and_rest_seconds(
@@ -153,19 +158,28 @@ class Pomodoro:
         self._current_timer_total_seconds = total
         self._current_timer_rest_seconds = rest
 
-    @staticmethod
-    def _create_change_status_event(prev_status: PomodoroTimerStatus, new_status: PomodoroTimerStatus):
-        Event.create(
-            actor=EventActor.USER,
-            type=EventType.POMODORO_CHANGE_STATUS,
-            data={
-                'prev_status': prev_status,
-                'new_status': new_status,
-            }
+    def _create_change_status_event(self, prev_status: PomodoroTimerStatus, new_status: PomodoroTimerStatus):
+        self._event_bus.publish(
+            SystemEvent(
+                type='pomodoro_tracker.change_status',
+                data=SystemEventPomodoroChangeStatus(
+                    prev_status=prev_status,
+                    new_status=new_status,
+                )
+            )
         )
 
-    @staticmethod
-    def _create_error_change_status_event(prev_status: PomodoroTimerStatus, new_status: PomodoroTimerStatus):
+    def _create_error_change_status_event(self, prev_status: PomodoroTimerStatus, new_status: PomodoroTimerStatus):
+        self._event_bus.publish(
+            SystemEvent(
+                type='error.system',
+                data=SystemEventAppError(
+                    source='PomodoroTracker',
+                    error=f'Cant move status: "{prev_status}" -> "{new_status}"',
+                )
+            )
+        )
+
         Event.create(
             type=EventType.APP_ERROR,
             actor=EventActor.SYSTEM,

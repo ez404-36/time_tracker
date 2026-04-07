@@ -30,18 +30,20 @@ SystemEventType = Literal[
     'pomodoro_tracker.end_work',
     'pomodoro_tracker.start_rest',
     'pomodoro_tracker.end_rest',
+    'pomodoro_tracker.change_status',
 
     'tasks.add',
     'tasks.update',
     'tasks.delete',
 
+    'error.system',
     'error.wrong_config',
     'error.file_not_found',
 ]
 
 @dataclass
 class SystemEventTimestampData:
-    ts: datetime.datetime = datetime.datetime.now(datetime.UTC)
+    ts: datetime.datetime = field(default_factory=lambda: datetime.datetime.now(datetime.UTC))
 
 
 @dataclass
@@ -62,12 +64,18 @@ class SystemEventStartMainTracker:
 @dataclass
 class SystemEventSwitchWindowData:
     window: WindowData
-    ts: datetime.datetime = datetime.datetime.now(datetime.UTC)
+    ts: datetime.datetime = field(default_factory=lambda: datetime.datetime.now(datetime.UTC))
 
 
 @dataclass
 class SystemEventChangeActiveWindowsData:
     active_windows: list[WindowData]
+
+
+@dataclass
+class SystemEventPomodoroChangeStatus:
+    prev_status: str
+    new_status: str
 
 
 @dataclass
@@ -93,6 +101,12 @@ class SystemEventFileNotFound:
 
 
 @dataclass
+class SystemEventAppError:
+    source: str
+    error: str
+
+
+@dataclass
 class SystemEventTaskAction:
     task: str
 
@@ -105,7 +119,9 @@ SystemEventData = SystemEventTimestampData \
                   | SystemEventWrongConfigData \
                   | SystemEventFileNotFound \
                   | SystemEventTaskAction \
-                  | SystemEventUpdateSessionStoreData
+                  | SystemEventUpdateSessionStoreData \
+                  | SystemEventAppError \
+                  | SystemEventPomodoroChangeStatus
 
 SystemEventCallback = Callable[[SystemEventData], None] | Callable[[], None]
 

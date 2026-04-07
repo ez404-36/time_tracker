@@ -33,8 +33,8 @@ class EventsSubscriber:
         self._event_bus.subscribe('tasks.update', self.on_task_update)
         self._event_bus.subscribe('tasks.delete', self.on_task_delete)
 
-        self._event_bus.subscribe('error.wrong_config', self.on_app_wrong_config)
-        self._event_bus.subscribe('error.file_not_found', self.on_app_file_not_found)
+        self._event_bus.subscribe('error.wrong_config', self.on_error_wrong_config)
+        self._event_bus.subscribe('error.file_not_found', self.on_error_file_not_found)
 
     @staticmethod
     def on_app_open(data: system_event_type.SystemEventTimestampData):
@@ -79,7 +79,7 @@ class EventsSubscriber:
         )
 
     @staticmethod
-    def on_app_wrong_config(data: system_event_type.SystemEventWrongConfigData):
+    def on_error_wrong_config(data: system_event_type.SystemEventWrongConfigData):
         Event.create(
             type=EventType.WRONG_CONFIG,
             actor=EventActor.SYSTEM,
@@ -87,9 +87,17 @@ class EventsSubscriber:
         )
 
     @staticmethod
-    def on_app_file_not_found(data: system_event_type.SystemEventFileNotFound):
+    def on_error_file_not_found(data: system_event_type.SystemEventFileNotFound):
         Event.create(
             type=EventType.FILE_NOT_FOUND,
+            actor=EventActor.SYSTEM,
+            data=asdict(data),
+        )
+
+    @staticmethod
+    def on_error_system(data: system_event_type.SystemEventAppError):
+        Event.create(
+            type=EventType.APP_ERROR,
             actor=EventActor.SYSTEM,
             data=asdict(data),
         )
@@ -149,6 +157,14 @@ class EventsSubscriber:
             type=EventType.ACTIVITY_TRACKING_END_IDLE,
             actor=EventActor.SYSTEM,
             ts=data.ts,
+        )
+
+    @staticmethod
+    def on_pomodoro_change_status(data: system_event_type.SystemEventPomodoroChangeStatus):
+        Event.create(
+            type=EventType.POMODORO_CHANGE_STATUS,
+            actor=EventActor.USER,
+            data=asdict(data),
         )
 
     @staticmethod

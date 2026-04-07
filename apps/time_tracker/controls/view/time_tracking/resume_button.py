@@ -1,7 +1,7 @@
 import flet as ft
 
 from core.di import container
-from core.system_events.types import SystemEvent, SystemEventStartMainTracker
+from core.system_events.types import SystemEvent
 from ui.base.components.mixins import ShowHideMixin
 from ui.consts import Icons, Colors
 

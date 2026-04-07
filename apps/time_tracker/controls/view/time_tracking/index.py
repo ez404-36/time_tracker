@@ -11,6 +11,8 @@ from core.system_events.types import SystemEventStartMainTracker
 from .config_button import TimeTrackingConfigButton
 from .current_window import CurrentWindowComponent
 from .pause_button import TimeTrackingPauseButton
+from .pomodoro_start_rest_button import TimeTrackingPomodoroStartRestButton
+from .pomodoro_start_work_button import TimeTrackingPomodoroStartWorkButton
 from .resume_button import TimeTrackingResumeButton
 from .start_button import TimeTrackingStartButton
 from .stop_button import TimeTrackerStopButton
@@ -28,17 +30,6 @@ class TimeTrackingComponent(
         self._app_settings = container.app_settings
         self._event_bus = container.event_bus
 
-        self._tracking_status: TimeTrackingStatus | None = None
-        self._start_button: TimeTrackingStartButton | None = None
-        self._pause_button: TimeTrackingPauseButton | None = None
-        self._resume_button: TimeTrackingResumeButton | None = None
-        self._stop_button: TimeTrackerStopButton | None = None
-        self._tracking_config_button: TimeTrackingConfigButton | None = None
-
-        self._buttons_and_status_row: ft.Row | None = None
-
-        self.window_session_component: CurrentWindowComponent | None = None
-
         self._autorefresh_statistics_task: asyncio.Task | None = None
 
         self._event_bus.subscribe('main_tracker.start', self.on_main_tracker_start)
@@ -54,28 +45,22 @@ class TimeTrackingComponent(
         return self._store.get('ActivityStatisticsView')
 
     def build(self):
-        self._start_button = TimeTrackingStartButton()
-        self._pause_button = TimeTrackingPauseButton()
-        self._resume_button = TimeTrackingResumeButton()
-        self._stop_button = TimeTrackerStopButton()
-        self._tracking_config_button = TimeTrackingConfigButton()
-        self._tracking_status = TimeTrackingStatus()
-        self.window_session_component = CurrentWindowComponent(padding=10, visible=False)
-
-        self._buttons_and_status_row = ft.Row(
+        buttons_and_status_row = ft.Row(
             controls=[
-                self._start_button,
-                self._resume_button,
-                self._pause_button,
-                self._tracking_status,
-                self._stop_button,
-                self._tracking_config_button,
+                TimeTrackingStartButton(),
+                TimeTrackingPomodoroStartWorkButton(),
+                TimeTrackingPomodoroStartRestButton(),
+                TimeTrackingResumeButton(),
+                TimeTrackingPauseButton(),
+                TimeTrackingStatus(),
+                TimeTrackerStopButton(),
+                TimeTrackingConfigButton(),
             ]
         )
 
         self.controls = [
-            self._buttons_and_status_row,
-            self.window_session_component,
+            buttons_and_status_row,
+            CurrentWindowComponent(padding=10, visible=False),
         ]
 
         super().build()
