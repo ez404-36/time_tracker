@@ -1,10 +1,11 @@
 import flet as ft
 
 from apps.time_tracker.models import IdleSession, WindowSession
+from apps.time_tracker.services.main_tracker import MainTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.di import container
-from core.mixins.tracker_info_mixin import TrackerInfoMixin
+from core.system_events.event_bus import EventBus
 from core.system_events.types import SystemEventSwitchWindowData, SystemEventTimestampData, SystemEventStartMainTracker
 from ui.base.components.containers import BorderedContainer
 from ui.base.components.mixins import ShowHideMixin
@@ -15,7 +16,6 @@ from ui.consts import Colors, FontSize
 class CurrentWindowComponent(
     BorderedContainer,
     ShowHideMixin,
-    TrackerInfoMixin,
 ):
     content: ft.Column
 
@@ -23,7 +23,8 @@ class CurrentWindowComponent(
         super().__init__(**kwargs)
         self._store = container.session_store
         self._app_settings = container.app_settings
-        self._event_bus = container.event_bus
+        self._event_bus: EventBus = container.event_bus
+        self._main_tracker: MainTracker = container.main_tracker
 
         self._window_session: WindowSession | None = None
         self._idle_session: IdleSession | None = None
@@ -40,9 +41,8 @@ class CurrentWindowComponent(
         self._event_bus.subscribe('activity_tracker.stop_idle', self.stop_idle_session)
 
     def on_start_main_tracker(self, data: SystemEventStartMainTracker):
-        self._set_tracker_config_on_start(data)
 
-        if self._tracker_config.window_tracking:
+        if data.window_tracking:
             # Если уже есть данные о текущем открытом окне, обновляем данные в интерфейсе и в БД
             if self._current_window_data:
                 self.switch_window_session(
@@ -56,7 +56,6 @@ class CurrentWindowComponent(
     def on_pause_main_tracker(self, data: SystemEventTimestampData):
         self.stop_window_session(data)
         self.stop_idle_session(data)
-        self._is_tracker_running = False
         self._rebuild_component(
             top_label_text=None,
             timer=None,
@@ -66,9 +65,7 @@ class CurrentWindowComponent(
         self.hide()
 
     def on_resume_main_tracker(self):
-        self._is_tracker_running = True
-
-        if self._tracker_config.window_tracking:
+        if self._main_tracker.params.window_tracking:
             if self._current_window_data:
                 self.switch_window_session(
                     SystemEventSwitchWindowData(
@@ -79,8 +76,6 @@ class CurrentWindowComponent(
             self.show()
 
     def on_stop_main_tracker(self, data: SystemEventTimestampData):
-        self._set_tracker_config_on_stop()
-
         self.stop_window_session(data)
         self.stop_idle_session(data)
         self._rebuild_component(
@@ -97,7 +92,7 @@ class CurrentWindowComponent(
 
         self._current_window_data = window
 
-        if not self._is_tracker_running or not self._tracker_config.window_tracking:
+        if not self._main_tracker.running or not self._main_tracker.params.window_tracking:
             return
 
         _, title = get_app_name_and_transform_window_title(window['executable_name'], window['window_title'])
@@ -128,7 +123,7 @@ class CurrentWindowComponent(
         )
 
     def on_detect_idle(self, data: SystemEventTimestampData):
-        if not self._is_tracker_running or not self._tracker_config.idle_tracking:
+        if not self._main_tracker.running or not self._main_tracker.params.idle_tracking:
             return
 
         self._idle_session = IdleSession.create(start_ts=data.ts)
@@ -142,7 +137,7 @@ class CurrentWindowComponent(
         )
 
     def stop_window_session(self, data: SystemEventTimestampData):
-        if not self._is_tracker_running or not self._tracker_config.window_tracking:
+        if not self._main_tracker.running or not self._main_tracker.params.window_tracking:
             return
 
         if self._window_session:
@@ -154,7 +149,7 @@ class CurrentWindowComponent(
         self.update()
 
     def stop_idle_session(self, data: SystemEventTimestampData):
-        if not self._is_tracker_running or not self._tracker_config.idle_tracking:
+        if not self._main_tracker.running or not self._main_tracker.params.idle_tracking:
             return
 
         if self._idle_session:

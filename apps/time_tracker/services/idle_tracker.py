@@ -1,24 +1,26 @@
 import asyncio
 import datetime
+from typing import TYPE_CHECKING
 
-from apps.app_settings.models import AppSettings
 from apps.time_tracker.services.window_control import WindowControl
-from core.di import container
-from core.system_events.event_bus import EventBus
 from core.system_events.types import SystemEvent, SystemEventTimestampData
 
+if TYPE_CHECKING:
+    from apps.app_settings.models import AppSettings
+    from core.system_events.event_bus import EventBus
 
-class ActivityTracker:
+
+class IdleTracker:
     """
-    Занимается отслеживанием активности/бездействия пользователя
+    Занимается отслеживанием бездействия пользователя
     """
 
-    def __init__(self):
+    def __init__(self, event_bus: 'EventBus', app_settings: 'AppSettings'):
         self.running = False
         self.is_idle = False
 
-        self._event_bus: EventBus = container.event_bus
-        self._app_settings: AppSettings = container.app_settings
+        self._event_bus = event_bus
+        self._app_settings = app_settings
 
         self._idle_threshold: int | None = None
         self._task: asyncio.Task | None = None
@@ -44,6 +46,7 @@ class ActivityTracker:
             return
 
         self.running = False
+
         if self._task:
             await self._task
 

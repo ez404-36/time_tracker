@@ -1,26 +1,29 @@
 import asyncio
 import datetime
+from typing import TYPE_CHECKING
 
 from apps.time_tracker.services.window_control.abstract import WindowData
 from apps.time_tracker.services.window_control.base import WindowControl
-from core.di import container
-from core.store import SessionStore
-from core.system_events.event_bus import EventBus
 from core.system_events.types import (
     SystemEvent,
     SystemEventChangeActiveWindowsData,
-    SystemEventSwitchWindowData,
     SystemEventStartMainTracker,
+    SystemEventSwitchWindowData,
 )
+
+if TYPE_CHECKING:
+    from core.system_events.event_bus import EventBus
+    from core.store import SessionStore
+
 
 class WindowTracker:
     """
     Отслеживает открытые окна
     """
 
-    def __init__(self):
-        self._store: SessionStore = container.session_store
-        self._event_bus: EventBus = container.event_bus
+    def __init__(self, event_bus: 'EventBus', session_store: 'SessionStore'):
+        self._store = session_store
+        self._event_bus = event_bus
 
         self.running = False
         self.task: asyncio.Task | None = None

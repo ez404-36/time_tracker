@@ -1,9 +1,9 @@
 import flet as ft
 
 from core.di import container
-from core.system_events.types import SystemEvent, SystemEventStartMainTracker, SystemEventChangeSettingsData
+from core.system_events.types import SystemEventChangeSettingsData
 from ui.base.components.mixins import ShowHideMixin
-from ui.consts import Icons, Colors
+from ui.consts import Colors, Icons
 
 
 class TimeTrackingStartButton(ft.IconButton, ShowHideMixin):
@@ -12,6 +12,7 @@ class TimeTrackingStartButton(ft.IconButton, ShowHideMixin):
 
         self._app_settings = container.app_settings
         self._event_bus = container.event_bus
+        self._main_tracker = container.main_tracker
 
         self.disabled = not any([
             self._app_settings.enable_idle_tracking,
@@ -33,16 +34,7 @@ class TimeTrackingStartButton(ft.IconButton, ShowHideMixin):
         self._event_bus.subscribe('app.change_settings', self.on_event_change_settings)
 
     async def _on_click(self, e):
-        self._event_bus.publish(
-            SystemEvent(
-                type='main_tracker.start',
-                data=SystemEventStartMainTracker(
-                    idle_tracking=self._app_settings.enable_idle_tracking,
-                    window_tracking=self._app_settings.enable_window_tracking,
-                    pomodoro_tracking=self._app_settings.enable_pomodoro,
-                )
-            )
-        )
+        self._main_tracker.start()
 
     def on_event_change_settings(self, data: SystemEventChangeSettingsData):
         tracker_settings = data.values['tracker']

@@ -4,8 +4,6 @@ import flet as ft
 
 from apps.app_settings.controls.view import SettingsView
 from apps.app_settings.models import AppSettings
-from apps.events.subscribers import EventsSubscriber
-from apps.notifications.subscribers import AudioNotificationSubscriber, SnackbarSubscriber
 from apps.tasks.controls.tasks_tab.main_container import TasksTabViewControl
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.time_tracker.controls.view.index import ActivityTabViewControl
@@ -135,14 +133,21 @@ class DesktopApp:
 
 
 async def main(page: ft.Page):
+    from apps.events.subscribers import EventsSubscriber
+    from apps.time_tracker.services.main_tracker import MainTracker
+    from apps.notifications.subscribers import AudioNotificationSubscriber, SnackbarSubscriber
+
     migrate(None)
 
     event_bus = EventBus()
+    app_settings = AppSettings.get_solo()
+    session_store = SessionStore(page, event_bus)
 
     container.page = page
-    container.app_settings = AppSettings.get_solo()
+    container.app_settings = app_settings
     container.event_bus = event_bus
-    container.session_store = SessionStore(page, event_bus)
+    container.session_store = session_store
+    container.main_tracker = MainTracker(event_bus, app_settings, session_store)
 
     EventsSubscriber()
     AudioNotificationSubscriber()

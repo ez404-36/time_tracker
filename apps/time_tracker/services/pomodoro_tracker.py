@@ -3,13 +3,17 @@ __all__ = (
     'PomodoroTimerStatus',
 )
 
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
+
 
 from apps.events.models import Event
-from apps.notifications.services.notification_sender import NotificationSender
 from apps.events.consts import EventActor, EventType
-from core.di import container
+
 from core.system_events.types import SystemEvent, SystemEventPomodoroChangeStatus, SystemEventAppError
+
+if TYPE_CHECKING:
+    from apps.app_settings.models import AppSettings
+    from core.system_events.event_bus import EventBus
 
 PomodoroTimerStatus = Literal[
     'disabled',
@@ -40,15 +44,13 @@ class PomodoroTracker:
     Принцип работы: поочередный запуск таймеров работы/отдыха
     """
 
-    def __init__(self):
-        self._store = container.session_store
-        self._event_bus = container.event_bus
-        self._app_settings = container.app_settings
+    def __init__(self, event_bus: 'EventBus', app_settings: 'AppSettings'):
+        self._event_bus = event_bus
+        self._app_settings = app_settings
 
-        self._notification_sender = NotificationSender()
+        # self._notification_sender = NotificationSender()
 
         self._status: PomodoroTimerStatus = 'disabled'
-        self._store.set('pomodoro', self._status)
 
         self._current_timer_total_seconds: int | None = None
         self._current_timer_rest_seconds: int | None = None
@@ -90,10 +92,10 @@ class PomodoroTracker:
         if self._status == 'working':
             self._change_status('working_stop')
             self._set_total_and_rest_seconds(total=0, rest=0)
-            self._notification_sender.send_info('Время отдохнуть')
+            # self._notification_sender.send_info('Время отдохнуть')
         elif self._status == 'resting':
             self._change_status('resting_stop')
-            self._notification_sender.send_info('Пора работать')
+            # self._notification_sender.send_info('Пора работать')
             self._set_total_and_rest_seconds(total=0, rest=0)
         else:
             self._create_error_change_status_event(self._status, 'unknown')

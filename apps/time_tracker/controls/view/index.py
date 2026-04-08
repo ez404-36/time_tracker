@@ -3,9 +3,6 @@ import flet as ft
 from apps.time_tracker.controls.statistics.index import ActivityStatisticsView
 from apps.time_tracker.controls.view.opened_windows import OpenedWindowsComponent
 from apps.time_tracker.controls.view.time_tracking import TimeTrackingComponent
-from apps.time_tracker.services.activity_tracker import ActivityTracker
-from apps.time_tracker.services.pomodoro_tracker import PomodoroTracker
-from apps.time_tracker.services.window_tracker import WindowTracker
 from core.di import container
 
 
@@ -27,10 +24,6 @@ class ActivityTabViewControl(ft.Container):
         self._statistics_view: ActivityStatisticsView | None = None
 
     def build(self):
-        self._store.set('window_tracker', WindowTracker())
-        self._store.set('idle_tracker', ActivityTracker())
-        # self._store.set('pomodoro_tracker', PomodoroTracker())
-
         self._time_tracking_component = TimeTrackingComponent()
         self._opened_windows_component = OpenedWindowsComponent()
 

@@ -2,12 +2,13 @@ from dataclasses import asdict
 
 import flet as ft
 
-from apps.app_settings.controls.settings_form import SettingsForm
 from apps.events.models import Event
 from apps.events.consts import EventActor, EventType
 from core.di import container
 from ui.base.components.buttons import SaveButton
 from ui.utils import show_snackbar
+
+from .settings_form import SettingsForm
 
 
 class SettingsView(ft.Container):

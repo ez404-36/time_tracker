@@ -3,9 +3,10 @@ import asyncio
 import flet as ft
 
 from apps.time_tracker.controls.statistics.index import ActivityStatisticsView
+from apps.time_tracker.services.main_tracker import MainTracker
 from core.di import container
 from core.mixins import SessionStoredComponent
-from core.mixins.tracker_info_mixin import TrackerInfoMixin
+from core.system_events.event_bus import EventBus
 from core.system_events.types import SystemEventStartMainTracker
 
 from .config_button import TimeTrackingConfigButton
@@ -22,13 +23,13 @@ from .time_tracking_status import TimeTrackingStatus
 class TimeTrackingComponent(
     ft.Column,
     SessionStoredComponent,
-    TrackerInfoMixin,
 ):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._store = container.session_store
         self._app_settings = container.app_settings
-        self._event_bus = container.event_bus
+        self._event_bus: EventBus = container.event_bus
+        self._main_tracker: MainTracker = container.main_tracker
 
         self._autorefresh_statistics_task: asyncio.Task | None = None
 
@@ -66,8 +67,7 @@ class TimeTrackingComponent(
         super().build()
 
     async def on_main_tracker_start(self, data: SystemEventStartMainTracker):
-        self._set_tracker_config_on_start(data)
-        if self._tracker_config.window_tracking:
+        if data.window_tracking:
             self.activity_statistics_component.toggle_show_statistics(force_show=True)
             self._autorefresh_statistics_task = asyncio.create_task(self._run_auto_refresh_statistics())
 
@@ -78,6 +78,6 @@ class TimeTrackingComponent(
     # TODO: большая нагрузка при рефреше статистики: каждую секунду перезапрос в БД и отрисовка.
     #  Пока некритично
     async def _run_auto_refresh_statistics(self):
-        while self._is_tracker_running and self._tracker_config.window_tracking:
+        while self._main_tracker.running and self._main_tracker.params.window_tracking:
             self.activity_statistics_component.refresh_statistics()
             await asyncio.sleep(1)

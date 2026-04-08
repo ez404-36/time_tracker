@@ -1,7 +1,7 @@
 import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Literal, Self
+from typing import Any, Awaitable, Callable, Literal, Self
 
 from apps.time_tracker.services.window_control.abstract import WindowData
 
@@ -123,8 +123,9 @@ SystemEventData = SystemEventTimestampData \
                   | SystemEventAppError \
                   | SystemEventPomodoroChangeStatus
 
-SystemEventCallback = Callable[[SystemEventData], None] | Callable[[], None]
+SystemEventCallbackFunction = Callable[[SystemEventData], None] | Callable[[], None]
 
+SystemEventCallback = SystemEventCallbackFunction | Awaitable[SystemEventCallbackFunction]
 
 @dataclass
 class SystemEvent:

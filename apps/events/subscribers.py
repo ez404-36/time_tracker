@@ -35,6 +35,7 @@ class EventsSubscriber:
 
         self._event_bus.subscribe('error.wrong_config', self.on_error_wrong_config)
         self._event_bus.subscribe('error.file_not_found', self.on_error_file_not_found)
+        self._event_bus.subscribe('error.system', self.on_error_system)
 
     @staticmethod
     def on_app_open(data: system_event_type.SystemEventTimestampData):
