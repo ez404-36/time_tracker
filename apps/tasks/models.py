@@ -8,6 +8,7 @@ from typing import Self
 from peewee import *
 
 from core.models import BaseModel
+from core.settings import DATE_FORMAT, TIME_FORMAT
 
 
 class Task(BaseModel):
@@ -28,17 +29,20 @@ class Task(BaseModel):
         table_name = 'task'
 
     def __str__(self):
-        return f'(#{self.id}) {self.title}'
+        if self.parent_id:
+            return f'Подзадача #{self.id} к задаче #{self.parent_id}'
+        else:
+            return f'Задача #{self.id}'
 
     @property
     def deadline_date_str(self) -> str:
         deadline_date = self.deadline_date
-        return deadline_date.strftime("%d.%m.%Y") if deadline_date else ''
+        return deadline_date.strftime(DATE_FORMAT) if deadline_date else ''
 
     @property
     def deadline_time_str(self) -> str:
         deadline_time = self.deadline_time
-        return deadline_time.strftime('%H:%M') if deadline_time else ''
+        return deadline_time.strftime(TIME_FORMAT) if deadline_time else ''
 
     @property
     def deadline_str(self) -> str:

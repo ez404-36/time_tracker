@@ -3,7 +3,7 @@ import uuid
 from pathlib import Path
 from typing import Callable, Generator
 
-from peewee import OperationalError
+from peewee import OperationalError, Database
 
 from core.database import db
 from core.consts import MIGRATIONS_DIR
@@ -29,9 +29,12 @@ class MigrationsApplier:
             it.index: it for it in self._applied_migrations
         }
 
+    @db.atomic()
     def migrate(self, _index: int | None):
         for file in self.traverse():
             file_index = self._get_file_index(file)
+
+            assert file_index is not None
 
             index_condition = _index is None or file_index <= _index
             applied_condition = file_index not in self._applied_migrations_map
@@ -39,6 +42,7 @@ class MigrationsApplier:
             if applied_condition and index_condition:
                 OneMigrationApplier(file).migrate()
 
+    @db.atomic()
     def downgrade(self, _index: int):
         file_index_map: dict[int, Path] = {}
         for file in self.traverse():
@@ -46,22 +50,46 @@ class MigrationsApplier:
             file_index_map[file_index] = file
 
 
+        def downgrade_migration(_applied_migration: MigrationModel):
+            nonlocal file_index_map
+            _file_path = file_index_map.get(_applied_migration.index)
+
+            assert _file_path is not None
+
+            OneMigrationApplier(_file_path).downgrade()
+
+
         if _index < 0:
             rest_downgrade_migrations = abs(_index)
+            for applied_migration in self._applied_migrations:
+                if rest_downgrade_migrations == 0:
+                    break
+
+                downgrade_migration(applied_migration)
+                rest_downgrade_migrations -= 1
+
         else:
-            rest_downgrade_migrations = 0
+            for applied_migration in self._applied_migrations:
+                if applied_migration.index < _index:
+                    break
 
-        for applied_migration in self._applied_migrations:
-            if _index >= applied_migration.index and rest_downgrade_migrations == 0:
-                continue
-
-            OneMigrationApplier(file_index_map.get(applied_migration.index)).downgrade()
-            rest_downgrade_migrations -= 1
+                downgrade_migration(applied_migration)
 
     def create_new(self, title: str):
         EXAMPLE = '''"""{migration_uuid}"""
 
 import peewee
+from playhouse.migrate import migrate as apply
+from core.database import migrator
+
+
+"""
+Example using migrator:
+- apply(migrator.add_column('table_name', 'field_name', peewee.CharField()))
+
+Example using native SQL:
+- db.execute_sql('ALTER TABLE "table_name" RENAME COLUMN $old_name to $new_name')
+"""
 
 
 def migrate(db: peewee.Database):
@@ -109,12 +137,14 @@ class OneMigrationApplier:
         self.file_path = file_path
 
         self._module = None
-        self._migration_uuid = None
-        self._migration_index = None
+        self._migration_uuid: str | None = None
+        self._migration_index: int | None = None
 
     @db.atomic()
     def migrate(self):
         self.prepare()
+
+        assert self._migration_index is not None
 
         if self._migration_index > 0:
             migration_row = (
@@ -130,7 +160,7 @@ class OneMigrationApplier:
             # Применение нулевой миграции означает создание таблицы migrations
             pass
 
-        migrate_method: Callable[[db], None] = getattr(self._module, 'migrate')
+        migrate_method: Callable[[Database], None] = getattr(self._module, 'migrate')
         migrate_method(db)
 
         MigrationModel.create(
@@ -141,6 +171,8 @@ class OneMigrationApplier:
     @db.atomic()
     def downgrade(self):
         self.prepare()
+
+        assert self._migration_index is not None
 
         migration_row = (
             MigrationModel.select()
@@ -153,7 +185,7 @@ class OneMigrationApplier:
 
         assert migration_row is not None, f'Миграция {self._migration_uuid} не применена'
 
-        downgrade_method: Callable[[db], None] = getattr(self._module, 'downgrade')
+        downgrade_method: Callable[[Database], None] = getattr(self._module, 'downgrade')
         downgrade_method(db)
 
         if self._migration_index > 0:

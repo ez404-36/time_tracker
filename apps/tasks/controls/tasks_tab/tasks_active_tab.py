@@ -1,10 +1,10 @@
 import flet as ft
 
-from core.flet_helpers import get_from_store
-from ui.base.components.stored_component import StoredComponent
+from core.di import container
+from core.mixins import SessionStoredComponent
 
 
-class TaskActiveTab(ft.Tab, StoredComponent):
+class TaskActiveTab(ft.Tab, SessionStoredComponent):
     """
     Компонент таба "Активные задачи"
     """
@@ -17,8 +17,10 @@ class TaskActiveTab(ft.Tab, StoredComponent):
         self.label = self.get_label()
         super().update()
 
-    def get_label(self) -> str:
-        if active_tasks_list_component := get_from_store(self.page, 'TaskListActive'):
+    @staticmethod
+    def get_label() -> str:
+        store = container.session_store
+        if active_tasks_list_component := store.get('TaskListActive'):
             active_tasks_len = len(active_tasks_list_component.controls)
         else:
             active_tasks_len = 0

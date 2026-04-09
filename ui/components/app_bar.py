@@ -1,7 +1,7 @@
 import flet as ft
 
-from apps.app_settings.controls.modal import SettingsModal
-from ui.consts import Icons
+from apps.app_settings.controls.settings_modal import SettingsModal
+from ui.consts import Icons, Colors
 
 
 class AppBar(ft.AppBar):
@@ -13,13 +13,13 @@ class AppBar(ft.AppBar):
             icon=Icons.MENU,
             on_click=self._on_click_menu,
         )
-        self.bgcolor = ft.Colors.with_opacity(0.04, ft.CupertinoColors.SYSTEM_BACKGROUND)
+        self.bgcolor = ft.Colors.with_opacity(0.04, Colors.SYSTEM_BACKGROUND)
 
         self.actions = [
             ft.IconButton(
                 icon=Icons.SETTINGS,
                 tooltip='Настройки',
-                on_click=lambda e: self.page.show_dialog(SettingsModal()),
+                on_click=lambda e: self.page.show_dialog(SettingsModal(mode='all')),
             )
         ]
 

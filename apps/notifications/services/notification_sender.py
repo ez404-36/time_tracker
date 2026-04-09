@@ -1,6 +1,7 @@
 import flet as ft
 
-from ui.base.components.popup.error import ErrorPopup
+from core.di import container
+from ui.base.components.popups import ErrorPopup, InfoPopup
 
 
 class NotificationSender:
@@ -8,9 +9,13 @@ class NotificationSender:
     Отправляет текстовые уведомления пользователю
     """
 
-    def __init__(self, page: ft.Page):
-        self._page = page
+    def __init__(self):
+        self._page = container.page
 
-    def send(self, message: str):
-        popup = ErrorPopup(message=message)
+    def send_error(self, message: str, actions: list[ft.Control] | None = None, **kwargs):
+        popup = ErrorPopup(message=message, actions=actions, **kwargs)
+        self._page.show_dialog(popup)
+
+    def send_info(self, message: str, actions: list[ft.Control] | None = None, **kwargs):
+        popup = InfoPopup(message=message, actions=actions, **kwargs)
         self._page.show_dialog(popup)

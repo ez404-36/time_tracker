@@ -1,6 +1,6 @@
 import flet as ft
 
-from ui.base.components.stored_component import StoredComponent
+from core.mixins import SessionStoredComponent
 
 
 class TaskListBase(ft.Column):
@@ -13,5 +13,5 @@ class TaskListBase(ft.Column):
         super().__init__(**kwargs)
 
 
-class TaskListActive(TaskListBase, StoredComponent): ...
-class TaskListDone(TaskListBase, StoredComponent): ...
+class TaskListActive(TaskListBase, SessionStoredComponent): ...
+class TaskListDone(TaskListBase, SessionStoredComponent): ...

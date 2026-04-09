@@ -1,22 +1,33 @@
 import datetime
 from collections import Counter, defaultdict
+from collections.abc import Sequence
+from typing import TypeVar
 
 import flet as ft
 from peewee import fn
 
-from apps.time_tracker.controls.view.statistics.one_app_view import OneAppView, WindowTitleSessionData
-from apps.time_tracker.controls.view.statistics.statistics_list import StatisticsListView
 from apps.time_tracker.models import WindowSession, IdleSession
-from core.utils import to_current_tz
+from core.di import container
+from core.mixins import SessionStoredComponent
+from core.settings import DATE_FORMAT
+from core.system_events.types import SystemEventSwitchWindowData
+from core.utils.date_utils import to_current_tz
+from ui.consts import Icons, FontWeight
+
+from .one_app_view import OneAppView, WindowTitleSessionData
+from .statistics_list import StatisticsListView
+
+T = TypeVar('T')
 
 
-class ActivityStatisticsView(ft.Column):
+class ActivityStatisticsView(ft.Column, SessionStoredComponent):
     """
     Компонент статистики активности пользователя
     """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._event_bus = container.event_bus
 
         self._date_filter_btn: ft.TextButton | None = None
         self._date_filter_modal: ft.DatePicker | None = None
@@ -30,12 +41,15 @@ class ActivityStatisticsView(ft.Column):
         self._window_sessions: list[WindowSession] = []
         self._idle_sessions: list[IdleSession] = []
 
+        self._event_bus.subscribe('window_tracker.switch_window', self.on_switch_window_event)
+
     def build(self):
         self._build_show_button()
         self._build_refresh_button()
         self._build_filter_btn()
         self._build_date_filter_modal()
-        self._build_app_statistics()
+
+        self._app_statistics = StatisticsListView(visible=False)
 
         self._params_row = ft.Row(
             controls=[
@@ -47,7 +61,7 @@ class ActivityStatisticsView(ft.Column):
         self.controls = [
             ft.Row(
                 controls=[
-                    ft.Text('Статистика', size=20, weight=ft.FontWeight.BOLD),
+                    ft.Text('Статистика используемых приложений', size=20, weight=FontWeight.BOLD),
                     self._show_button,
                     self._refresh_button,
                 ]
@@ -58,11 +72,7 @@ class ActivityStatisticsView(ft.Column):
         ]
 
         self._rebuild_app_statistics()
-
-    def _build_app_statistics(self):
-        self._app_statistics = StatisticsListView(
-            visible=False,
-        )
+        super().build()
 
     def _rebuild_app_statistics(self, with_update=False):
         self._app_statistics.controls.clear()
@@ -111,19 +121,15 @@ class ActivityStatisticsView(ft.Column):
             self._app_statistics.update()
 
     def _refresh_sessions_db(self):
-        self._idle_sessions = list(
-            IdleSession.select()
+        self._idle_sessions = list(self._filter_sessions(IdleSession))
+        self._window_sessions = list(self._filter_sessions(WindowSession))
+
+    def _filter_sessions(self, session_cls: type[T]) -> Sequence[T]:
+        return (
+            session_cls.select()
             .where(
-                fn.date(IdleSession.start_ts) == self._filter_date_value,
-                IdleSession.duration > 0,
-            )
-            .order_by(IdleSession.duration.desc())
-        )
-        self._window_sessions = list(
-            WindowSession.select()
-            .where(
-                fn.date(WindowSession.start_ts) == self._filter_date_value,
-                WindowSession.duration > 0,
+                fn.date(session_cls.start_ts) == self._filter_date_value,
+                session_cls.duration > 0,
             )
         )
 
@@ -143,7 +149,7 @@ class ActivityStatisticsView(ft.Column):
 
     def _build_refresh_button(self):
         self._refresh_button = ft.IconButton(
-            icon=ft.Icons.REFRESH,
+            icon=Icons.REFRESH,
             tooltip='Обновить',
             visible=False,
             on_click=self._on_click_refresh,
@@ -158,6 +164,9 @@ class ActivityStatisticsView(ft.Column):
     def refresh_statistics(self):
         self._rebuild_app_statistics(with_update=True)
 
+    def on_switch_window_event(self, _data: SystemEventSwitchWindowData):
+        self.refresh_statistics()
+
     def toggle_show_statistics(self, force_show=False):
         self._is_showed = not self._is_showed or force_show
 
@@ -170,7 +179,7 @@ class ActivityStatisticsView(ft.Column):
         self.update()
 
     def _build_filter_btn(self):
-        text = f'По дате: {self._filter_date_value.strftime("%d.%m.%y")}'
+        text = f'По дате: {self._filter_date_value.strftime(DATE_FORMAT)}'
 
         if self._date_filter_btn:
             self._date_filter_btn.content = text

@@ -22,6 +22,9 @@ class WindowControl:
         elif system == 'Darwin':
             self.service = WindowControlMac()
 
+    def __str__(self) -> str:
+        return f'WindowControl({self.service.__class__.__name__})'
+
     def get_active_window(self) -> WindowData | None:
         return self.service.get_active_window()
 

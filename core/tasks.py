@@ -1,25 +1,24 @@
 import asyncio
 import datetime
 
-import flet as ft
-
-from apps.app_settings.models import AppSettings
+from apps.notifications.services.audio_notifications import AudioNotificationService
 from apps.notifications.services.notification_sender import NotificationSender
+from apps.tasks.helpers import refresh_tasks_tab
 from apps.tasks.models import Task
 from apps.tasks.services.deadline_checker import TaskDeadlineChecker
 
 
-async def check_tasks_deadline(page: ft.Page):
-    settings = AppSettings.get_solo()
+async def check_tasks_deadline():
     checker = TaskDeadlineChecker()
-    notification_sender = NotificationSender(page)
+    notification_sender = NotificationSender()
+    audio_notification_sender = AudioNotificationService()
 
     while True:
         now = datetime.datetime.now()
         expired_tasks = await checker.get_expired_tasks(now)
 
         if expired_tasks:
-            settings.play_task_deadline_sound()
+            audio_notification_sender.play_task_deadline_sound()
 
             expired_at_now = []
             expired_before = []
@@ -31,7 +30,7 @@ async def check_tasks_deadline(page: ft.Page):
                     expired_before.append(task)
 
             if expired_at_now:
-                notification_sender.send(
+                notification_sender.send_error(
                     f'Время выполнить задачи:\n{_pretty_task_list(expired_at_now)}'
                 )
 
@@ -39,9 +38,11 @@ async def check_tasks_deadline(page: ft.Page):
 
                 Task.update(is_expired=True).where(Task.id in [it.id for it in expired_before]).execute()
 
-                notification_sender.send(
+                notification_sender.send_error(
                     f'Просрочен срок исполнения следующих задач:\n{_pretty_task_list(expired_before)}'
                 )
+
+                refresh_tasks_tab(with_update_controls=True)
 
         await asyncio.sleep(60)
 

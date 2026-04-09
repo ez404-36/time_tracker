@@ -2,8 +2,9 @@ import time
 
 import flet as ft
 
-from core.flet_helpers import get_from_store, get_or_create_from_store
-from ui.consts import Colors
+from core.di import container
+from core.settings import TIME_WITH_SECONDS_FORMAT
+from ui.consts import Colors, Icons, FontWeight
 
 
 class StatisticsOneRow(ft.Container):
@@ -24,6 +25,7 @@ class StatisticsOneRow(ft.Container):
             kwargs.setdefault('margin', ft.Margin(left=50, top=0, bottom=0, right=0))
         kwargs.setdefault('width', 500)
         super().__init__(**kwargs)
+        self._store = container.session_store
         self.has_parent = has_parent
         self.has_children = has_children
         self.title = title
@@ -38,7 +40,7 @@ class StatisticsOneRow(ft.Container):
         self._expand_children_icon: ft.IconButton | None = None
 
     def build(self):
-        expanded_statistics = get_from_store(self.page, 'expanded_statistics')
+        expanded_statistics = self._store.get('expanded_statistics')
         self.is_expanded = expanded_statistics and self.title in expanded_statistics
 
         if self.has_children:
@@ -59,28 +61,28 @@ class StatisticsOneRow(ft.Container):
         self._text = ft.Text(
             self.title,
             size=self.text_width,
-            weight=ft.FontWeight.W_500 if self.text_bold else ft.FontWeight.NORMAL,
+            weight=FontWeight.W_500 if self.text_bold else FontWeight.NORMAL,
             color=self.text_color,
             width=120 if not self.has_parent else 200,
         )
 
     def build_duration_text(self):
         struct_time = time.gmtime(self.duration)
-        txt = time.strftime("%H:%M:%S", struct_time)
+        txt = time.strftime(TIME_WITH_SECONDS_FORMAT, struct_time)
 
         self._duration_text = ft.Text(
             value=txt,
-            weight=ft.FontWeight.W_500 if self.text_bold else ft.FontWeight.NORMAL,
+            weight=FontWeight.W_500 if self.text_bold else FontWeight.NORMAL,
             color=self.text_color,
             size=self.text_width,
         )
 
     def build_expand_children_icon(self):
         if self.is_expanded:
-            icon = ft.Icons.KEYBOARD_ARROW_DOWN
+            icon = Icons.KEYBOARD_ARROW_DOWN
             tooltip = 'Скрыть подробности'
         else:
-            icon = ft.Icons.KEYBOARD_ARROW_RIGHT
+            icon = Icons.KEYBOARD_ARROW_RIGHT
             tooltip = 'Показать подробности'
 
         if self._expand_children_icon:
@@ -98,7 +100,7 @@ class StatisticsOneRow(ft.Container):
     def on_click_expand_children_icon(self, e):
         self.is_expanded = not self.is_expanded
 
-        expanded_statistics: set[str] = get_or_create_from_store(self.page, 'expanded_statistics', set())
+        expanded_statistics: set[str] = self._store.get_or_create('expanded_statistics', set())
 
         if self.is_expanded:
             expanded_statistics.add(self.title)

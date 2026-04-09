@@ -65,7 +65,12 @@ def main():
     elif args.command == 'downgrade':
         downgrade(args.index[0])
     elif args.command == 'new_migration':
-        create_new_migration(args.title[0])
+        if title := args.title:
+            title = title[0]
+        else:
+            title = ''
+
+        create_new_migration(title)
 
 
 if __name__ == '__main__':
