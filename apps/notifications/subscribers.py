@@ -14,9 +14,16 @@ class AudioNotificationSubscriber:
         self._service = AudioNotificationService()
 
         self._event_bus.subscribe('activity_tracker.detect_idle', self.on_activity_tracker_detect_idle)
+        self._event_bus.subscribe('pomodoro_tracker.change_status', self.on_activity_tracker_detect_idle)
 
     def on_activity_tracker_detect_idle(self, _data: system_event_type.SystemEventTimestampData):
         self._service.play_idle_start_sound()
+
+    def on_pomodoro_tracker_change_status(self, data: system_event_type.SystemEventPomodoroChangeStatus):
+        new_status = data.new_status
+
+        if new_status in ['working_stop', 'resting_stop']:
+            self._service.play_pomodoro_sound()
 
 
 class SnackbarSubscriber:
@@ -36,6 +43,7 @@ class SnackbarSubscriber:
         self._event_bus.subscribe('main_tracker.stop', self.on_main_tracker_stop)
 
         self._event_bus.subscribe('activity_tracker.detect_idle', self.on_activity_tracker_detect_idle)
+        self._event_bus.subscribe('pomodoro_tracker.change_status', self.on_activity_tracker_detect_idle)
 
         self._event_bus.subscribe('tasks.add', self.on_task_create)
         self._event_bus.subscribe('tasks.update', self.on_task_update)
@@ -63,6 +71,15 @@ class SnackbarSubscriber:
 
     def on_activity_tracker_detect_idle(self, _data: system_event_type.SystemEventTimestampData):
         show_snackbar(f'Обнаружено бездействие более {self._app_settings.idle_threshold} секунд')
+
+    @staticmethod
+    def on_pomodoro_tracker_change_status(data: system_event_type.SystemEventPomodoroChangeStatus):
+        new_status = data.new_status
+
+        if new_status == 'working_stop':
+            show_snackbar('Пора отдохнуть')
+        elif new_status == 'resting_stop':
+            show_snackbar('Пора работать')
 
     @staticmethod
     def on_task_create(data: system_event_type.SystemEventTaskAction):

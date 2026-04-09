@@ -92,10 +92,8 @@ class PomodoroTracker:
         if self._status == 'working':
             self._change_status('working_stop')
             self._set_total_and_rest_seconds(total=0, rest=0)
-            # self._notification_sender.send_info('Время отдохнуть')
         elif self._status == 'resting':
             self._change_status('resting_stop')
-            # self._notification_sender.send_info('Пора работать')
             self._set_total_and_rest_seconds(total=0, rest=0)
         else:
             self._create_error_change_status_event(self._status, 'unknown')

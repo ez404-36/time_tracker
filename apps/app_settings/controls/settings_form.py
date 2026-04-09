@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import flet as ft
@@ -9,6 +9,7 @@ from apps.app_settings.controls.types import SettingsFormMode
 from apps.app_settings.utils import get_available_notification_sounds
 from core.consts import AUDIO_DIR
 from core.di import container
+from core.system_events.types import SystemEvent, SystemEventChangeSettingsData
 from ui.base.components.containers import BorderedContainer
 from ui.consts import Icons
 
@@ -29,6 +30,9 @@ class SettingsAudioFormData:
     task_deadline_sound: str | None
     enable_idle_start_sound_notifications: bool
     idle_start_sound: str | None
+    enable_pomodoro_sound_notifications: bool
+    pomodoro_sound: str | None
+
 
 @dataclass(frozen=True)
 class SettingsCommonFormData:
@@ -58,8 +62,11 @@ class SettingsForm(BorderedContainer):
             kwargs.setdefault('width', 400)
 
         super().__init__(**kwargs)
+        self.adaptive = True
+
         self._mode = mode
         self._app_settings = container.app_settings
+        self._event_bus = container.event_bus
 
         self._enable_window_tracking_switch: ft.Switch | None = None
 
@@ -76,6 +83,9 @@ class SettingsForm(BorderedContainer):
         self._enable_idle_start_sound_switch: ft.Switch | None = None
         self._idle_start_sound_dropdown: ft.Dropdown | None = None
 
+        self._enable_pomodoro_sound_notifications_switch: ft.Switch | None = None
+        self._pomodoro_sound_dropdown: ft.Dropdown | None = None
+
         self._timezone_dropdown: ft.Dropdown | None = None
 
         self._available_notification_sounds = get_available_notification_sounds()
@@ -90,7 +100,9 @@ class SettingsForm(BorderedContainer):
         self._build_enable_task_deadline_sound_switch()
         self._build_task_deadline_sound_dropdown()
         self._build_enable_idle_start_sound_switch()
+        self._build_enable_pomodoro_sound_switch()
         self._build_idle_start_sound_dropdown()
+        self._build_enable_pomodoro_sound_dropdown()
         self._build_timezone_dropdown()
 
         if self._mode == 'tracker':
@@ -122,13 +134,37 @@ class SettingsForm(BorderedContainer):
                 self._task_deadline_sound_dropdown,
                 self._enable_idle_start_sound_switch,
                 self._idle_start_sound_dropdown,
+                self._enable_pomodoro_sound_notifications_switch,
+                self._pomodoro_sound_dropdown,
             ]
 
         content = ft.ListView(
             spacing=10,
-            controls=controls
+            scroll=ft.ScrollMode.ADAPTIVE,
+            controls=controls,
         )
         self.content = content
+
+    def save(self):
+        settings_form_values = asdict(self.collect_form_fields())
+
+        for values in settings_form_values.values():
+            if values is None:
+                continue
+
+            for field, value in values.items():
+                setattr(self._app_settings, field, value)
+
+        self._app_settings.save()
+
+        self._event_bus.publish(
+            SystemEvent(
+                type='app.change_settings',
+                data=SystemEventChangeSettingsData(
+                    values=settings_form_values
+                )
+            )
+        )
 
     def collect_form_fields(self) -> SettingsFormData:
         tracker_settings = self._collect_tracker_settings()
@@ -157,6 +193,8 @@ class SettingsForm(BorderedContainer):
             task_deadline_sound=self._task_deadline_sound_dropdown.value,
             enable_idle_start_sound_notifications=self._enable_idle_start_sound_switch.value,
             idle_start_sound=self._idle_start_sound_dropdown.value,
+            enable_pomodoro_sound_notifications=self._enable_pomodoro_sound_notifications_switch.value,
+            pomodoro_sound=self._pomodoro_sound_dropdown.value,
         )
 
     def _collect_tracker_settings(self) -> SettingsTrackerFormData:
@@ -269,6 +307,18 @@ class SettingsForm(BorderedContainer):
         self._idle_start_sound_dropdown.visible = enabled
         self.update()
 
+    def _build_enable_pomodoro_sound_switch(self):
+        self._enable_pomodoro_sound_notifications_switch = ft.Switch(
+            label='Звуковые уведомления окончания таймера работы/отдыха',
+            value=self._app_settings.enable_pomodoro_sound_notifications,
+            on_change=self._on_change_enable_pomodoro_sound_switch,
+        )
+
+    def _on_change_enable_pomodoro_sound_switch(self, e):
+        enabled = e.control.value
+        self._pomodoro_sound_dropdown.visible = enabled
+        self.update()
+
     def _build_task_deadline_sound_dropdown(self):
         self._task_deadline_sound_dropdown = self.get_notification_sound_dropdown()
         self._task_deadline_sound_dropdown.visible = self._app_settings.enable_task_deadline_sound_notifications
@@ -278,6 +328,11 @@ class SettingsForm(BorderedContainer):
         self._idle_start_sound_dropdown = self.get_notification_sound_dropdown()
         self._idle_start_sound_dropdown.visible = self._app_settings.enable_idle_start_sound_notifications
         self._idle_start_sound_dropdown.value = self._app_settings.idle_start_sound
+
+    def _build_enable_pomodoro_sound_dropdown(self):
+        self._pomodoro_sound_dropdown = self.get_notification_sound_dropdown()
+        self._pomodoro_sound_dropdown.visible = self._app_settings.enable_pomodoro_sound_notifications
+        self._pomodoro_sound_dropdown.value = self._app_settings.pomodoro_sound
 
     def _build_timezone_dropdown(self):
         self._timezone_dropdown = ft.Dropdown(

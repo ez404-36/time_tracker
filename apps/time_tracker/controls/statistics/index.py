@@ -164,7 +164,7 @@ class ActivityStatisticsView(ft.Column, SessionStoredComponent):
     def refresh_statistics(self):
         self._rebuild_app_statistics(with_update=True)
 
-    def on_switch_window_event(self, data: SystemEventSwitchWindowData):
+    def on_switch_window_event(self, _data: SystemEventSwitchWindowData):
         self.refresh_statistics()
 
     def toggle_show_statistics(self, force_show=False):

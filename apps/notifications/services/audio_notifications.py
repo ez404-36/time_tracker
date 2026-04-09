@@ -40,6 +40,21 @@ class AudioNotificationService:
                     )
                 )
 
+    def play_pomodoro_sound(self):
+        if self._app_settings.enable_pomodoro_sound_notifications:
+            if sound := self._app_settings.pomodoro_sound:
+                self._play_sound(sound)
+            else:
+                self._event_bus.publish(
+                    event=SystemEvent(
+                        type='error.wrong_config',
+                        data=SystemEventWrongConfigData(
+                            field='pomodoro_sound',
+                            error='File not specified'
+                        )
+                    )
+                )
+
     def _play_sound(self, file_name: str | None):
         if file_name:
             file = AUDIO_DIR / file_name

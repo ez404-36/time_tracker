@@ -33,16 +33,28 @@ class AppSettings(BaseModel):
     # region Звуковые уведомления
 
     enable_task_deadline_sound_notifications = BooleanField(
-        help_text='Включить звуковые уведомления для дедлайна задач', default=False
+        help_text='Включить звуковые уведомления для дедлайна задач',
+        default=False,
     )
     task_deadline_sound = CharField(
-        help_text='Название файла звукового уведомления для дедлайна задач', null=True, max_length=255
+        help_text='Название файла звукового уведомления для дедлайна задач',
+        null=True, max_length=255
     )
     enable_idle_start_sound_notifications = BooleanField(
-        help_text='Включить звуковые уведомления о начала бездействия', default=False
+        help_text='Включить звуковые уведомления о начала бездействия',
+        default=False,
     )
     idle_start_sound = CharField(
-        help_text='Название файла звукового уведомления о начале бездействия', null=True, max_length=255
+        help_text='Название файла звукового уведомления о начале бездействия',
+        null=True, max_length=255,
+    )
+    enable_pomodoro_sound_notifications = BooleanField(
+        help_text='Включить звуковые уведомления окончания таймера',
+        default=False,
+    )
+    pomodoro_sound = CharField(
+        help_text='Название файла звукового уведомления окончания таймера помодоро',
+        null=True, max_length=255,
     )
 
     # endregion

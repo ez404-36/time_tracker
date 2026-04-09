@@ -2,7 +2,7 @@ import datetime
 
 import flet as ft
 
-from apps.app_settings.controls.view import SettingsView
+from apps.app_settings.controls.settings_view import SettingsView
 from apps.app_settings.models import AppSettings
 from apps.tasks.controls.tasks_tab.main_container import TasksTabViewControl
 from apps.tasks.helpers import refresh_tasks_tab

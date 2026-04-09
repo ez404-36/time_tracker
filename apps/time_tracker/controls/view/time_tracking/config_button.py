@@ -1,6 +1,6 @@
 import flet as ft
 
-from apps.app_settings.controls.modal import SettingsModal
+from apps.app_settings.controls.settings_modal import SettingsModal
 from core.di import container
 from ui.base.components.mixins import ShowHideMixin
 from ui.consts import Icons, Colors
