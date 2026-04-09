@@ -1,7 +1,8 @@
 import flet as ft
 
+from apps.time_tracker.types import PomodoroTimerStatus
 from core.di import container
-from core.system_events.types import SystemEvent
+from core.system_events import types as system_event_type
 from ui.base.components.mixins import ShowHideMixin
 from ui.consts import Icons, Colors
 
@@ -20,20 +21,17 @@ class TimeTrackingPomodoroStartWorkButton(ft.IconButton, ShowHideMixin):
 
         self._app_settings = container.app_settings
         self._event_bus = container.event_bus
+        self._main_tracker = container.main_tracker
 
-        self._event_bus.subscribe('main_tracker.start', self.hide)
-        self._event_bus.subscribe('main_tracker.pause', self.hide)
-        self._event_bus.subscribe('main_tracker.resume', self.hide)
-        self._event_bus.subscribe('main_tracker.stop', self.hide)
+        self._event_bus.subscribe('pomodoro_tracker.change_status', self.on_pomodoro_tracker_change_status)
 
-        self._event_bus.subscribe('pomodoro_tracker.start_work', self.hide)
-        self._event_bus.subscribe('pomodoro_tracker.end_work', self.hide)
-        self._event_bus.subscribe('pomodoro_tracker.start_rest', self.hide)
-        self._event_bus.subscribe('pomodoro_tracker.end_rest', self.show)
+    def _on_click(self):
+        self._main_tracker.pomodoro_tracker.start_next_timer()
 
-    def _on_click(self, e):
-        self._event_bus.publish(
-            SystemEvent(
-                type='pomodoro_tracker.start_work',
-            )
-        )
+    def on_pomodoro_tracker_change_status(self, data: system_event_type.SystemEventPomodoroChangeStatus):
+        new_status: PomodoroTimerStatus = data.new_status
+
+        if new_status == 'resting_stop':
+            self.show()
+        else:
+            self.hide()

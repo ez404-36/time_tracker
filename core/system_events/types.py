@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Literal, Self
 
 from apps.time_tracker.services.window_control.abstract import WindowData
+from apps.time_tracker.types import PomodoroTimerStatus
 
 SystemEventType = Literal[
     'app.open',
@@ -26,10 +27,6 @@ SystemEventType = Literal[
     'window_tracker.switch_window',
     'window_tracker.change_opened_windows',
 
-    'pomodoro_tracker.start_work',
-    'pomodoro_tracker.end_work',
-    'pomodoro_tracker.start_rest',
-    'pomodoro_tracker.end_rest',
     'pomodoro_tracker.change_status',
 
     'tasks.add',
@@ -74,8 +71,8 @@ class SystemEventChangeActiveWindowsData:
 
 @dataclass
 class SystemEventPomodoroChangeStatus:
-    prev_status: str
-    new_status: str
+    prev_status: PomodoroTimerStatus
+    new_status: PomodoroTimerStatus
 
 
 @dataclass
