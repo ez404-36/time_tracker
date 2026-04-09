@@ -26,7 +26,7 @@ class TimeTrackingPomodoroStartRestButton(ft.IconButton, ShowHideMixin):
         self._event_bus.subscribe('pomodoro_tracker.change_status', self.on_pomodoro_tracker_change_status)
 
     def _on_click(self):
-        self._main_tracker.pomodoro_tracker.start_next_timer()
+        self._main_tracker.pomodoro_tracker.start_resting()
 
     def on_pomodoro_tracker_change_status(self, data: system_event_type.SystemEventPomodoroChangeStatus):
         new_status: PomodoroTimerStatus = data.new_status

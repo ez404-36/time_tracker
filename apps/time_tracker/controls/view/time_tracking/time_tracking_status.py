@@ -95,7 +95,7 @@ class TimeTrackingStatus(ft.Row):
 
         self._timer = CountdownComponent(
             seconds=self._app_settings.pomodoro_work_time * 1,  # TODO: 60
-            on_end=self._main_tracker.pomodoro_tracker.stop_current_timer,
+            on_end=self._main_tracker.hold,
         )
 
         self.controls = [
@@ -108,7 +108,7 @@ class TimeTrackingStatus(ft.Row):
 
         self._timer = CountdownComponent(
             seconds=self._app_settings.pomodoro_rest_time * 1,  # TODO: 60
-            on_end=self._main_tracker.pomodoro_tracker.stop_current_timer,
+            on_end=self._main_tracker.hold,
         )
 
         self.controls = [

@@ -14,6 +14,7 @@ SystemEventType = Literal[
 
     'main_tracker.start',
     'main_tracker.pause',
+    'main_tracker.hold',
     'main_tracker.resume',
     'main_tracker.stop',
 
