@@ -45,7 +45,7 @@ class TaskMutateModal(ft.AlertDialog):
         self.content = TaskMutateForm(self._instance, self._parent_instance)
 
         self.actions = [
-            CancelButton(on_click=lambda e: self.page.pop_dialog()),
+            CancelButton(on_click=self._hide),
             SaveButton(on_click=self._on_save),
         ]
 
@@ -83,4 +83,8 @@ class TaskMutateModal(ft.AlertDialog):
             )
 
         refresh_tasks_tab()
-        self.page.pop_dialog()
+        self._hide()
+
+    def _hide(self):
+        self.open = False
+        self.update()

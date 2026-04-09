@@ -140,8 +140,8 @@ class SettingsForm(BorderedContainer):
 
         content = ft.ListView(
             spacing=10,
-            scroll=ft.ScrollMode.ADAPTIVE,
             controls=controls,
+            height=500,
         )
         self.content = content
 
