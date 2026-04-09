@@ -1,9 +1,21 @@
 from functools import lru_cache
 
 import pytz
-from peewee import BooleanField, CharField, IntegerField, SmallIntegerField
+from peewee import BooleanField, CharField, ForeignKeyField, IntegerField, SmallIntegerField
 
 from core.models import BaseModel
+
+
+class SettingsAudioParam(BaseModel):
+    """
+    Параметр настройки звука для какого-либо действия
+    """
+    disabled = BooleanField(default=False)
+    sound = CharField(help_text='Название звукового файла', null=True, max_length=255)
+    volume_offset = IntegerField(help_text='Смещение уровня звука, в децибелах', default=0)
+
+    class Meta:
+        table_name = 'settings_audio_param'
 
 
 class AppSettings(BaseModel):
@@ -32,30 +44,9 @@ class AppSettings(BaseModel):
 
     # region Звуковые уведомления
 
-    enable_task_deadline_sound_notifications = BooleanField(
-        help_text='Включить звуковые уведомления для дедлайна задач',
-        default=False,
-    )
-    task_deadline_sound = CharField(
-        help_text='Название файла звукового уведомления для дедлайна задач',
-        null=True, max_length=255
-    )
-    enable_idle_start_sound_notifications = BooleanField(
-        help_text='Включить звуковые уведомления о начала бездействия',
-        default=False,
-    )
-    idle_start_sound = CharField(
-        help_text='Название файла звукового уведомления о начале бездействия',
-        null=True, max_length=255,
-    )
-    enable_pomodoro_sound_notifications = BooleanField(
-        help_text='Включить звуковые уведомления окончания таймера',
-        default=False,
-    )
-    pomodoro_sound = CharField(
-        help_text='Название файла звукового уведомления окончания таймера помодоро',
-        null=True, max_length=255,
-    )
+    task_deadline_sound_config = ForeignKeyField(SettingsAudioParam, null=True, backref='task_deadline_sound_config')
+    idle_sound_config = ForeignKeyField(SettingsAudioParam, null=True, backref='idle_sound_config')
+    pomodoro_sound_config = ForeignKeyField(SettingsAudioParam, null=True, backref='pomodoro_sound_config')
 
     # endregion
 

@@ -5,6 +5,10 @@ from pydub import playback
 
 
 class AudioPlayer:
+    """
+    Занимается воспроизведением аудио
+    """
+
     @classmethod
     def play(cls, file_path: Path | str, volume_offset: int = 0):
         file_path = Path(file_path)

@@ -5,6 +5,10 @@ from core.system_events.types import SystemEvent, SystemEventFileNotFound, Syste
 
 
 class AudioNotificationService:
+    """
+    Сервис по отправке звуковых уведомлений
+    """
+
     def __init__(self):
         self._app_settings = container.app_settings
         self._event_bus = container.event_bus
