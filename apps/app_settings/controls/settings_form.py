@@ -3,10 +3,10 @@ from pathlib import Path
 
 import flet as ft
 import pytz
-from playsound3 import playsound
 
 from apps.app_settings.controls.types import SettingsFormMode
 from apps.app_settings.utils import get_available_notification_sounds
+from core.audio_player import AudioPlayer
 from core.consts import AUDIO_DIR
 from core.di import container
 from core.system_events.types import SystemEvent, SystemEventChangeSettingsData
@@ -354,7 +354,7 @@ class SettingsForm(BorderedContainer):
         for sound_file_path in self._available_notification_sounds:
             def on_click(e):
                 sound_name = e.control.parent.controls[1].value
-                playsound(AUDIO_DIR / sound_name)
+                AudioPlayer.play(AUDIO_DIR / sound_name)
 
             option = ft.DropdownOption(
                 key=Path(sound_file_path).name,

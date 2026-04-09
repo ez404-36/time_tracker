@@ -1,5 +1,4 @@
-from playsound3 import playsound
-
+from core.audio_player import AudioPlayer
 from core.consts import AUDIO_DIR
 from core.di import container
 from core.system_events.types import SystemEvent, SystemEventFileNotFound, SystemEventWrongConfigData
@@ -59,7 +58,7 @@ class AudioNotificationService:
         if file_name:
             file = AUDIO_DIR / file_name
             if file.exists():
-                playsound(file)
+                AudioPlayer.play(file)
             else:
                 self._event_bus.publish(
                     event=SystemEvent(
