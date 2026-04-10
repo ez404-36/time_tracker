@@ -18,6 +18,23 @@ class SettingsAudioParamFormData:
     volume_offset: int
 
 
+class VolumeOffsetText(ft.Text):
+    def __init__(self, volume_offset: ft.Number, **kwargs):
+        super().__init__(**kwargs)
+        self.volume_offset = volume_offset
+
+    def build(self):
+        self.value = self._get_value()
+
+    def update_value(self, volume_offset: ft.Number):
+        self.volume_offset = volume_offset
+        self.value = self._get_value()
+        self.update()
+
+    def _get_value(self) -> str:
+        return f'Усиление/Уменьшение громкости: {self.volume_offset} Дб'
+
+
 class SettingsAudioParamForm(BorderedContainer):
     content: ft.ListView
 
@@ -26,8 +43,11 @@ class SettingsAudioParamForm(BorderedContainer):
         super().__init__(**kwargs)
 
         self._enable_switch: ft.Switch | None = None
+        self._sound_row: ft.Row | None = None
         self._sound_dropdown: ft.Dropdown | None = None
+        self._sound_play_button: ft.IconButton | None = None
         self._volume_offset_row: ft.Row | None = None
+        self._volume_offset_text: VolumeOffsetText | None = None
         self._volume_offset_slider: ft.Slider | None = None
 
         self._audio_param = audio_param
@@ -39,21 +59,39 @@ class SettingsAudioParamForm(BorderedContainer):
             value=not self._audio_param.disabled if self._audio_param else False,
             on_change=self._on_change_switch,
         )
+        self._volume_offset_text = VolumeOffsetText(
+            volume_offset=float(self._audio_param.volume_offset) if self._audio_param else 0,
+        )
         self._volume_offset_slider = ft.Slider(
-            label='Усиление/Уменьшение громкости, в децибелах',
-            min=-20,
-            max=20,
-            width=200,
-            value=self._audio_param.volume_offset if self._audio_param else 0,
+            min=-20.0,
+            max=20.0,
+            width=400,
+            value=float(self._audio_param.volume_offset) if self._audio_param else 0,
+            on_change_end=self._on_change_volume_offset,
         )
         self._sound_dropdown = self.get_notification_sound_dropdown()
+        self._sound_play_button = ft.IconButton(
+            icon=Icons.START,
+            on_click=self._on_click_play_sound,
+            visible=self._sound_dropdown.value is not None,
+            tooltip='Воспроизвести звук',
+        )
 
         self._volume_offset_row = ft.Row(
             width=300,
             visible=not self._audio_param.disabled if self._audio_param else False,
             controls=[
-                ft.Text('Усиление/Уменьшение громкости, Дб'),
+                self._volume_offset_text,
                 self._volume_offset_slider,
+            ]
+        )
+
+        self._sound_row = ft.Row(
+            width=300,
+            visible=not self._audio_param.disabled if self._audio_param else False,
+            controls=[
+                self._sound_dropdown,
+                self._sound_play_button,
             ]
         )
 
@@ -61,7 +99,7 @@ class SettingsAudioParamForm(BorderedContainer):
             spacing=10,
             controls=[
                 self._enable_switch,
-                self._sound_dropdown,
+                self._sound_row,
                 self._volume_offset_row,
             ]
         )
@@ -70,12 +108,24 @@ class SettingsAudioParamForm(BorderedContainer):
         return SettingsAudioParamFormData(
             disabled=not self._enable_switch.value,
             sound=self._sound_dropdown.value,
-            volume_offset=self._volume_offset_slider.value,
+            volume_offset=round(self._volume_offset_slider.value, 1),
         )
+
+    def _on_click_play_sound(self, e):
+        sound = self._sound_dropdown.value
+        if self._sound_dropdown.value:
+            AudioPlayer.play(
+                AUDIO_DIR / sound,
+                volume_offset=self._volume_offset_slider.value,
+            )
+
+    def _on_change_volume_offset(self, e):
+        value: ft.Number = e.control.value
+        self._volume_offset_text.update_value(round(value, 1))
 
     def _on_change_switch(self, e):
         enabled = e.control.value
-        self._sound_dropdown.visible = enabled
+        self._sound_row.visible = enabled
         self._volume_offset_row.visible = enabled
 
         self.update()
@@ -88,7 +138,6 @@ class SettingsAudioParamForm(BorderedContainer):
         for sound_file_path in self._available_notification_sounds:
             def on_click(e):
                 sound_name: str = e.control.parent.controls[1].value
-                # _self: SettingsAudioParamForm = e.control.parent.parent.parent.parent.parent
                 AudioPlayer.play(
                     AUDIO_DIR / sound_name,
                     volume_offset=volume_offset_component.value,
@@ -112,5 +161,12 @@ class SettingsAudioParamForm(BorderedContainer):
             label='Звук уведомления',
             menu_height=200,
             options=options,
-            visible=not self._audio_param.disabled if self._audio_param else False,
+            value=self._audio_param and self._audio_param.sound,
+            on_select=self._on_change_sound_dropdown,
         )
+
+    def _on_change_sound_dropdown(self, e):
+        has_value = e.control.value is not None
+
+        self._sound_play_button.visible = has_value
+        self._sound_play_button.update()

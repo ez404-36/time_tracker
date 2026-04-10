@@ -1,7 +1,7 @@
 from functools import lru_cache
 
 import pytz
-from peewee import BooleanField, CharField, ForeignKeyField, IntegerField, SmallIntegerField
+from peewee import BooleanField, CharField, DecimalField, ForeignKeyField, IntegerField, SmallIntegerField
 
 from core.models import BaseModel
 
@@ -12,7 +12,12 @@ class SettingsAudioParam(BaseModel):
     """
     disabled = BooleanField(default=False)
     sound = CharField(help_text='Название звукового файла', null=True, max_length=255)
-    volume_offset = IntegerField(help_text='Смещение уровня звука, в децибелах', default=0)
+    volume_offset = DecimalField(
+        help_text='Смещение уровня звука, в децибелах',
+        max_digits=3,
+        decimal_places=1,
+        default=0.0,
+    )
 
     class Meta:
         table_name = 'settings_audio_param'

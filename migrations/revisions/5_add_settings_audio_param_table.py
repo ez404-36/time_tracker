@@ -21,7 +21,7 @@ def migrate(db: peewee.Database):
             "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
             "disabled" BOOLEAN DEFAULT 0,
             "sound" VARCHAR(255),
-            "volume_offset" INTEGER DEFAULT 0
+            "volume_offset" DECIMAL(3, 1) DEFAULT 0.0
         );
         """
     )
@@ -82,7 +82,7 @@ def downgrade(db: peewee.Database):
 
     db.execute_sql(
         """
-        DROP TABLE "settings_audio_param";
+        DROP TABLE settings_audio_param;
         """
     )
 

@@ -15,12 +15,15 @@ Example using native SQL:
 
 
 def migrate(db: peewee.Database):
-    apply(migrator.drop_column('settings', 'enable_task_deadline_sound_notifications'))
-    apply(migrator.drop_column('settings', 'task_deadline_sound'))
-    apply(migrator.drop_column('settings', 'enable_idle_start_sound_notifications'))
-    apply(migrator.drop_column('settings', 'idle_start_sound'))
-    apply(migrator.drop_column('settings', 'enable_pomodoro_sound_notifications'))
-    apply(migrator.drop_column('settings', 'pomodoro_sound'))
+    try:
+        apply(migrator.drop_column('settings', 'enable_task_deadline_sound_notifications'))
+        apply(migrator.drop_column('settings', 'task_deadline_sound'))
+        apply(migrator.drop_column('settings', 'enable_idle_start_sound_notifications'))
+        apply(migrator.drop_column('settings', 'idle_start_sound'))
+        apply(migrator.drop_column('settings', 'enable_pomodoro_sound_notifications'))
+        apply(migrator.drop_column('settings', 'pomodoro_sound'))
+    except peewee.OperationalError:
+        pass
 
 
 def downgrade(db: peewee.Database):
