@@ -1,8 +1,10 @@
 import flet as ft
 
 from apps.time_tracker.services.main_tracker import MainTracker
+from apps.time_tracker.types import PomodoroTimerStatus
 from core.di import container
 from core.system_events.event_bus import EventBus
+from core.system_events.types import SystemEventPomodoroChangeStatus
 from ui.base.components.mixins import ShowHideMixin
 from ui.consts import Colors, Icons
 
@@ -27,8 +29,15 @@ class TimeTrackingPauseButton(ft.IconButton, ShowHideMixin):
         self._event_bus.subscribe('main_tracker.resume', self.show)
         self._event_bus.subscribe('main_tracker.stop', self.hide)
 
-        self._event_bus.subscribe('pomodoro_tracker.end_work', self.hide)
-        self._event_bus.subscribe('pomodoro_tracker.end_rest', self.hide)
+        self._event_bus.subscribe('pomodoro_tracker.change_status', self.on_pomodoro_tracker_change_status)
 
     def _on_click(self, e):
         self._main_tracker.pause()
+
+    def on_pomodoro_tracker_change_status(self, data: SystemEventPomodoroChangeStatus):
+        new_status: PomodoroTimerStatus = data.new_status
+
+        if new_status in ['working', 'resting']:
+            self.show()
+        else:
+            self.hide()

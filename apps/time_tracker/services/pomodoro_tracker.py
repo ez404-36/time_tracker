@@ -1,30 +1,15 @@
 __all__ = (
     'PomodoroTracker',
-    'PomodoroTimerStatus',
 )
 
-from typing import Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-
-from apps.events.models import Event
-from apps.events.consts import EventActor, EventType
-
-from core.system_events.types import SystemEvent, SystemEventPomodoroChangeStatus, SystemEventAppError
+from apps.time_tracker.types import PomodoroTimerStatus
+from core.system_events import types as system_event_types
 
 if TYPE_CHECKING:
     from apps.app_settings.models import AppSettings
     from core.system_events.event_bus import EventBus
-
-PomodoroTimerStatus = Literal[
-    'disabled',
-    'unknown',
-    'working',
-    'working_pause',
-    'working_stop',
-    'resting',
-    'resting_pause',
-    'resting_stop',
-]
 
 
 pomodoro_status_to_next_status_map: dict[PomodoroTimerStatus, list[PomodoroTimerStatus]] = {
@@ -45,15 +30,18 @@ class PomodoroTracker:
     """
 
     def __init__(self, event_bus: 'EventBus', app_settings: 'AppSettings'):
+        self.running = False
+
         self._event_bus = event_bus
         self._app_settings = app_settings
 
-        # self._notification_sender = NotificationSender()
-
         self._status: PomodoroTimerStatus = 'disabled'
 
-        self._current_timer_total_seconds: int | None = None
-        self._current_timer_rest_seconds: int | None = None
+        self._event_bus.subscribe('main_tracker.start', self.start)
+        self._event_bus.subscribe('main_tracker.pause', self.pause)
+        self._event_bus.subscribe('main_tracker.hold', self.hold)
+        self._event_bus.subscribe('main_tracker.resume', self.resume)
+        self._event_bus.subscribe('main_tracker.stop', self.stop)
 
     def __str__(self):
         return f'PomodoroTracker(status={self.status})'
@@ -62,75 +50,46 @@ class PomodoroTracker:
     def status(self) -> PomodoroTimerStatus:
         return self._status
 
-    @property
-    def is_on_pause(self) -> bool:
-        return self._status in ['working_pause', 'resting_pause']
-
-    @property
-    def total_seconds(self) -> int | None:
-        return self._current_timer_total_seconds
-
-    @property
-    def rest_seconds(self) -> int | None:
-        return self._current_timer_rest_seconds
-
-    @rest_seconds.setter
-    def rest_seconds(self, seconds: int):
-        self._current_timer_rest_seconds = seconds
-
-    def start(self) -> None:
+    def start(self, data: system_event_types.SystemEventStartMainTracker) -> None:
         """Первичный запуск работы по таймеру Помодоро"""
-        self._change_status('working')
-        self._set_total_and_rest_seconds(
-            total=self._app_settings.pomodoro_work_time,
-            rest=self._app_settings.pomodoro_work_time,
-        )
 
-    def stop_current_timer(self):
-        """Остановка текущего таймера"""
+        if data.pomodoro_tracking:
+            self.running = True
+            self.start_working()
+
+    def hold(self):
+        """Действия при истечении текущего таймера"""
 
         if self._status == 'working':
             self._change_status('working_stop')
-            self._set_total_and_rest_seconds(total=0, rest=0)
         elif self._status == 'resting':
             self._change_status('resting_stop')
-            self._set_total_and_rest_seconds(total=0, rest=0)
         else:
             self._create_error_change_status_event(self._status, 'unknown')
 
-    def start_next_timer(self):
-        """Запуск следующего таймера"""
+    def start_resting(self):
+        self._change_status('resting')
 
-        if self._status == 'working_stop':
-            self._change_status('resting')
-            self._current_timer_total_seconds = self._app_settings.pomodoro_rest_time
-        elif self._status == 'resting_stop':
-            self._change_status('working')
-            self._current_timer_total_seconds = self._app_settings.pomodoro_work_time
-        else:
-            self._create_error_change_status_event(self._status, 'unknown')
+    def start_working(self):
+        self._change_status('working')
 
-    def pause_current_timer(self, rest_seconds: int) -> None:
+    def pause(self) -> None:
         """Приостановка текущего таймера"""
 
         if self._status == 'working':
             self._change_status('working_pause')
-            self._current_timer_rest_seconds = rest_seconds
         elif self._status == 'resting':
             self._change_status('resting_pause')
-            self._current_timer_rest_seconds = rest_seconds
         else:
             self._create_error_change_status_event(self._status, 'unknown')
 
     def resume(self) -> None:
-        """Возобновление текущего таймера после приостановки"""
+        """Возобновление текущего таймера после ручной приостановки"""
 
         if self._status == 'working_pause':
             self._change_status('working')
-            self._current_timer_rest_seconds = 0
         elif self._status == 'resting_pause':
             self._change_status('resting')
-            self._current_timer_rest_seconds = 0
         else:
             self._create_error_change_status_event(self._status, 'unknown')
 
@@ -138,8 +97,12 @@ class PomodoroTracker:
         """Полная остановка таймера"""
 
         self._change_status('disabled')
+        self.running = False
 
     def _change_status(self, new_status: PomodoroTimerStatus):
+        if not self.running:
+            return
+
         prev_status = self._status
 
         available_new_statuses = pomodoro_status_to_next_status_map.get(prev_status)
@@ -160,9 +123,9 @@ class PomodoroTracker:
 
     def _create_change_status_event(self, prev_status: PomodoroTimerStatus, new_status: PomodoroTimerStatus):
         self._event_bus.publish(
-            SystemEvent(
+            system_event_types.SystemEvent(
                 type='pomodoro_tracker.change_status',
-                data=SystemEventPomodoroChangeStatus(
+                data=system_event_types.SystemEventPomodoroChangeStatus(
                     prev_status=prev_status,
                     new_status=new_status,
                 )
@@ -171,20 +134,11 @@ class PomodoroTracker:
 
     def _create_error_change_status_event(self, prev_status: PomodoroTimerStatus, new_status: PomodoroTimerStatus):
         self._event_bus.publish(
-            SystemEvent(
+            system_event_types.SystemEvent(
                 type='error.system',
-                data=SystemEventAppError(
+                data=system_event_types.SystemEventAppError(
                     source='PomodoroTracker',
                     error=f'Cant move status: "{prev_status}" -> "{new_status}"',
                 )
             )
-        )
-
-        Event.create(
-            type=EventType.APP_ERROR,
-            actor=EventActor.SYSTEM,
-            data={
-                'type': 'Pomodoro',
-                'info': f'moving timer status from "{prev_status}" to "{new_status}"',
-            }
         )

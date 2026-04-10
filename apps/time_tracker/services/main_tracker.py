@@ -65,6 +65,10 @@ class MainTracker:
         )
 
     def pause(self):
+        """
+        Ручная приостановка трекера
+        """
+
         if not self.running:
             return
 
@@ -72,6 +76,22 @@ class MainTracker:
         self._event_bus.publish(
             SystemEvent(
                 type='main_tracker.pause',
+            )
+        )
+
+    def hold(self):
+        """
+        Автоматическая приостановка трекера.
+        Ожидание действий от пользователя
+        """
+
+        if not self.running:
+            return
+
+        self.paused = True
+        self._event_bus.publish(
+            SystemEvent(
+                type='main_tracker.hold',
             )
         )
 

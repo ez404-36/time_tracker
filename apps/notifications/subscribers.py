@@ -1,4 +1,5 @@
 from apps.notifications.services.audio_notifications import AudioNotificationService
+from apps.time_tracker.types import PomodoroTimerStatus
 from core.di import container
 from core.system_events import types as system_event_type
 from ui.utils import show_snackbar
@@ -14,7 +15,7 @@ class AudioNotificationSubscriber:
         self._service = AudioNotificationService()
 
         self._event_bus.subscribe('activity_tracker.detect_idle', self.on_activity_tracker_detect_idle)
-        self._event_bus.subscribe('pomodoro_tracker.change_status', self.on_activity_tracker_detect_idle)
+        self._event_bus.subscribe('pomodoro_tracker.change_status', self.on_pomodoro_tracker_change_status)
 
     def on_activity_tracker_detect_idle(self, _data: system_event_type.SystemEventTimestampData):
         self._service.play_idle_start_sound()
@@ -43,7 +44,7 @@ class SnackbarSubscriber:
         self._event_bus.subscribe('main_tracker.stop', self.on_main_tracker_stop)
 
         self._event_bus.subscribe('activity_tracker.detect_idle', self.on_activity_tracker_detect_idle)
-        self._event_bus.subscribe('pomodoro_tracker.change_status', self.on_activity_tracker_detect_idle)
+        self._event_bus.subscribe('pomodoro_tracker.change_status', self.on_pomodoro_tracker_change_status)
 
         self._event_bus.subscribe('tasks.add', self.on_task_create)
         self._event_bus.subscribe('tasks.update', self.on_task_update)
@@ -74,7 +75,7 @@ class SnackbarSubscriber:
 
     @staticmethod
     def on_pomodoro_tracker_change_status(data: system_event_type.SystemEventPomodoroChangeStatus):
-        new_status = data.new_status
+        new_status: PomodoroTimerStatus = data.new_status
 
         if new_status == 'working_stop':
             show_snackbar('Пора отдохнуть')

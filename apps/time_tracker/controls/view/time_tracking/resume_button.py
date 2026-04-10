@@ -26,5 +26,5 @@ class TimeTrackingResumeButton(ft.IconButton, ShowHideMixin):
         self._event_bus.subscribe('main_tracker.resume', self.hide)
         self._event_bus.subscribe('main_tracker.stop', self.hide)
 
-    def _on_click(self, e):
+    def _on_click(self):
         self._main_tracker.resume()

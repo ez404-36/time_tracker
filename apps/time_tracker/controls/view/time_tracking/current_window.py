@@ -35,6 +35,7 @@ class CurrentWindowComponent(
         self._event_bus.subscribe('window_tracker.switch_window', self.switch_window_session)
         self._event_bus.subscribe('main_tracker.start', self.on_start_main_tracker)
         self._event_bus.subscribe('main_tracker.pause', self.on_pause_main_tracker)
+        self._event_bus.subscribe('main_tracker.hold', self.on_pause_main_tracker)
         self._event_bus.subscribe('main_tracker.resume', self.on_resume_main_tracker)
         self._event_bus.subscribe('main_tracker.stop', self.on_stop_main_tracker)
         self._event_bus.subscribe('activity_tracker.detect_idle', self.on_detect_idle)

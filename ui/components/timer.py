@@ -69,9 +69,9 @@ class CountdownComponent(TimerComponent):
 
     async def update_timer(self):
         while self.running:
-            self.update_value()
-
             if not self.paused:
+                self.update_value()
+
                 if self.seconds == 0:
                     self.running = False
                     if self.on_end:
