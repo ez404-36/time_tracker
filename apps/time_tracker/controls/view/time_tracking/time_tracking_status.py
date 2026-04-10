@@ -53,7 +53,9 @@ class TimeTrackingStatus(ft.Row):
     def _on_pomodoro_tracker_change_status(self, data: system_event_type.SystemEventPomodoroChangeStatus):
         new_status: PomodoroTimerStatus = data.new_status
 
-        if new_status == 'resting':
+        if data.prev_status in ['working_pause', 'resting_pause']:
+            self._timer.resume()
+        elif new_status == 'resting':
             self._start_resting()
         elif new_status == 'working':
             self._start_working()
@@ -94,7 +96,7 @@ class TimeTrackingStatus(ft.Row):
         self._reset()
 
         self._timer = CountdownComponent(
-            seconds=self._app_settings.pomodoro_work_time * 1,  # TODO: 60
+            seconds=self._app_settings.pomodoro_work_time * 60,
             on_end=self._main_tracker.hold,
         )
 
@@ -107,7 +109,7 @@ class TimeTrackingStatus(ft.Row):
         self.controls.clear()
 
         self._timer = CountdownComponent(
-            seconds=self._app_settings.pomodoro_rest_time * 1,  # TODO: 60
+            seconds=self._app_settings.pomodoro_rest_time * 60,
             on_end=self._main_tracker.hold,
         )
 
