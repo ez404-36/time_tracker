@@ -1,5 +1,10 @@
 [environment]
 python-version = "3.13"
 
+[src]
+include = ['apps', 'core', 'migrations', 'ui']
+
 [rules]
 invalid-assignment = "ignore"
+unresolved-import = "ignore"
+unresolved-attribute = "ignore"

@@ -27,10 +27,11 @@ class WindowControlLinux(WindowControlAbstract):
 
         return self._as_window_data(window)
 
-    def get_all_windows(self):
+    def get_all_windows(self) -> list[WindowData]:
         try:
             windows = pywinctl.getAllWindows()
         except Exception as e:
+            print(e)
             windows = defaultEwmhRoot.getClientListStacking()
 
         all_windows = self._remove_bad_windows(windows)
@@ -69,24 +70,25 @@ class WindowControlLinux(WindowControlAbstract):
         return 0
 
     def _remove_bad_windows(self, windows: list[str | int] | None) -> list[LinuxWindow]:
-        outList = []
+        output = []
         if windows is not None:
             for window in windows:
                 try:
-                    if window: outList.append(window)
+                    if window: output.append(window)
                 except Exception as e:
                     print(e)
                     pass
-        return outList
+        return output
 
-    def get_executable_path(self, window: LinuxWindow) -> str:
+    @staticmethod
+    def get_executable_path(window: LinuxWindow) -> str:
         pid = window.getPID()
         p = psutil.Process(pid)
         return p.exe()
 
-    @staticmethod
-    def _as_window_data(window: LinuxWindow) -> WindowData:
+    def _as_window_data(self, window: LinuxWindow) -> WindowData:
         return WindowData(
-            app_name=window.getAppName(),
-            title=window.title,
+            executable_name=window.getAppName(),
+            window_title=window.title,
+            executable_path=self.get_executable_path(window),
         )

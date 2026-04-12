@@ -31,10 +31,13 @@ class WindowControlWindows(WindowControlAbstract):
 
         _, pid = win32process.GetWindowThreadProcessId(hwnd)
         try:
-            process = psutil.Process(pid)
+            proc = psutil.Process(pid)
+            exe = proc.exe()
+            name = proc.name()
             return WindowData(
-                app_name=process.name(),
-                title=win32gui.GetWindowText(hwnd),
+                executable_name=name,
+                window_title=win32gui.GetWindowText(hwnd),
+                executable_path=exe,
             )
         except psutil.Error:
             return None
@@ -61,8 +64,9 @@ class WindowControlWindows(WindowControlAbstract):
 
             windows.append(
                 WindowData(
-                    app_name=name,
-                    title=title,
+                    executable_name=name,
+                    window_title=title,
+                    executable_path=exe,
                 )
             )
 
