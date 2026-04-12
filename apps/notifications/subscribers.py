@@ -50,6 +50,8 @@ class SnackbarSubscriber:
         self._event_bus.subscribe('tasks.update', self.on_task_update)
         self._event_bus.subscribe('tasks.delete', self.on_task_delete)
 
+        self._event_bus.subscribe('error.system', self.on_app_system_error)
+
     @staticmethod
     def on_change_settings(_data: system_event_type.SystemEventChangeSettingsData):
         show_snackbar('Настройки успешно изменены')
@@ -93,3 +95,7 @@ class SnackbarSubscriber:
     @staticmethod
     def on_task_delete(data: system_event_type.SystemEventTaskAction):
         show_snackbar(f'{data.task} удалена')
+
+    @staticmethod
+    def on_app_system_error(data: system_event_type.SystemEventAppError):
+        show_snackbar(f'ОШИБКА в {data.source}: {data.error}')

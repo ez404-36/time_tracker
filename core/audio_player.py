@@ -3,6 +3,9 @@ from pathlib import Path
 from pydub import AudioSegment
 from pydub import playback
 
+from core.di import container
+from core.system_events.types import SystemEvent, SystemEventAppError
+
 
 class AudioPlayer:
     """
@@ -11,9 +14,21 @@ class AudioPlayer:
 
     @classmethod
     def play(cls, file_path: Path | str, volume_offset: int = 0):
-        file_path = Path(file_path)
-        audio_object = cls._get_pydub_audio_segment(file_path, volume_offset)
-        playback.play(audio_object)
+        _file_path = Path(file_path)
+        try:
+            audio_object = cls._get_pydub_audio_segment(_file_path, volume_offset)
+            playback.play(audio_object)
+        except Exception as e:
+            event_bus = container.event_bus
+            event_bus.publish(
+                SystemEvent(
+                    type='error.system',
+                    data=SystemEventAppError(
+                        source='AudioPlayer',
+                        error=f'Ошибка воспроизведения аудио: {_file_path}',
+                    )
+                )
+            )
 
     @staticmethod
     def _get_pydub_audio_segment(file_path: Path, volume_offset: int) -> AudioSegment:
