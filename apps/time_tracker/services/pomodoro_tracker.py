@@ -113,14 +113,6 @@ class PomodoroTracker:
             self._status = new_status
             self._create_change_status_event(prev_status, new_status)
 
-    def _set_total_and_rest_seconds(
-            self,
-            total: int | None,
-            rest: int | None,
-    ):
-        self._current_timer_total_seconds = total
-        self._current_timer_rest_seconds = rest
-
     def _create_change_status_event(self, prev_status: PomodoroTimerStatus, new_status: PomodoroTimerStatus):
         self._event_bus.publish(
             system_event_types.SystemEvent(
