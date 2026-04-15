@@ -121,9 +121,10 @@ SystemEventData = SystemEventTimestampData \
                   | SystemEventAppError \
                   | SystemEventPomodoroChangeStatus
 
-SystemEventCallbackFunction = Callable[[SystemEventData], None] | Callable[[], None]
+SyncCallback = Callable[..., None]
+AsyncCallback = Callable[..., Awaitable[None]]
 
-SystemEventCallback = SystemEventCallbackFunction | Awaitable[SystemEventCallbackFunction]
+SystemEventCallback = SyncCallback | AsyncCallback
 
 @dataclass
 class SystemEvent:

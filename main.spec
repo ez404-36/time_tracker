@@ -6,27 +6,37 @@ project_root = os.path.dirname(os.path.abspath(__name__))
 a = Analysis(
     ['main.py'],
     pathex=[
-        project_root,
-        os.path.join(project_root, 'apps'),
-        os.path.join(project_root, 'core'),
+        # project_root,
+        # os.path.join(project_root, 'apps'),
+        # os.path.join(project_root, 'core'),
+        # os.path.join(project_root, 'migrations'),
+        # os.path.join(project_root, 'ui'),
     ],
     binaries=[],
     datas=[
-        ('apps/**/*', 'apps/'),
-        ('core/**/*', 'core/'),
-        ('media/**/*', 'media/'),
+    	('./', './'),
+    	# ('.venv/', 'python_deps'),
+        # ('apps/*', 'app/apps/'),
+        # ('core/*', 'app/core/'),
+        # ('migrations/*', 'app/migrations/'),
+        # ('ui/*', 'app/ui/'),
+        # ('media/*', 'media/'),
     ],
     hiddenimports=[
         # Добавьте здесь любые скрытые импорты
         'flet',
         'sqlite3',
+        'dependency_injector.errors',
+        'dependency_injector.wiring',
         # 'pywin32', # Для Windows
-        # 'pywinctl', # Для Linux
+        'pywinctl', # Для Linux
     ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+    	'.venv',
+    ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=None,

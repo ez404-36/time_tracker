@@ -105,7 +105,7 @@ class PomodoroTracker:
 
         prev_status = self._status
 
-        available_new_statuses = pomodoro_status_to_next_status_map.get(prev_status)
+        available_new_statuses: list[PomodoroTimerStatus] = pomodoro_status_to_next_status_map[prev_status]
 
         if new_status != 'disabled' and new_status not in available_new_statuses:
             self._create_error_change_status_event(prev_status, new_status)
