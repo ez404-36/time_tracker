@@ -14,13 +14,7 @@ a = Analysis(
     ],
     binaries=[],
     datas=[
-    	('./', './'),
-    	# ('.venv/', 'python_deps'),
-        # ('apps/*', 'app/apps/'),
-        # ('core/*', 'app/core/'),
-        # ('migrations/*', 'app/migrations/'),
-        # ('ui/*', 'app/ui/'),
-        # ('media/*', 'media/'),
+    	('./', './app'),
     ],
     hiddenimports=[
         # Добавьте здесь любые скрытые импорты
@@ -28,14 +22,13 @@ a = Analysis(
         'sqlite3',
         'dependency_injector.errors',
         'dependency_injector.wiring',
-        # 'pywin32', # Для Windows
-        'pywinctl', # Для Linux
     ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
     	'.venv',
+    	'__pycache__',
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
