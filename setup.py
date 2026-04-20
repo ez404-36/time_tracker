@@ -1,13 +1,14 @@
 from cx_Freeze import Executable, setup
 
 resources = [
-    ('media/', 'media/'),
+    ('./', './'),
 ]
 
 build_exe_options = {
-    "excludes": ["ty"],
+    "excludes": [
+        "ty",
+    ],
     "includes": [
-        "pywinctl",
         "audioop",
         "dependency_injector.errors",
         "dependency_injector.wiring",
@@ -15,7 +16,7 @@ build_exe_options = {
 }
 
 executable = Executable(
-    'main.py',
+    script='main.py',
     target_name="TimeTracker",
     base=None,
     icon='./media/assets/icon.png',  # TODO

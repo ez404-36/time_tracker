@@ -9,6 +9,7 @@ from apps.tasks.helpers import refresh_tasks_tab
 from apps.time_tracker.controls.view.index import ActivityTabViewControl
 from apps.time_tracker.models import IdleSession
 from apps.time_tracker.models import WindowSession
+from core.consts import USER_MEDIA_DIR
 from core.di import container
 from core.store import SessionStore
 from core.system_events.event_bus import EventBus
@@ -164,4 +165,4 @@ async def main(page: ft.Page):
     app.init()
 
 
-ft.run(main=main, view=ft.AppView.FLET_APP)
+ft.run(main=main, view=ft.AppView.FLET_APP, upload_dir=USER_MEDIA_DIR)

@@ -5,16 +5,10 @@ project_root = os.path.dirname(os.path.abspath(__name__))
 
 a = Analysis(
     ['main.py'],
-    pathex=[
-        # project_root,
-        # os.path.join(project_root, 'apps'),
-        # os.path.join(project_root, 'core'),
-        # os.path.join(project_root, 'migrations'),
-        # os.path.join(project_root, 'ui'),
-    ],
+    pathex=[],
     binaries=[],
     datas=[
-    	('./', './app'),
+    	('./', './'),
     ],
     hiddenimports=[
         # Добавьте здесь любые скрытые импорты

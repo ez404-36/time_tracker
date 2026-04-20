@@ -3,7 +3,7 @@ import os
 import subprocess
 from typing import Literal, cast
 
-from core.consts import BASE_DIR
+from core.consts import USER_DATA_DIR
 
 AvailableOS = Literal[
     'Linux',
@@ -31,7 +31,7 @@ else:
     IS_FFMPEG_INSTALLED = True
 
 
-DB_URL = BASE_DIR / 'database.db'
+DB_URL = USER_DATA_DIR / 'database.db'
 
 # Визаульные настройки
 
