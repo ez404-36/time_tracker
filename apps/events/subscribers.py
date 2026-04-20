@@ -92,7 +92,7 @@ class EventsSubscriber:
         )
 
     @staticmethod
-    def on_error_file_not_found(data: system_event_type.SystemEventFileNotFound):
+    def on_error_file_not_found(data: system_event_type.SystemEventFileInfo):
         Event.create(
             type=EventType.FILE_NOT_FOUND,
             actor=EventActor.SYSTEM,

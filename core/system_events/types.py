@@ -12,6 +12,9 @@ SystemEventType = Literal[
     'app.change_settings',
     'app.update_session_store',
 
+    'media.add_file',
+    'media.delete_file',
+
     'main_tracker.start',
     'main_tracker.pause',
     'main_tracker.hold',
@@ -94,8 +97,9 @@ class SystemEventWrongConfigData:
 
 
 @dataclass
-class SystemEventFileNotFound:
-    file: str | Path
+class SystemEventFileInfo:
+    filename: str
+    path: str | Path | None
 
 
 @dataclass
@@ -115,7 +119,7 @@ SystemEventData = SystemEventTimestampData \
                   | SystemEventSwitchWindowData \
                   | SystemEventChangeActiveWindowsData \
                   | SystemEventWrongConfigData \
-                  | SystemEventFileNotFound \
+                  | SystemEventFileInfo \
                   | SystemEventTaskAction \
                   | SystemEventUpdateSessionStoreData \
                   | SystemEventAppError \

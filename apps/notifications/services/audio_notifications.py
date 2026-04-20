@@ -4,7 +4,7 @@ from apps.app_settings.models import SettingsAudioParam
 from core.audio_player import AudioPlayer
 from core.consts import AUDIO_DIR
 from core.di import container
-from core.system_events.types import SystemEvent, SystemEventFileNotFound, SystemEventWrongConfigData
+from core.system_events.types import SystemEvent, SystemEventFileInfo
 
 
 class AudioNotificationService:
@@ -40,8 +40,9 @@ class AudioNotificationService:
         self._event_bus.publish(
             event=SystemEvent(
                 type='error.wrong_config',
-                data=SystemEventFileNotFound(
-                    file=file
+                data=SystemEventFileInfo(
+                    filename=Path(file).name,
+                    path=file,
                 )
             )
         )
