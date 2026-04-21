@@ -1,7 +1,8 @@
 import importlib
+import re
 import uuid
 from pathlib import Path
-from typing import Callable, Generator
+from typing import Callable, Iterable
 
 from peewee import OperationalError, Database
 
@@ -31,7 +32,7 @@ class MigrationsApplier:
 
     @db.atomic()
     def migrate(self, _index: int | None):
-        for file in self.traverse():
+        for file in self.sorted_migration_files():
             file_index = self._get_file_index(file)
 
             assert file_index is not None
@@ -45,10 +46,10 @@ class MigrationsApplier:
     @db.atomic()
     def downgrade(self, _index: int):
         file_index_map: dict[int, Path] = {}
-        for file in self.traverse():
+
+        for file in self.sorted_migration_files():
             file_index = self._get_file_index(file)
             file_index_map[file_index] = file
-
 
         def downgrade_migration(_applied_migration: MigrationModel):
             nonlocal file_index_map
@@ -110,13 +111,18 @@ def downgrade(db: peewee.Database):
 
         file_name = f'{new_migration_index}_{title}.py'
 
-        with open(Path(MIGRATIONS_DIR / file_name), 'w') as f_obj:
+        with open(Path(self._root / file_name), 'w') as f_obj:
             f_obj.write(EXAMPLE.format(migration_uuid=uuid.uuid4()))
 
-    def traverse(self) -> Generator[Path]:
-        for file in Path(self._root).rglob('*.py'):
-            if file.stem != '__init__':
-                yield file
+    def sorted_migration_files(self) -> Iterable[Path]:
+        migration_files = [f for f in self._root.iterdir() if f.is_file() and f.name != '__init__.py']
+
+        def extract_index(filename: str) -> int:
+            """Извлекает индекс из названия файла."""
+            match = re.match(r'^(\d+)_', filename)
+            return int(match.group(1)) if match else -1
+
+        return sorted(migration_files, key=lambda f: extract_index(f.name))
 
     @staticmethod
     def _get_file_index(file: Path) -> int | None:

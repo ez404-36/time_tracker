@@ -3,10 +3,16 @@ import flet as ft
 from apps.time_tracker.models import IdleSession, WindowSession
 from apps.time_tracker.services.main_tracker import MainTracker
 from apps.time_tracker.services.window_control.abstract import WindowData
+from apps.time_tracker.types import PomodoroTimerStatus
 from apps.time_tracker.utils import get_app_name_and_transform_window_title
 from core.di import container
 from core.system_events.event_bus import EventBus
-from core.system_events.types import SystemEventSwitchWindowData, SystemEventTimestampData, SystemEventStartMainTracker
+from core.system_events.types import (
+    SystemEventPomodoroChangeStatus,
+    SystemEventSwitchWindowData,
+    SystemEventTimestampData,
+    SystemEventStartMainTracker,
+)
 from ui.base.components.containers import BorderedContainer
 from ui.base.components.mixins import ShowHideMixin
 from ui.components.timer import TimerComponent
@@ -36,10 +42,11 @@ class CurrentWindowComponent(
         self._event_bus.subscribe('main_tracker.start', self.on_start_main_tracker)
         self._event_bus.subscribe('main_tracker.pause', self.on_pause_main_tracker)
         self._event_bus.subscribe('main_tracker.hold', self.on_pause_main_tracker)
-        self._event_bus.subscribe('main_tracker.resume', self.on_resume_main_tracker)
+        self._event_bus.subscribe('main_tracker.resume', self.resume_window_tracking)
         self._event_bus.subscribe('main_tracker.stop', self.on_stop_main_tracker)
         self._event_bus.subscribe('activity_tracker.detect_idle', self.on_detect_idle)
         self._event_bus.subscribe('activity_tracker.stop_idle', self.stop_idle_session)
+        self._event_bus.subscribe('pomodoro_tracker.change_status', self._on_pomodoro_tracker_change_status)
 
     def on_start_main_tracker(self, data: SystemEventStartMainTracker):
 
@@ -65,7 +72,7 @@ class CurrentWindowComponent(
         )
         self.hide()
 
-    def on_resume_main_tracker(self):
+    def resume_window_tracking(self):
         if self._main_tracker.params.window_tracking:
             if self._current_window_data:
                 self.switch_window_session(
@@ -136,6 +143,12 @@ class CurrentWindowComponent(
             main_label_text='Бездействие',
             bg_color=Colors.RED_LIGHT,
         )
+
+    def _on_pomodoro_tracker_change_status(self, data: SystemEventPomodoroChangeStatus):
+        new_status: PomodoroTimerStatus = data.new_status
+
+        if new_status == 'working':
+            self.resume_window_tracking()
 
     def stop_window_session(self, data: SystemEventTimestampData):
         if not self._main_tracker.running or not self._main_tracker.params.window_tracking:

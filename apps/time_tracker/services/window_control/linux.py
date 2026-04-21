@@ -3,14 +3,17 @@ import re
 import subprocess
 
 import psutil
-import pywinctl
+
+from core.settings import USE_WAYLAND, USE_X11
 
 try:
     from ewmhlib import defaultEwmhRoot
+    import pywinctl
     from pywinctl._pywinctl_linux import LinuxWindow
 except ModuleNotFoundError:
     defaultEwmhRoot = object
     LinuxWindow = object
+    pywinctl = object
 
 from apps.time_tracker.services.window_control.abstract import WindowControlAbstract, WindowData
 
@@ -41,10 +44,8 @@ class WindowControlLinux(WindowControlAbstract):
         ]
 
     def get_idle_seconds(self) -> int:
-        session = os.environ.get("XDG_SESSION_TYPE")
-
         # X11
-        if session == "x11" and "DISPLAY" in os.environ:
+        if USE_X11 and "DISPLAY" in os.environ:
             try:
                 out = subprocess.check_output(["xprintidle"], stderr=subprocess.DEVNULL)
                 return int(out.strip()) // 1000
@@ -52,7 +53,7 @@ class WindowControlLinux(WindowControlAbstract):
                 print(e)
 
         # Wayland (GNOME)
-        if session == "wayland":
+        if USE_WAYLAND:
             try:
                 out = subprocess.check_output([
                     "gdbus", "call",
@@ -69,7 +70,8 @@ class WindowControlLinux(WindowControlAbstract):
 
         return 0
 
-    def _remove_bad_windows(self, windows: list[str | int] | None) -> list[LinuxWindow]:
+    @staticmethod
+    def _remove_bad_windows(windows: list[str | int] | None) -> list[LinuxWindow]:
         output = []
         if windows is not None:
             for window in windows:

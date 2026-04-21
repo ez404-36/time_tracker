@@ -38,6 +38,9 @@ class SnackbarSubscriber:
 
         self._event_bus.subscribe('app.change_settings', self.on_change_settings)
 
+        self._event_bus.subscribe('media.add_file', self.on_add_custom_file)
+        self._event_bus.subscribe('media.delete_file', self.on_delete_custom_file)
+
         self._event_bus.subscribe('main_tracker.start', self.on_main_tracker_start)
         self._event_bus.subscribe('main_tracker.pause', self.on_main_tracker_pause)
         self._event_bus.subscribe('main_tracker.resume', self.on_main_tracker_resume)
@@ -49,6 +52,8 @@ class SnackbarSubscriber:
         self._event_bus.subscribe('tasks.add', self.on_task_create)
         self._event_bus.subscribe('tasks.update', self.on_task_update)
         self._event_bus.subscribe('tasks.delete', self.on_task_delete)
+
+        self._event_bus.subscribe('error.system', self.on_app_system_error)
 
     @staticmethod
     def on_change_settings(_data: system_event_type.SystemEventChangeSettingsData):
@@ -93,3 +98,15 @@ class SnackbarSubscriber:
     @staticmethod
     def on_task_delete(data: system_event_type.SystemEventTaskAction):
         show_snackbar(f'{data.task} удалена')
+
+    @staticmethod
+    def on_app_system_error(data: system_event_type.SystemEventAppError):
+        show_snackbar(f'ОШИБКА в {data.source}: {data.error}')
+
+    @staticmethod
+    def on_add_custom_file(data: system_event_type.SystemEventFileInfo):
+        show_snackbar(f'Файл {data.filename} успешно добавлен')
+
+    @staticmethod
+    def on_delete_custom_file(data: system_event_type.SystemEventFileInfo):
+        show_snackbar(f'Файл {data.filename} удалён')
