@@ -1,6 +1,7 @@
 import flet as ft
 
 from apps.time_tracker.types import PomodoroTimerStatus
+from core.consts import SECONDS_PER_MINUTE
 from core.di import container
 from core.system_events import types as system_event_type
 from ui.components.timer import TimerComponent, CountdownComponent
@@ -96,7 +97,7 @@ class TimeTrackingStatus(ft.Row):
         self._reset()
 
         self._timer = CountdownComponent(
-            seconds=self._app_settings.pomodoro_work_time * 60,
+            seconds=self._app_settings.pomodoro_work_time * SECONDS_PER_MINUTE,
             on_end=self._main_tracker.hold,
         )
 
@@ -109,7 +110,7 @@ class TimeTrackingStatus(ft.Row):
         self.controls.clear()
 
         self._timer = CountdownComponent(
-            seconds=self._app_settings.pomodoro_rest_time * 60,
+            seconds=self._app_settings.pomodoro_rest_time * SECONDS_PER_MINUTE,
             on_end=self._main_tracker.hold,
         )
 

@@ -15,7 +15,7 @@ class BasePopup(ft.AlertDialog, metaclass=abc.ABCMeta):
         self.title = ft.Row(
             controls=[
                 self._get_icon(),
-                ft.Text(value=self._msg)
+                ft.Text(value=self._msg, size=FontSize.REGULAR),
             ]
         )
         self.actions = self._actions
@@ -26,9 +26,9 @@ class BasePopup(ft.AlertDialog, metaclass=abc.ABCMeta):
 
 class ErrorPopup(BasePopup):
     def _get_icon(self) -> ft.Icon:
-        return ft.Icon(icon=Icons.ERROR, color=Colors.RED_LIGHT, size=FontSize.H1)
+        return ft.Icon(icon=Icons.ERROR, color=Colors.RED_LIGHT, size=FontSize.H3)
 
 
 class InfoPopup(BasePopup):
     def _get_icon(self) -> ft.Icon:
-        return ft.Icon(icon=Icons.INFO, color=Colors.BLUE_LIGHT, size=FontSize.H1)
+        return ft.Icon(icon=Icons.INFO, color=Colors.BLUE_LIGHT, size=FontSize.H3)

@@ -1,9 +1,8 @@
-import platform
-
 from apps.time_tracker.services.window_control.abstract import WindowControlAbstract, WindowData
 from apps.time_tracker.services.window_control.linux import WindowControlLinux
 from apps.time_tracker.services.window_control.mac import WindowControlMac
 from apps.time_tracker.services.window_control.windows import WindowControlWindows
+from core.settings import PLATFORM
 
 
 class WindowControl:
@@ -14,12 +13,11 @@ class WindowControl:
     service: WindowControlAbstract
 
     def __init__(self):
-        system = platform.system()
-        if system == 'Linux':
+        if PLATFORM == 'Linux':
             self.service = WindowControlLinux()
-        elif system == 'Windows':
+        elif PLATFORM == 'Windows':
             self.service = WindowControlWindows()
-        elif system == 'Darwin':
+        elif PLATFORM == 'Darwin':
             self.service = WindowControlMac()
 
     def __str__(self) -> str:

@@ -15,7 +15,7 @@ class TimerComponent(ft.Text):
     def __init__(
             self,
             seconds: int = 0,
-            on_update_value: Coroutine[int, None, None] | Callable[[int], None] = None,
+            on_update_value: Callable[[int], None] | None = None,
             **kwargs,
     ):
         super().__init__(**kwargs)
@@ -60,8 +60,8 @@ class CountdownComponent(TimerComponent):
     def __init__(
             self,
             seconds: int = 0,
-            on_update_value: Coroutine[int, None, None] | Callable[[int], None] = None,
-            on_end: Coroutine[None, None, None] | Callable[[], None] = None,
+            on_update_value: Callable[[int], None] | None = None,
+            on_end: Coroutine[None, None, None] | Callable[[], None] | None = None,
             **kwargs,
     ):
         super().__init__(seconds=seconds, on_update_value=on_update_value, **kwargs)

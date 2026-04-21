@@ -1,11 +1,12 @@
 [project]
 name = "time-tracker"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.0.2"
+description = "Ваш личный помощник в работе без лишнего шума"
 requires-python = ">=3.13"
 dependencies = [
     "audioop-lts>=0.2.2",
-    "dependency-injector>=4.48.3",
+    "cx-freeze>=8.6.4",
+    "dependency-injector>=4.49.0",
     "flet[all]==0.82.2",
     "markdown>=3.10",
     "peewee>=3.18.3",
@@ -13,12 +14,13 @@ dependencies = [
     "psutil>=7.2.0",
     "pydub>=0.25.1",
     "pyinstaller>=6.18.0",
+    "python3-xlib>=0.15",
     "pytz>=2025.2",
-    "pywinctl>=0.4.1",
-    "ty==0.0.23",
+    "pywin32>=311 ; sys_platform == 'windows'",
+    "pywinctl>=0.4.1 ; sys_platform == 'linux'",
 ]
 
 [dependency-groups]
 dev = [
-    "ty>=0.0.12",
+    "ty>=0.0.30",
 ]

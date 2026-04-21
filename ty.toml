@@ -3,6 +3,7 @@ python-version = "3.13"
 
 [src]
 include = ['apps', 'core', 'migrations', 'ui']
+exclude = ['.venv', 'build', 'dist']
 
 [rules]
 invalid-assignment = "ignore"

@@ -1,3 +1,4 @@
+import logging
 from dataclasses import asdict
 import json
 
@@ -5,6 +6,9 @@ from apps.events.consts import EventActor, EventType
 from apps.events.models import Event
 from core.di import container
 from core.system_events import types as system_event_type
+
+
+logger = logging.getLogger(__name__)
 
 
 class EventsSubscriber:
@@ -88,7 +92,7 @@ class EventsSubscriber:
         )
 
     @staticmethod
-    def on_error_file_not_found(data: system_event_type.SystemEventFileNotFound):
+    def on_error_file_not_found(data: system_event_type.SystemEventFileInfo):
         Event.create(
             type=EventType.FILE_NOT_FOUND,
             actor=EventActor.SYSTEM,
@@ -102,6 +106,7 @@ class EventsSubscriber:
             actor=EventActor.SYSTEM,
             data=asdict(data),
         )
+        logger.error(f'{data.source}: {data.error}')
 
     @staticmethod
     def on_window_tracker_start(data: system_event_type.SystemEventTimestampData):
