@@ -3,16 +3,17 @@ import re
 import subprocess
 
 import psutil
-import pywinctl
 
 from core.settings import USE_WAYLAND, USE_X11
 
 try:
     from ewmhlib import defaultEwmhRoot
+    import pywinctl
     from pywinctl._pywinctl_linux import LinuxWindow
 except ModuleNotFoundError:
     defaultEwmhRoot = object
     LinuxWindow = object
+    pywinctl = object
 
 from apps.time_tracker.services.window_control.abstract import WindowControlAbstract, WindowData
 

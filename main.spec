@@ -8,7 +8,11 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-    	('./', './'),
+    	('./apps', './apps'),
+    	('./core', './core'),
+    	('./media', './media'),
+    	('./migrations', './migrations'),
+    	('./ui', './ui'),
     ],
     hiddenimports=[
         # Добавьте здесь любые скрытые импорты
@@ -22,6 +26,8 @@ a = Analysis(
     runtime_hooks=[],
     excludes=[
     	'.venv',
+    	'.idea',
+    	'.git',
     	'__pycache__',
     ],
     win_no_prefer_redirects=False,
