@@ -53,7 +53,7 @@ class TaskListItem(ft.ExpansionTile):
         children_tasks = self._instance.children
 
         self.controls = [
-            self.__class__(instance=child)
+            self.__class__(instance=child, margin=ft.Margin(left=20))
             for child in children_tasks
         ]
 
@@ -79,14 +79,14 @@ class TaskListItem(ft.ExpansionTile):
 
         children_ids = list(map(lambda it: it.id, self._instance.children.select(Task.id)))
 
-        (
+        query = (
             Task
             .delete()
             .where(
-                Task.id.in_([children_ids] + [self._instance.id])
+                Task.id.in_(children_ids + [self._instance.id])
             )
-            .execute()
         )
+        query.execute()
 
         self._event_bus.publish(
             SystemEvent(
