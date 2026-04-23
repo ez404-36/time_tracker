@@ -1,6 +1,6 @@
 [project]
 name = "time-tracker"
-version = "0.0.2"
+version = "0.0.3"
 description = "Ваш личный помощник в работе без лишнего шума"
 requires-python = ">=3.13"
 dependencies = [

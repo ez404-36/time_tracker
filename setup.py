@@ -24,7 +24,7 @@ executable = Executable(
 
 setup(
     name="TimeTracker",
-    version="0.0.2",
+    version="0.0.3",
     description="TimeTracker — ваш личный помощник в работе без лишнего шума",
     options={"build_exe": build_exe_options},
     executables=[executable],
