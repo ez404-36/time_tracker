@@ -30,9 +30,9 @@ class Task(BaseModel):
 
     def __str__(self):
         if self.parent_id:
-            return f'Подзадача #{self.id} к задаче #{self.parent_id}'
+            return f'#{self.parent_id}.{self.id}: {self.title[:30]}'
         else:
-            return f'Задача #{self.id}'
+            return f'#{self.id}: {self.title[:30]}'
 
     @property
     def deadline_date_str(self) -> str:

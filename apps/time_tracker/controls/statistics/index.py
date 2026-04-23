@@ -12,6 +12,7 @@ from core.mixins import SessionStoredComponent
 from core.settings import DATE_FORMAT
 from core.system_events.types import SystemEventSwitchWindowData
 from core.utils.date_utils import to_current_tz
+from ui.base.components.text import TextComponent
 from ui.consts import Icons, FontWeight
 
 from .one_app_view import OneAppView, WindowTitleSessionData
@@ -61,7 +62,7 @@ class ActivityStatisticsView(ft.Column, SessionStoredComponent):
         self.controls = [
             ft.Row(
                 controls=[
-                    ft.Text('Статистика используемых приложений', size=20, weight=FontWeight.BOLD),
+                    TextComponent(value='Статистика используемых приложений', size=20, weight=FontWeight.BOLD),
                     self._show_button,
                     self._refresh_button,
                 ]

@@ -15,6 +15,7 @@ from core.system_events.types import (
 )
 from ui.base.components.containers import BorderedContainer
 from ui.base.components.mixins import ShowHideMixin
+from ui.base.components.text import TextComponent
 from ui.components.timer import TimerComponent
 from ui.consts import Colors, FontSize
 
@@ -184,7 +185,7 @@ class CurrentWindowComponent(
         top_row_controls = []
         if top_label_text:
             top_row_controls.append(
-                ft.Text(
+                TextComponent(
                     value=top_label_text,
                     size=FontSize.REGULAR,
                 )
@@ -206,7 +207,7 @@ class CurrentWindowComponent(
                 ft.Row(
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
-                        ft.Text(
+                        TextComponent(
                             value=main_label_text,
                             size=FontSize.H4,
                             tooltip=main_label_text if len(main_label_text) > 20 else None,

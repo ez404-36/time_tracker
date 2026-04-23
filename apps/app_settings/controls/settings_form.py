@@ -10,6 +10,7 @@ from core.database import db
 from core.di import container
 from core.system_events.types import SystemEvent, SystemEventChangeSettingsData
 from ui.base.components.containers import BorderedContainer
+from ui.base.components.text import TextComponent
 from ui.consts import FontSize
 
 
@@ -106,10 +107,10 @@ class SettingsForm(BorderedContainer):
         else:
             controls = [
                 ft.Container(padding=6),
-                ft.Text(value='Общие настройки', size=FontSize.H4),
+                TextComponent(value='Общие настройки', size=FontSize.H4),
                 self._timezone_dropdown,
                 ft.Divider(),
-                ft.Text(value='Настройки трекера', size=FontSize.H4),
+                TextComponent(value='Настройки трекера', size=FontSize.H4),
                 self._enable_window_tracking_switch,
                 self._enable_idle_tracking_switch,
                 self._idle_threshold,
@@ -117,15 +118,15 @@ class SettingsForm(BorderedContainer):
                 self._pomodoro_work_time,
                 self._pomodoro_rest_time,
                 ft.Divider(),
-                ft.Text(value='Настройки звуковых уведомлений', size=FontSize.H4),
+                TextComponent(value='Настройки звуковых уведомлений', size=FontSize.H4),
                 ft.Container(padding=6),
-                ft.Text(value='Истечение срока исполнения задач', size=FontSize.H5),
+                TextComponent(value='Истечение срока исполнения задач', size=FontSize.H5),
                 self._task_deadline_sound_config_form,
                 ft.Container(padding=6),
-                ft.Text(value='Обнаружение бездействия', size=FontSize.H5),
+                TextComponent(value='Обнаружение бездействия', size=FontSize.H5),
                 self._idle_sound_config_form,
                 ft.Container(padding=6),
-                ft.Text(value='Окончание текущего таймера работы/отдыха', size=FontSize.H5),
+                TextComponent(value='Окончание текущего таймера работы/отдыха', size=FontSize.H5),
                 self._pomodoro_sound_config_form,
             ]
 

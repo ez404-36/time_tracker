@@ -5,6 +5,7 @@ from apps.app_settings.models import AppSettings
 from apps.time_tracker.services.main_tracker import MainTracker
 from core.store import SessionStore
 from core.system_events.event_bus import EventBus
+from ui.ui_settings import AppSettingsUI
 
 
 class _Container(containers.DeclarativeContainer):
@@ -15,6 +16,8 @@ class _Container(containers.DeclarativeContainer):
     event_bus: EventBus = providers.Singleton(EventBus) # Шина событий
 
     app_settings: AppSettings = providers.Singleton(AppSettings)
+
+    ui_settings: AppSettingsUI = providers.Singleton(AppSettingsUI)
 
     main_tracker: MainTracker = providers.Singleton(MainTracker)
 

@@ -4,6 +4,7 @@ import flet as ft
 
 from core.di import container
 from core.settings import TIME_WITH_SECONDS_FORMAT
+from ui.base.components.text import TextComponent
 from ui.consts import Colors, Icons, FontWeight
 
 
@@ -33,7 +34,7 @@ class StatisticsOneRow(ft.Container):
         self.is_expanded = False
         self.text_width = 14 if not self.has_parent else 12
         self.text_bold = True if not self.has_parent else False
-        self.text_color = Colors.RED_LIGHT if title == 'Бездействие' else Colors.BLACK
+        self.text_color = Colors.RED_LIGHT if title == 'Бездействие' else None
 
         self._text: ft.Text | None = None
         self._duration_text: ft.Text | None = None
@@ -58,8 +59,8 @@ class StatisticsOneRow(ft.Container):
         self.content = ft.Row(controls)
 
     def build_text(self):
-        self._text = ft.Text(
-            self.title,
+        self._text = TextComponent(
+            value=self.title,
             size=self.text_width,
             weight=FontWeight.W_500 if self.text_bold else FontWeight.NORMAL,
             color=self.text_color,
@@ -70,7 +71,7 @@ class StatisticsOneRow(ft.Container):
         struct_time = time.gmtime(self.duration)
         txt = time.strftime(TIME_WITH_SECONDS_FORMAT, struct_time)
 
-        self._duration_text = ft.Text(
+        self._duration_text = TextComponent(
             value=txt,
             weight=FontWeight.W_500 if self.text_bold else FontWeight.NORMAL,
             color=self.text_color,

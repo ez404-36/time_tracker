@@ -104,6 +104,8 @@ def downgrade(db: peewee.Database):
 
         '''
 
+        title = title.replace(' ', '_')
+
         if self._applied_migrations:
             new_migration_index = self._applied_migrations[0].index + 1
         else:

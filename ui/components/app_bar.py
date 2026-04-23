@@ -3,6 +3,7 @@ import subprocess
 import flet as ft
 
 from apps.notifications.services.notification_sender import NotificationSender
+from core.di import container
 from core.settings import IS_FFMPEG_INSTALLED, PLATFORM, USE_X11
 from ui.consts import Colors, Icons
 
@@ -10,13 +11,25 @@ from ui.consts import Colors, Icons
 class AppBar(ft.AppBar):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._theme_button: ft.IconButton | None = None
+        self._ui_settings = container.ui_settings
 
     def build(self):
+        actions = []
+
         self.leading = ft.IconButton(
             icon=Icons.MENU,
             on_click=self._on_click_menu,
         )
-        self.bgcolor = ft.Colors.with_opacity(0.04, Colors.SYSTEM_BACKGROUND)
+        self.bgcolor = ft.Colors.with_opacity(0.04, Colors.PRIMARY)
+
+        self._theme_button = ft.IconButton(
+            icon=self._get_theme_button_icon(),
+            tooltip=self._get_theme_button_tooltip(),
+            on_click=self._on_click_theme_button,
+        )
+
+        actions.append(self._theme_button)
 
         notification_sender = NotificationSender()
 
@@ -35,14 +48,36 @@ class AppBar(ft.AppBar):
             problems.append('Для работы звуковых уведомлений установите библиотеку ffmpeg:\n- Windows: `winget install ffmpeg`\n- Debian: `apt install ffmpeg`\n -Fedora: `dnf install ffmpeg`')
 
         if problems:
-            self.actions = [
+            actions.append(
                 ft.IconButton(
                     icon=Icons.ERROR,
                     tooltip='Проблемы',
                     on_click=lambda _: notification_sender.send_error(message='\n'.join([f'{index + 1}: {it}' for index, it in enumerate(problems)])),
                 )
-            ]
+            )
+
+        self.actions = actions
 
     async def _on_click_menu(self):
         await self.page.show_drawer()
+
+    def _on_click_theme_button(self, e):
+        self._ui_settings.switch_theme()
+        self._theme_button.icon = self._get_theme_button_icon()
+        self._theme_button.tooltip = self._get_theme_button_tooltip()
+        self.page.theme_mode = self._ui_settings.theme
+        self.page.update()
+
+    def _get_theme_button_icon(self) -> ft.IconData:
+        if self._ui_settings.theme == 'light':
+            return ft.Icons.DARK_MODE
+        else:
+            return ft.Icons.LIGHT_MODE
+
+    def _get_theme_button_tooltip(self) -> str:
+        if self._ui_settings.theme == 'light':
+            return 'Переключиться на тёмную тему'
+        else:
+            return 'Переключиться на светлую тему'
+
 

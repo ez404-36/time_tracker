@@ -4,8 +4,10 @@ from apps.tasks.controls.task_detail.task_detail_title import TaskDetailTitle
 from apps.tasks.controls.task_mutate.modal import TaskMutateModal
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.tasks.models import Task
+from core.database import db
 from core.di import container
 from core.system_events.types import SystemEvent, SystemEventTaskAction
+from ui.base.components.text import TextComponent
 from ui.consts import Colors, FontSize, Icons
 
 
@@ -38,7 +40,7 @@ class TaskListItem(ft.ExpansionTile):
 
         self.title = TaskDetailTitle(self._instance)
 
-        self.subtitle = ft.Text(
+        self.subtitle = TextComponent(
             value=self._instance.description,
             size=FontSize.REGULAR if not self._instance.parent_id else FontSize.SMALL
         )
@@ -58,12 +60,33 @@ class TaskListItem(ft.ExpansionTile):
     async def _on_change_checkbox(self, e):
         is_done = e.control.value
         self._instance.is_done = is_done
-        self._instance.save()
+
+        with db.atomic():
+            self._instance.save()
+            if parent := self._instance.parent:
+                has_opened_tasks = parent.children.where(Task.is_done != True).exists()
+                if is_done and not has_opened_tasks:
+                    parent.is_done = True
+                    parent.save()
+                elif not is_done and has_opened_tasks:
+                    parent.is_done = False
+                    parent.save()
+
         refresh_tasks_tab()
 
     async def _on_click_delete(self, e):
         instance_str = str(self._instance)
-        self._instance.delete_instance()
+
+        children_ids = list(map(lambda it: it.id, self._instance.children.select(Task.id)))
+
+        (
+            Task
+            .delete()
+            .where(
+                Task.id.in_([children_ids] + [self._instance.id])
+            )
+            .execute()
+        )
 
         self._event_bus.publish(
             SystemEvent(

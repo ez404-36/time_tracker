@@ -1,7 +1,17 @@
+from typing import Literal
+
 import flet as ft
 
 
+Theme = Literal['light', 'dark']
+
+
 class Colors:
+    PRIMARY = ft.Colors.PRIMARY
+    SECONDARY = ft.Colors.SECONDARY
+    SYSTEM_BACKGROUND = ft.CupertinoColors.SYSTEM_BACKGROUND
+    SYSTEM_BACKGROUND_SECONDARY = ft.CupertinoColors.SECONDARY_SYSTEM_BACKGROUND
+
     RED_LIGHT = ft.Colors.RED_300
     RED = ft.Colors.RED
     BLUE_LIGHT = ft.Colors.BLUE_300
@@ -12,7 +22,6 @@ class Colors:
     WHITE = ft.Colors.WHITE
     GREY = ft.Colors.GREY
     GREY_LIGHT = ft.Colors.GREY_300
-    SYSTEM_BACKGROUND = ft.CupertinoColors.SYSTEM_BACKGROUND
 
 
 class Icons:
