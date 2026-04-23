@@ -69,7 +69,7 @@ class CurrentWindowComponent(
             top_label_text=None,
             timer=None,
             main_label_text=None,
-            bg_color=Colors.WHITE,
+            bg_color=None,
         )
         self.hide()
 
@@ -91,7 +91,7 @@ class CurrentWindowComponent(
             top_label_text=None,
             timer=None,
             main_label_text=None,
-            bg_color=Colors.WHITE,
+            bg_color=None,
         )
         self.hide()
 
@@ -128,7 +128,7 @@ class CurrentWindowComponent(
             top_label_text='Активное окно',
             timer=TimerComponent(),
             main_label_text=app_title,
-            bg_color=Colors.WHITE,
+            bg_color=None,
         )
 
     def on_detect_idle(self, data: SystemEventTimestampData):
