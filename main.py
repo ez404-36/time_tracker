@@ -18,6 +18,7 @@ from core.tasks import check_tasks_deadline
 from manage import migrate
 from ui.components.app_bar import AppBar
 from ui.consts import Icons
+from ui.ui_settings import AppSettingsUI
 
 ACTIVITY_TRACK_NAV_INDEX = 0
 TASKS_NAV_INDEX = 1
@@ -48,6 +49,8 @@ class DesktopApp:
         page.title = 'Персональный менеджер'
         page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         page.vertical_alignment = ft.MainAxisAlignment.START
+
+        page.theme_mode = container.ui_settings.theme
 
         page.on_close = self.on_close_page
 
@@ -146,6 +149,7 @@ async def main(page: ft.Page):
 
     container.page = page
     container.app_settings = app_settings
+    container.ui_settings = AppSettingsUI(app_settings)
     container.event_bus = event_bus
     container.session_store = session_store
     container.main_tracker = MainTracker(event_bus, app_settings, session_store)

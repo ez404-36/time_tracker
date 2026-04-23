@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 import pytz
+from playhouse.sqlite_ext import JSONField
 from peewee import BooleanField, CharField, DecimalField, ForeignKeyField, IntegerField, SmallIntegerField
 
 from core.models import BaseModel
@@ -33,6 +34,11 @@ class AppSettings(BaseModel):
     client_timezone = CharField(help_text='Таймзона клиента', default='Europe/Moscow')
 
     # endregion
+
+    ui_settings = JSONField(
+        help_text='Визуальные настройки',
+        default=dict
+    )
 
     # region Отслеживание активности
 

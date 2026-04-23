@@ -3,8 +3,6 @@ import os
 import subprocess
 from typing import Literal, cast
 
-from core.consts import USER_DATA_DIR
-
 AvailableOS = Literal[
     'Linux',
     'Windows',
@@ -29,9 +27,6 @@ except Exception as e:
     IS_FFMPEG_INSTALLED = False
 else:
     IS_FFMPEG_INSTALLED = True
-
-
-DB_URL = USER_DATA_DIR / 'database.db'
 
 # Визаульные настройки
 

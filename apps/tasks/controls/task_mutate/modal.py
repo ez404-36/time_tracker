@@ -8,6 +8,7 @@ from apps.tasks.models import Task
 from core.di import container
 from core.system_events.types import SystemEvent, SystemEventTaskAction
 from ui.base.components.buttons import CancelButton, SaveButton
+from ui.base.components.text import TextComponent
 from ui.utils import show_snackbar
 
 
@@ -32,7 +33,7 @@ class TaskMutateModal(ft.AlertDialog):
         kwargs.update(
             dict(
                 adaptive=True,
-                title=ft.Text(modal_title),
+                title=TextComponent(value=modal_title),
             )
         )
 

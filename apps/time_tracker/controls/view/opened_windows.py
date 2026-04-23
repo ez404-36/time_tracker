@@ -9,6 +9,7 @@ from core.system_events.event_bus import EventBus
 from core.system_events.types import SystemEventChangeActiveWindowsData, SystemEventChangeSettingsData
 from ui.base.components.containers import BorderedContainer
 from ui.base.components.mixins import ShowHideMixin
+from ui.base.components.text import TextComponent
 from ui.consts import FontSize, FontWeight, Icons
 
 
@@ -43,7 +44,7 @@ class OpenedWindowsComponent(
 
     def build(self):
         self.build_show_opened_windows_checkbox()
-        self._opened_windows_text = ft.Text('Открытые окна', visible=False, size=FontSize.H5, weight=FontWeight.W_400)
+        self._opened_windows_text = TextComponent(value='Открытые окна', visible=False, size=FontSize.H5, weight=FontWeight.W_400)
 
         self._all_window_sessions = ft.ListView(
             expand=True,
@@ -123,7 +124,7 @@ class OpenedWindowsComponent(
         return ft.Row(
             controls=[
                 ft.Icon(Icons.APPS),
-                ft.Text(
+                TextComponent(
                     value=title,
                     tooltip=ft.Tooltip(
                         message=executable_title,
