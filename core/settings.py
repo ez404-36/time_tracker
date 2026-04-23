@@ -3,6 +3,9 @@ import os
 import subprocess
 from typing import Literal, cast
 
+from core.consts import PROJECT_DIR
+from scripts.project_metadata_extractor import ProjectMetadataExtractor
+
 AvailableOS = Literal[
     'Linux',
     'Windows',
@@ -19,6 +22,9 @@ if PLATFORM == 'Linux':
 else:
     USE_X11 = False
     USE_WAYLAND = False
+
+
+CURRENT_VERSION: str = ProjectMetadataExtractor(PROJECT_DIR / 'pyproject.toml').get_version()
 
 
 try:
