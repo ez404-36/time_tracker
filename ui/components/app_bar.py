@@ -4,7 +4,7 @@ import flet as ft
 
 from apps.notifications.services.notification_sender import NotificationSender
 from core.di import container
-from core.settings import IS_FFMPEG_INSTALLED, PLATFORM, USE_X11
+from core.settings import CURRENT_VERSION, IS_FFMPEG_INSTALLED, PLATFORM, USE_X11
 from ui.consts import Colors, Icons
 
 
@@ -13,9 +13,13 @@ class AppBar(ft.AppBar):
         super().__init__(**kwargs)
         self._theme_button: ft.IconButton | None = None
         self._ui_settings = container.ui_settings
+        self._notification_sender = NotificationSender()
 
     def build(self):
-        actions = []
+        actions: list[ft.Control] = [
+            ft.Text(value=f'Версия: {CURRENT_VERSION}'),
+            ft.Container(padding=10),
+        ]
 
         self.leading = ft.IconButton(
             icon=Icons.MENU,
@@ -30,8 +34,6 @@ class AppBar(ft.AppBar):
         )
 
         actions.append(self._theme_button)
-
-        notification_sender = NotificationSender()
 
         problems: list[str] = []
 
@@ -52,7 +54,7 @@ class AppBar(ft.AppBar):
                 ft.IconButton(
                     icon=Icons.ERROR,
                     tooltip='Проблемы',
-                    on_click=lambda _: notification_sender.send_error(message='\n'.join([f'{index + 1}: {it}' for index, it in enumerate(problems)])),
+                    on_click=lambda _: self._notification_sender.send_error(message='\n'.join([f'{index + 1}: {it}' for index, it in enumerate(problems)])),
                 )
             )
 

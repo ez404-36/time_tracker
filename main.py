@@ -4,6 +4,7 @@ import flet as ft
 
 from apps.app_settings.controls.settings_view import SettingsView
 from apps.app_settings.models import AppSettings
+from apps.notifications.services.notification_sender import NotificationSender
 from apps.tasks.controls.tasks_tab.main_container import TasksTabViewControl
 from apps.tasks.helpers import refresh_tasks_tab
 from apps.time_tracker.controls.view.index import ActivityTabViewControl
@@ -11,11 +12,13 @@ from apps.time_tracker.models import IdleSession
 from apps.time_tracker.models import WindowSession
 from core.consts import USER_MEDIA_DIR
 from core.di import container
+from core.settings import CURRENT_VERSION
 from core.store import SessionStore
 from core.system_events.event_bus import EventBus
 from core.system_events.types import SystemEvent, SystemEventTimestampData
 from core.tasks import check_tasks_deadline
 from manage import migrate
+from scripts.github_release_parser import GitHubReleaseParser
 from ui.components.app_bar import AppBar
 from ui.consts import Icons
 from ui.ui_settings import AppSettingsUI
@@ -35,6 +38,7 @@ class DesktopApp:
         self._app_settings_control: SettingsView | None = None
 
         self._selected_nav_index: int = ACTIVITY_TRACK_NAV_INDEX
+        self._notification_sender = NotificationSender()
 
     def init(self):
         """
@@ -85,6 +89,26 @@ class DesktopApp:
         refresh_tasks_tab(with_update_controls=False)
 
         page.run_task(check_tasks_deadline)
+
+        project_github_url = "https://github.com/ez404-36/time_tracker/releases"
+        parser = GitHubReleaseParser()
+        latest_version = parser.get_latest_release_tag(project_github_url)
+        latest_version = latest_version.lstrip('v')
+
+        if CURRENT_VERSION != latest_version:
+            self._notification_sender.send_info(
+                message=f'Доступна новая версия приложения - {latest_version}',
+                actions=[
+                    ft.TextButton(
+                        content='Подробнее',
+                        url=project_github_url,
+                    ),
+                    ft.TextButton(
+                        content='Закрыть',
+                        on_click=lambda e: self.page.pop_dialog(),
+                    )
+                ]
+            )
 
     async def _on_change_navigation_drawer(self, e: ft.Event[ft.NavigationDrawer]):
         new_nav_index = int(e.data)
