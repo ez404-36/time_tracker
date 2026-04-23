@@ -11,6 +11,7 @@ from core.consts import USER_AUDIO_DIR
 from core.di import container
 from core.system_events.types import SystemEvent, SystemEventFileInfo
 from ui.base.components.containers import BorderedContainer
+from ui.base.components.text import TextComponent
 from ui.consts import Icons
 
 
@@ -21,7 +22,7 @@ class SettingsAudioParamFormData:
     volume_offset: int
 
 
-class VolumeOffsetText(ft.Text):
+class VolumeOffsetText(TextComponent):
     def __init__(self, volume_offset: ft.Number, **kwargs):
         super().__init__(**kwargs)
         self.volume_offset = volume_offset
@@ -200,7 +201,7 @@ class SettingsAudioParamForm(BorderedContainer):
                     icon=Icons.PLAY_ARROW,
                     on_click=on_click_play_wrapper(sound_file_path),
                 ),
-                ft.Text(file_name)
+                TextComponent(value=file_name)
             ]
 
             is_custom_uploaded_sound = sound_file_path.startswith(custom_audio_dir)

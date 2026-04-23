@@ -101,12 +101,14 @@ class TaskMutateForm(ft.Container):
 
     def _build_title_field(self):
         self._title_field = ft.TextField(
+            width=400,
             hint_text='Название задачи',
             value=self._get_value_from_instance('title'),
         )
 
     def _build_description_field(self):
         self._description_field = ft.TextField(
+            width=400,
             hint_text='Описание задачи',
             multiline=True,
             shift_enter=True,
@@ -114,7 +116,7 @@ class TaskMutateForm(ft.Container):
         )
 
     def _build_parent_dropdown(self):
-        root_tasks = self._get_root_tasks()
+        root_tasks = self._get_root_opened_tasks()
 
         parent_id = self._get_value_from_instance('parent_id')
         if not parent_id and self._parent_instance:
@@ -123,6 +125,7 @@ class TaskMutateForm(ft.Container):
         self._parent_dropdown = ft.Dropdown(
             text='Связать с задачей',
             value=parent_id and str(parent_id),
+            width=400,
             options=[
                 ft.DropdownOption(
                     key=str(root_task.id),
@@ -134,8 +137,15 @@ class TaskMutateForm(ft.Container):
             disabled=self._parent_instance is not None,
         )
 
-    def _get_root_tasks(self) -> Collection[Task]:
-        return Task().select().where(Task.parent == None, Task.id != self._get_value_from_instance('id'))
+    def _get_root_opened_tasks(self) -> Collection[Task]:
+        return (
+            Task().select()
+            .where(
+                Task.parent == None,
+                Task.is_done != True,
+                Task.id != self._get_value_from_instance('id'),
+            )
+        )
 
     def _get_value_from_instance(self, field_name: str) -> Any | None:
         if self._instance:

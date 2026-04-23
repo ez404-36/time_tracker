@@ -8,6 +8,5 @@ class BorderedContainer(ft.Container):
         kwargs.update(
             border=ft.Border.all(1, Colors.GREY),
             border_radius=10,
-            bgcolor=Colors.WHITE,
         )
         super().__init__(**kwargs)

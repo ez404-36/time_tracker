@@ -3,7 +3,8 @@ import os
 import subprocess
 from typing import Literal, cast
 
-from core.consts import USER_DATA_DIR
+from core.consts import PROJECT_DIR
+from scripts.project_metadata_extractor import ProjectMetadataExtractor
 
 AvailableOS = Literal[
     'Linux',
@@ -23,15 +24,15 @@ else:
     USE_WAYLAND = False
 
 
+CURRENT_VERSION: str = ProjectMetadataExtractor(PROJECT_DIR / 'pyproject.toml').get_version()
+
+
 try:
     subprocess.check_output(['ffmpeg', '-version'])
 except Exception as e:
     IS_FFMPEG_INSTALLED = False
 else:
     IS_FFMPEG_INSTALLED = True
-
-
-DB_URL = USER_DATA_DIR / 'database.db'
 
 # Визаульные настройки
 

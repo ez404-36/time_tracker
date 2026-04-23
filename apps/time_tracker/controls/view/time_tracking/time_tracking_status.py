@@ -4,6 +4,7 @@ from apps.time_tracker.types import PomodoroTimerStatus
 from core.consts import SECONDS_PER_MINUTE
 from core.di import container
 from core.system_events import types as system_event_type
+from ui.base.components.text import TextComponent
 from ui.components.timer import TimerComponent, CountdownComponent
 from ui.consts import FontSize
 
@@ -124,7 +125,7 @@ class TimeTrackingStatus(ft.Row):
 
     @staticmethod
     def _get_label_component(text: str) -> ft.Text:
-        return ft.Text(
+        return TextComponent(
             value=text,
             size=FontSize.H5,
         )
