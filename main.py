@@ -18,7 +18,8 @@ from core.system_events.event_bus import EventBus
 from core.system_events.types import SystemEvent, SystemEventTimestampData
 from core.tasks import check_tasks_deadline
 from manage import migrate
-from scripts.github_release_parser import GitHubReleaseParser
+from scripts.github_release_parser import GitHubReleaseError, GitHubReleaseParser
+from scripts.project_metadata_extractor import app_version_as_number
 from ui.components.app_bar import AppBar
 from ui.consts import Icons
 from ui.ui_settings import AppSettingsUI
@@ -40,7 +41,7 @@ class DesktopApp:
         self._selected_nav_index: int = ACTIVITY_TRACK_NAV_INDEX
         self._notification_sender = NotificationSender()
 
-    def init(self):
+    async def init(self):
         """
         Инициализация десктопного приложения:
         * первичная отрисовка компонентов
@@ -89,13 +90,22 @@ class DesktopApp:
         refresh_tasks_tab(with_update_controls=False)
 
         page.run_task(check_tasks_deadline)
+        await self._check_new_app_version()
 
+    async def _check_new_app_version(self):
         project_github_url = "https://github.com/ez404-36/time_tracker/releases"
         parser = GitHubReleaseParser()
-        latest_version = parser.get_latest_release_tag(project_github_url)
-        latest_version = latest_version.lstrip('v')
 
-        if CURRENT_VERSION != latest_version:
+        try:
+            latest_version = await parser.get_latest_release_tag(project_github_url)
+        except GitHubReleaseError:
+            latest_version = None
+        else:
+            latest_version = latest_version.lstrip('v')
+
+        is_exists_new_app_version = latest_version and app_version_as_number(CURRENT_VERSION) < app_version_as_number(latest_version)
+
+        if is_exists_new_app_version:
             self._notification_sender.send_info(
                 message=f'Доступна новая версия приложения - {latest_version}',
                 actions=[
@@ -190,7 +200,7 @@ async def main(page: ft.Page):
     )
 
     app = DesktopApp(page)
-    app.init()
+    await app.init()
 
 
 ft.run(main=main, view=ft.AppView.FLET_APP, upload_dir=USER_MEDIA_DIR)

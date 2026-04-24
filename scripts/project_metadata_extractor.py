@@ -6,6 +6,12 @@ import tomllib
 from core.consts import PROJECT_DIR
 
 
+def app_version_as_number(version: str) -> int:
+    app_version_str = ''.join(version.split('.'))
+    assert app_version_str.isdigit()
+    return int(app_version_str)
+
+
 class ProjectMetadataExtractor:
     """
     Сервис для извлечения метаданных из конфигурационных файлов проекта.
