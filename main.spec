@@ -1,11 +1,11 @@
-import sys
-import os
+# -*- mode: python ; coding: utf-8 -*-
 
-project_root = os.path.dirname(os.path.abspath(__name__))
 
 a = Analysis(
     ['main.py'],
-    pathex=[],
+    pathex=[
+    	os.path.abspath('.')  # корень проекта
+    ],
     binaries=[],
     datas=[
     	('./apps', './apps'),
@@ -13,12 +13,10 @@ a = Analysis(
     	('./media', './media'),
     	('./migrations', './migrations'),
     	('./ui', './ui'),
+    	('pyproject.toml', '.'),
     ],
     hiddenimports=[
-        # Добавьте здесь любые скрытые импорты
-        'flet',
-        'sqlite3',
-        'dependency_injector.errors',
+    	'dependency_injector.errors',
         'dependency_injector.wiring',
     ],
     hookspath=[],
@@ -26,39 +24,35 @@ a = Analysis(
     runtime_hooks=[],
     excludes=[
     	'.venv',
+    	'build',
+    	'dist',
     	'.idea',
     	'.git',
     	'__pycache__',
+    	'tests',
     ],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=None,
-    noarchive=False
+    noarchive=False,
+    optimize=0,
 )
-
-pyz = PYZ(a.pure, a.zipped_data, cipher=None)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
     a.scripts,
+    a.binaries,
+    a.datas,
     [],
-    exclude_binaries=True,
     name='TimeTracker',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,  # Установите True если нужно видеть консоль
-    windowed=True,  # Для GUI приложений (скрывает окно консоли)
-)
-
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    strip=False,
-    upx=True,
     upx_exclude=[],
-    name='TimeTracker'
+    runtime_tmpdir=None,
+    console=True,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
 )
