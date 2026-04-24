@@ -6,8 +6,6 @@ _HOME_DIR = Path.home()
 
 USER_DATA_DIR = _HOME_DIR / ".time_tracker"
 
-USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
-
 DB_URL = USER_DATA_DIR / 'database.db'
 
 USER_MEDIA_DIR = USER_DATA_DIR / "media"

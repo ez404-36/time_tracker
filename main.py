@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 import flet as ft
@@ -10,13 +11,13 @@ from apps.tasks.helpers import refresh_tasks_tab
 from apps.time_tracker.controls.view.index import ActivityTabViewControl
 from apps.time_tracker.models import IdleSession
 from apps.time_tracker.models import WindowSession
-from core.consts import USER_MEDIA_DIR
+from core.consts import USER_MEDIA_DIR, USER_DATA_DIR
 from core.di import container
 from core.settings import CURRENT_VERSION
 from core.store import SessionStore
 from core.system_events.event_bus import EventBus
 from core.system_events.types import SystemEvent, SystemEventTimestampData
-from core.tasks import check_tasks_deadline
+from core.tasks import TaskDeadlineHandler
 from manage import migrate
 from scripts.github_release_parser import GitHubReleaseError, GitHubReleaseParser
 from scripts.project_metadata_extractor import app_version_as_number
@@ -40,6 +41,8 @@ class DesktopApp:
 
         self._selected_nav_index: int = ACTIVITY_TRACK_NAV_INDEX
         self._notification_sender = NotificationSender()
+
+        self._running_tasks: list[asyncio.Task] = []
 
     async def init(self):
         """
@@ -89,7 +92,11 @@ class DesktopApp:
 
         refresh_tasks_tab(with_update_controls=False)
 
-        page.run_task(check_tasks_deadline)
+        task_deadline_handler = TaskDeadlineHandler()
+
+        self._running_tasks.append(
+            asyncio.create_task(task_deadline_handler.run())
+        )
         await self._check_new_app_version()
 
     async def _check_new_app_version(self):
@@ -149,7 +156,7 @@ class DesktopApp:
 
         await self.page.close_drawer()
 
-    def on_close_page(self):
+    async def on_close_page(self):
         now = datetime.datetime.now(datetime.UTC)
 
         container.event_bus.publish(
@@ -167,7 +174,14 @@ class DesktopApp:
         if idle_session:
             idle_session.stop(now)
 
+        for running_task in self._running_tasks:
+            await running_task
+
         return True
+
+
+async def before_main(page: ft.Page):
+    USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
 async def main(page: ft.Page):
@@ -202,5 +216,9 @@ async def main(page: ft.Page):
     app = DesktopApp(page)
     await app.init()
 
-
-ft.run(main=main, view=ft.AppView.FLET_APP, upload_dir=USER_MEDIA_DIR)
+ft.run(
+    main=main,
+    before_main=before_main,
+    view=ft.AppView.FLET_APP,
+    upload_dir=USER_MEDIA_DIR,
+)
