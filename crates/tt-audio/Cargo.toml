@@ -1,0 +1,18 @@
+[package]
+name = "tt-audio"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+tt-core = { path = "../tt-core" }
+
+rodio = { version = "0.20", features = ["symphonia-all"] }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
