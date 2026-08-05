@@ -1,0 +1,35 @@
+[package]
+name = "tt-platform"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+tt-core = { path = "../tt-core" }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+regex = "1"
+once_cell = "1.20"
+
+# Linux X11
+x11rb = { version = "0.14", features = ["randr", "screensaver"], optional = true }
+
+# Linux Wayland
+zbus = { version = "5", optional = true }
+
+# Windows
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_ProcessStatus",
+    "Win32_System_Threading",
+] }
+sysinfo = { version = "0.32", default-features = false }
+
+[features]
+default = ["x11", "wayland"]
+x11 = ["dep:x11rb"]
+wayland = ["dep:zbus"]
