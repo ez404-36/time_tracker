@@ -1,0 +1,3 @@
+# Cargo configuration for the TimeTracker Rust workspace.
+# Kept intentionally minimal at stage 0; platform-specific linker flags
+# (e.g. webkit2gtk) are handled by the system package manager + CI.

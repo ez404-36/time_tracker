@@ -1,7 +1,16 @@
 .venv
 .idea
+*.pyc
+__pycache__/
 *.db
 *.sqlite*
 TODO.md
 build/**
 dist/**
+
+# Rust
+/target
+
+# Cargo.lock для библиотек не коммитим, для бинарников - коммитим
+# TimeTracker — бинарный проект, поэтому Cargo.lock должен быть в репозитории
+# (исключен из этого списка для явного контроля)
