@@ -1,0 +1,17 @@
+[package]
+name = "tt-db"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio", "chrono", "migrate"] }
+chrono = { version = "0.4", features = ["serde"] }
+chrono-tz = "0.9"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tt-core = { path = "../tt-core" }
+tokio = { version = "1", features = ["rt"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
