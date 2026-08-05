@@ -1,0 +1,21 @@
+[package]
+name = "tt-app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "tt-app"
+path = "src/main.rs"
+
+[dependencies]
+dioxus = { workspace = true }
+# tray-icon 0.21 — та же ветка, что использует dioxus-desktop 0.7 внутренне,
+# чтобы в дереве зависимостей была единственная копия крейта.
+# (На crates.io актуальный stable — 0.24, но dioxus 0.7 привязан к 0.21.)
+tray-icon = "0.21"
+# single-instance: последний стабильный релиз 0.3.3 (обновлений с 2021 нет).
+single-instance = "0.3"
+tokio = { workspace = true }
