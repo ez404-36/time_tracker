@@ -2,7 +2,7 @@
 
 use crate::error::PlatformError;
 use crate::WindowControl;
-use sysinfo::{Pid, System};
+use sysinfo::{Pid, System, ProcessesToUpdate, ProcessRefreshKind};
 use tracing::debug;
 use tt_core::WindowData;
 use windows::core::*;
@@ -22,25 +22,21 @@ extern "system" {
 }
 
 /// Windows реализация WindowControl
-pub struct WindowsWindowControl {
-    system: System,
-}
+pub struct WindowsWindowControl;
 
 impl WindowsWindowControl {
     /// Создаёт новую Windows-реализацию
     pub fn new() -> Self {
         debug!("Windows WindowControl инициализирован");
-        Self {
-            system: System::new_all(),
-        }
+        Self
     }
 
     /// Получает информацию о процессе по PID
-    fn get_process_info(&mut self, pid: u32) -> Option<(String, Option<String>)> {
-        self.system.refresh_processes(Pid::from_u32(pid));
-
-        if let Some(process) = self.system.process(Pid::from_u32(pid)) {
-            let name = process.name().to_string();
+    fn get_process_info(system: &mut System, pid: u32) -> Option<(String, Option<String>)> {
+        system.refresh_processes(ProcessesToUpdate::Some(&[Pid::from_u32(pid)]), ProcessRefreshKind::new());
+        
+        if let Some(process) = system.process(Pid::from_u32(pid)) {
+            let name = process.name().to_string_lossy().to_string();
             let exe = process.exe().map(|p| p.to_string_lossy().to_string());
             Some((name, exe))
         } else {
@@ -114,8 +110,8 @@ impl WindowsWindowControl {
 
 impl WindowControl for WindowsWindowControl {
     fn active_window(&self) -> std::result::Result<Option<WindowData>, PlatformError> {
-        let mut system = self.system.clone();
-        system.refresh_processes();
+        let mut system = System::new_all();
+        system.refresh_processes(ProcessesToUpdate::All, ProcessRefreshKind::new());
 
         unsafe {
             // Получаем хэндл активного окна
@@ -144,7 +140,7 @@ impl WindowControl for WindowsWindowControl {
             }
 
             // Получаем информацию о процессе
-            if let Some((executable_name, executable_path)) = system.get_process_info(pid) {
+            if let Some((executable_name, executable_path)) = Self::get_process_info(&mut system, pid) {
                 Ok(Some(WindowData {
                     executable_name,
                     window_title: Some(window_title),
@@ -158,38 +154,12 @@ impl WindowControl for WindowsWindowControl {
     }
 
     fn all_windows(&self) -> std::result::Result<Vec<WindowData>, PlatformError> {
-        let mut system = self.system.clone();
-        system.refresh_processes();
+        let mut system = System::new_all();
+        system.refresh_processes(ProcessesToUpdate::All, ProcessRefreshKind::new());
 
         let mut windows = Vec::new();
-        let system_ptr = &mut system as *mut System;
 
         unsafe {
-            // Создаём структуру с указателем на вектор и системой
-            let mut data = (windows.as_mut_ptr() as usize, system_ptr as usize);
-
-            EnumWindows(
-                Some(Self::enum_windows_callback),
-                LPARAM(&mut data as *mut (usize, usize) as isize),
-            );
-        }
-
-        // Теперь windows заполнен, нужно получить вектор обратно
-        // Но поскольку мы используем unsafe код, это может быть проблематично
-        // Давайте используем более простой подход
-
-        unsafe {
-            let mut result = Vec::new();
-            let mut system = self.system.clone();
-            system.refresh_processes();
-
-            EnumWindows(
-                Some(Self::enum_windows_callback_simple),
-                LPARAM(&mut system as *mut System as isize),
-            );
-
-            // К сожалению, нам нужно использовать другой подход для сбора результатов
-            // Временное решение - используем структуру для передачи данных
             let mut callback_data = EnumWindowsData {
                 windows: Vec::new(),
                 system: &mut system,
@@ -261,8 +231,8 @@ impl WindowsWindowControl {
         }
 
         // Получаем информацию о процессе
-        data.system.refresh_processes();
-        if let Some((executable_name, executable_path)) = data.system.get_process_info(pid) {
+        data.system.refresh_processes(ProcessesToUpdate::Some(&[Pid::from_u32(pid)]), ProcessRefreshKind::new());
+        if let Some((executable_name, executable_path)) = Self::get_process_info(data.system, pid) {
             data.windows.push(WindowData {
                 executable_name,
                 window_title: Some(window_title),
