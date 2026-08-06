@@ -196,7 +196,7 @@ pub fn transform_title_and_app_name(
     let transformed_title = transformer.transform_window_title(window_title);
 
     // Если заголовок пустой после трансформации, возвращаем None
-    let title = transformed_title.and_then(|t| if t.is_empty() { None } else { Some(t) });
+    let title = transformed_title.filter(|t| !t.is_empty());
 
     (app_name, title)
 }
