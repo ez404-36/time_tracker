@@ -8,9 +8,21 @@ use tracing::{debug, warn};
 use tt_core::WindowData;
 use windows::core::*;
 use windows::Win32::Foundation::*;
+use windows::Win32::System::LibraryLoader::{GetModuleHandleW, GetProcAddress};
 use windows::Win32::System::ProcessStatus::*;
 use windows::Win32::System::Threading::*;
 use windows::Win32::UI::WindowsAndMessaging::*;
+
+#[repr(C)]
+struct LASTINPUTINFO {
+    cbSize: u32,
+    dwTime: u32,
+}
+
+extern "system" {
+    fn GetLastInputInfo(plii: *mut LASTINPUTINFO) -> BOOL;
+    fn GetTickCount() -> u32;
+}
 
 /// Windows реализация WindowControl
 pub struct WindowsWindowControl {
@@ -111,7 +123,7 @@ impl WindowControl for WindowsWindowControl {
         unsafe {
             // Получаем хэндл активного окна
             let hwnd = GetForegroundWindow();
-            if hwnd.0 == 0 {
+            if hwnd.is_invalid() {
                 return Ok(None);
             }
 
