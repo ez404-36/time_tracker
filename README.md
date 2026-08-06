@@ -24,6 +24,19 @@ TimeTracker — ваш личный помощник в работе без ли
 
 ### Linux
 
+#### Системные зависимости
+
+Для сборки на Linux требуются следующие системные библиотеки:
+```bash
+sudo apt-get install -y \
+  libwebkit2gtk-4.1-dev \
+  libgtk-3-dev \
+  libayatana-appindicator3-dev \
+  librsvg2-dev \
+  libxdo-dev \
+  libasound2-dev
+```
+
 #### Различные оконные системы
 
 Чтобы узнать используемую оконную систему, введите
