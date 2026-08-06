@@ -12,6 +12,7 @@ use windows::Win32::UI::WindowsAndMessaging::*;
 #[repr(C)]
 #[derive(Default)]
 #[allow(non_snake_case)]
+#[allow(clippy::upper_case_acronyms)]
 struct LASTINPUTINFO {
     cbSize: u32,
     dwTime: u32,
