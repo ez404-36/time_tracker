@@ -8,12 +8,12 @@ use tracing::{debug, warn};
 use tt_core::WindowData;
 use windows::core::*;
 use windows::Win32::Foundation::*;
-use windows::Win32::System::LibraryLoader::{GetModuleHandleW, GetProcAddress};
 use windows::Win32::System::ProcessStatus::*;
 use windows::Win32::System::Threading::*;
 use windows::Win32::UI::WindowsAndMessaging::*;
 
 #[repr(C)]
+#[derive(Default)]
 struct LASTINPUTINFO {
     cbSize: u32,
     dwTime: u32,
@@ -116,7 +116,7 @@ impl WindowsWindowControl {
 }
 
 impl WindowControl for WindowsWindowControl {
-    fn active_window(&self) -> Result<Option<WindowData>, PlatformError> {
+    fn active_window(&self) -> std::result::Result<Option<WindowData>, PlatformError> {
         let mut system = self.system.clone();
         system.refresh_processes();
 
@@ -160,7 +160,7 @@ impl WindowControl for WindowsWindowControl {
         }
     }
 
-    fn all_windows(&self) -> Result<Vec<WindowData>, PlatformError> {
+    fn all_windows(&self) -> std::result::Result<Vec<WindowData>, PlatformError> {
         let mut system = self.system.clone();
         system.refresh_processes();
 
@@ -207,7 +207,7 @@ impl WindowControl for WindowsWindowControl {
         }
     }
 
-    fn idle_seconds(&self) -> Result<u64, PlatformError> {
+    fn idle_seconds(&self) -> std::result::Result<u64, PlatformError> {
         unsafe {
             let mut lii = LASTINPUTINFO {
                 cbSize: std::mem::size_of::<LASTINPUTINFO>() as u32,
