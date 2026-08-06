@@ -170,7 +170,8 @@ impl WindowsWindowControl {
         }
 
         // Получаем информацию о процессе
-        data.system.refresh_processes(ProcessesToUpdate::Some(&[Pid::from_u32(pid)]), false);
+        data.system
+            .refresh_processes(ProcessesToUpdate::Some(&[Pid::from_u32(pid)]), false);
         if let Some((executable_name, executable_path)) = Self::get_process_info(data.system, pid) {
             data.windows.push(WindowData {
                 executable_name,
