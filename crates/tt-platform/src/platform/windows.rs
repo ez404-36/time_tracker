@@ -96,7 +96,7 @@ impl WindowControl for WindowsWindowControl {
         let mut system = System::new_all();
         system.refresh_processes(ProcessesToUpdate::All, false);
 
-        let mut windows = Vec::new();
+        let mut windows: Vec<WindowData> = Vec::new();
 
         unsafe {
             let mut callback_data = EnumWindowsData {
