@@ -12,6 +12,7 @@ use windows::Win32::UI::WindowsAndMessaging::*;
 #[repr(C)]
 #[derive(Default)]
 #[allow(non_snake_case)]
+#[allow(upper_case_acronyms)]
 struct LASTINPUTINFO {
     cbSize: u32,
     dwTime: u32,
@@ -103,7 +104,7 @@ impl WindowControl for WindowsWindowControl {
         let mut system = System::new_all();
         system.refresh_processes(ProcessesToUpdate::All, false);
 
-        let mut windows: Vec<WindowData> = Vec::new();
+        let mut _windows: Vec<WindowData> = Vec::new();
 
         unsafe {
             let mut callback_data = EnumWindowsData {
