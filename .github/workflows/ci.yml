@@ -33,7 +33,7 @@ jobs:
             libxdo-dev \
             libasound2-dev
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
         with:
           components: rustfmt, clippy
 
@@ -68,7 +68,7 @@ jobs:
             libxdo-dev \
             libasound2-dev
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
         with:
           components: rustfmt, clippy
 
