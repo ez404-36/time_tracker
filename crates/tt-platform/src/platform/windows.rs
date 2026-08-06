@@ -2,14 +2,11 @@
 
 use crate::error::PlatformError;
 use crate::WindowControl;
-use std::ptr;
 use sysinfo::{Pid, System};
-use tracing::{debug, warn};
+use tracing::debug;
 use tt_core::WindowData;
 use windows::core::*;
 use windows::Win32::Foundation::*;
-use windows::Win32::System::ProcessStatus::*;
-use windows::Win32::System::Threading::*;
 use windows::Win32::UI::WindowsAndMessaging::*;
 
 #[repr(C)]

@@ -28,7 +28,7 @@ windows = { version = "0.62", features = [
     "Win32_System_Threading",
     "Win32_System_LibraryLoader",
 ] }
-sysinfo = { version = "0.32", default-features = false }
+sysinfo = { version = "0.32", default-features = false, features = ["system"] }
 
 [features]
 default = ["x11", "wayland"]
