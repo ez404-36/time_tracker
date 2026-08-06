@@ -2,7 +2,7 @@
 
 use crate::error::PlatformError;
 use crate::WindowControl;
-use sysinfo::{Pid, System, ProcessesToUpdate, ProcessRefreshKind};
+use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System};
 use tracing::debug;
 use tt_core::WindowData;
 use windows::core::*;
@@ -33,8 +33,11 @@ impl WindowsWindowControl {
 
     /// Получает информацию о процессе по PID
     fn get_process_info(system: &mut System, pid: u32) -> Option<(String, Option<String>)> {
-        system.refresh_processes(ProcessesToUpdate::Some(&[Pid::from_u32(pid)]), ProcessRefreshKind::new());
-        
+        system.refresh_processes(
+            ProcessesToUpdate::Some(&[Pid::from_u32(pid)]),
+            ProcessRefreshKind::new(),
+        );
+
         if let Some(process) = system.process(Pid::from_u32(pid)) {
             let name = process.name().to_string_lossy().to_string();
             let exe = process.exe().map(|p| p.to_string_lossy().to_string());
@@ -140,7 +143,9 @@ impl WindowControl for WindowsWindowControl {
             }
 
             // Получаем информацию о процессе
-            if let Some((executable_name, executable_path)) = Self::get_process_info(&mut system, pid) {
+            if let Some((executable_name, executable_path)) =
+                Self::get_process_info(&mut system, pid)
+            {
                 Ok(Some(WindowData {
                     executable_name,
                     window_title: Some(window_title),
@@ -231,7 +236,10 @@ impl WindowsWindowControl {
         }
 
         // Получаем информацию о процессе
-        data.system.refresh_processes(ProcessesToUpdate::Some(&[Pid::from_u32(pid)]), ProcessRefreshKind::new());
+        data.system.refresh_processes(
+            ProcessesToUpdate::Some(&[Pid::from_u32(pid)]),
+            ProcessRefreshKind::new(),
+        );
         if let Some((executable_name, executable_path)) = Self::get_process_info(data.system, pid) {
             data.windows.push(WindowData {
                 executable_name,
