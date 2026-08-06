@@ -33,8 +33,9 @@ jobs:
             libxdo-dev \
             libasound2-dev
 
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: 1.97.1
           components: rustfmt, clippy
 
       - name: rust-cache
@@ -68,8 +69,9 @@ jobs:
             libxdo-dev \
             libasound2-dev
 
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: 1.97.1
           components: rustfmt, clippy
 
       - name: rust-cache
