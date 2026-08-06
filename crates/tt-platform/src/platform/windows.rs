@@ -11,6 +11,7 @@ use windows::Win32::UI::WindowsAndMessaging::*;
 
 #[repr(C)]
 #[derive(Default)]
+#[allow(non_snake_case)]
 struct LASTINPUTINFO {
     cbSize: u32,
     dwTime: u32,
@@ -23,6 +24,12 @@ extern "system" {
 
 /// Windows реализация WindowControl
 pub struct WindowsWindowControl;
+
+impl Default for WindowsWindowControl {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl WindowsWindowControl {
     /// Создаёт новую Windows-реализацию
@@ -104,7 +111,7 @@ impl WindowControl for WindowsWindowControl {
                 system: &mut system,
             };
 
-            EnumWindows(
+            let _ = EnumWindows(
                 Some(Self::enum_windows_callback_struct),
                 LPARAM(&mut callback_data as *mut EnumWindowsData as isize),
             );
