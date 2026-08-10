@@ -550,4 +550,155 @@ mod tests {
             "Не должно быть события, так как уже не в бездействии"
         );
     }
+
+    /// Интеграционный тест: сессия бездействия создаётся в БД
+    #[tokio::test]
+    async fn test_idle_session_created() {
+        use std::sync::Mutex;
+        use tt_db::IdleSession;
+
+        let event_bus = Arc::new(EventBus::new(10));
+        let idle_seconds = Arc::new(Mutex::new(10u64));
+
+        let mock_window_control = Box::new(MockWindowControl::new(idle_seconds));
+        let pool = create_test_pool().await;
+        setup_test_db(&pool).await;
+        let session_repository = Arc::new(SessionRepository::new(pool));
+
+        let mut tracker = IdleTracker::new(
+            event_bus.clone(),
+            session_repository.clone(),
+            mock_window_control,
+            5, // порог 5 сек
+        );
+
+        tracker.start().await.unwrap();
+
+        // Выполняем тик с высоким значением бездействия
+        tracker._tick().await.unwrap();
+
+        // Ждём, пока сессия будет создана
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Проверяем, что сессия создана в БД
+        let sessions = sqlx::query_as::<_, IdleSession>(
+            "SELECT id, start_ts, end_ts, duration FROM idle_session",
+        )
+        .fetch_all(session_repository.pool())
+        .await
+        .unwrap();
+
+        assert_eq!(
+            sessions.len(),
+            1,
+            "Должна быть создана одна сессия бездействия"
+        );
+        let session = &sessions[0];
+
+        assert!(session.id.is_some(), "ID сессии должен быть установлен");
+        assert!(
+            session.end_ts.is_none(),
+            "end_ts должен быть NULL для активной сессии"
+        );
+        assert_eq!(
+            session.duration, 0,
+            "duration должен быть 0 для активной сессии"
+        );
+    }
+
+    /// Интеграционный тест: сессия бездействия закрывается при возврате активности
+    #[tokio::test]
+    async fn test_idle_session_closed_on_activity() {
+        use std::sync::Mutex;
+        use tt_db::IdleSession;
+
+        let event_bus = Arc::new(EventBus::new(10));
+        let idle_seconds = Arc::new(Mutex::new(10u64));
+        let idle_clone = idle_seconds.clone();
+
+        let mock_window_control = Box::new(MockWindowControl::new(idle_seconds));
+        let pool = create_test_pool().await;
+        setup_test_db(&pool).await;
+        let session_repository = Arc::new(SessionRepository::new(pool));
+
+        let mut tracker = IdleTracker::new(
+            event_bus.clone(),
+            session_repository.clone(),
+            mock_window_control,
+            5, // порог 5 сек
+        );
+
+        tracker.start().await.unwrap();
+
+        // Переходим в бездействие
+        tracker._tick().await.unwrap();
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Возвращаем активность
+        *idle_clone.lock().unwrap() = 2;
+        tracker._tick().await.unwrap();
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Проверяем, что сессия закрыта
+        let sessions = sqlx::query_as::<_, IdleSession>(
+            "SELECT id, start_ts, end_ts, duration FROM idle_session",
+        )
+        .fetch_all(session_repository.pool())
+        .await
+        .unwrap();
+
+        assert_eq!(sessions.len(), 1, "Должна быть одна сессия бездействия");
+        let session = &sessions[0];
+
+        assert!(session.end_ts.is_some(), "Сессия должна быть закрыта");
+        assert!(session.duration >= 0, "duration должен быть >= 0");
+    }
+
+    /// Интеграционный тест: остановка трекера закрывает открытую сессию бездействия
+    #[tokio::test]
+    async fn test_idle_session_closed_on_stop() {
+        use std::sync::Mutex;
+        use tt_db::IdleSession;
+
+        let event_bus = Arc::new(EventBus::new(10));
+        let idle_seconds = Arc::new(Mutex::new(10u64));
+
+        let mock_window_control = Box::new(MockWindowControl::new(idle_seconds));
+        let pool = create_test_pool().await;
+        setup_test_db(&pool).await;
+        let session_repository = Arc::new(SessionRepository::new(pool));
+
+        let mut tracker = IdleTracker::new(
+            event_bus.clone(),
+            session_repository.clone(),
+            mock_window_control,
+            5, // порог 5 сек
+        );
+
+        tracker.start().await.unwrap();
+
+        // Переходим в бездействие
+        tracker._tick().await.unwrap();
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Останавливаем трекер
+        tracker.stop().await;
+
+        // Проверяем, что сессия закрыта
+        let sessions = sqlx::query_as::<_, IdleSession>(
+            "SELECT id, start_ts, end_ts, duration FROM idle_session",
+        )
+        .fetch_all(session_repository.pool())
+        .await
+        .unwrap();
+
+        assert_eq!(sessions.len(), 1, "Должна быть одна сессия бездействия");
+        let session = &sessions[0];
+
+        assert!(
+            session.end_ts.is_some(),
+            "Сессия должна быть закрыта при остановке"
+        );
+        assert!(session.duration >= 0, "duration должен быть >= 0");
+    }
 }

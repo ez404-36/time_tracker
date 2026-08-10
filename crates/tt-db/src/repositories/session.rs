@@ -29,6 +29,11 @@ impl SessionRepository {
         Self { pool }
     }
 
+    /// Возвращает ссылку на пул соединений
+    pub fn pool(&self) -> &SqlitePool {
+        &self.pool
+    }
+
     /// Создаёт сессию окна
     pub async fn create_window(
         &self,

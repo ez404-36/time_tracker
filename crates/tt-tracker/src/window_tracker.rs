@@ -224,6 +224,7 @@ mod tests {
     use sqlx::SqlitePool;
     use std::sync::Arc;
     use tt_core::SystemEvent;
+    use tt_db::WindowSession;
 
     /// Мок для WindowControl
     struct MockWindowControl {
@@ -367,5 +368,280 @@ mod tests {
         }
 
         tracker.stop().await.unwrap();
+    }
+
+    /// Интеграционный тест: сессия создаётся в БД при активном окне
+    #[tokio::test]
+    async fn test_window_session_created() {
+        use std::sync::Mutex;
+
+        // Изменяемый мок для управления активным окном
+        struct MutableMockWindowControl {
+            active_window: Arc<Mutex<Option<WindowData>>>,
+        }
+
+        impl MutableMockWindowControl {
+            fn new(active_window: Arc<Mutex<Option<WindowData>>>) -> Self {
+                Self { active_window }
+            }
+        }
+
+        impl WindowControl for MutableMockWindowControl {
+            fn active_window(&self) -> Result<Option<WindowData>, tt_platform::PlatformError> {
+                Ok(self.active_window.lock().unwrap().clone())
+            }
+
+            fn all_windows(&self) -> Result<Vec<WindowData>, tt_platform::PlatformError> {
+                Ok(Vec::new())
+            }
+
+            fn idle_seconds(&self) -> Result<u64, tt_platform::PlatformError> {
+                Ok(0)
+            }
+        }
+
+        let event_bus = Arc::new(EventBus::new(10));
+        let pool = create_test_pool().await;
+        setup_test_db(&pool).await;
+        let session_repository = Arc::new(SessionRepository::new(pool));
+
+        let active_window_arc = Arc::new(Mutex::new(None::<WindowData>));
+        let mock_window_control =
+            Box::new(MutableMockWindowControl::new(active_window_arc.clone()));
+
+        let mut tracker = WindowTracker::new(
+            event_bus.clone(),
+            session_repository.clone(),
+            mock_window_control,
+        );
+
+        tracker.start().await.unwrap();
+
+        // Устанавливаем активное окно
+        let window = WindowData {
+            executable_name: "firefox".to_string(),
+            window_title: Some("GitHub - Mozilla Firefox".to_string()),
+            executable_path: Some("/usr/bin/firefox".to_string()),
+            pid: Some(5678),
+        };
+        active_window_arc.lock().unwrap().replace(window.clone());
+
+        // Ждём, пока трекер создаст сессию (цикл работает каждую секунду)
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+        // Проверяем, что сессия создана в БД
+        let sessions = sqlx::query_as::<_, WindowSession>(
+            "SELECT id, start_ts, end_ts, duration, executable_name, executable_path, window_title FROM window_session"
+        )
+        .fetch_all(session_repository.pool())
+        .await
+        .unwrap();
+
+        assert_eq!(sessions.len(), 1, "Должна быть создана одна сессия");
+        let session = &sessions[0];
+
+        assert!(session.id.is_some(), "ID сессии должен быть установлен");
+        assert_eq!(session.executable_name, "firefox");
+        assert_eq!(
+            session.window_title,
+            Some("GitHub - Mozilla Firefox".to_string())
+        );
+        assert_eq!(
+            session.executable_path,
+            Some("/usr/bin/firefox".to_string())
+        );
+        assert!(
+            session.end_ts.is_none(),
+            "end_ts должен быть NULL для активной сессии"
+        );
+        assert_eq!(
+            session.duration, 0,
+            "duration должен быть 0 для активной сессии"
+        );
+
+        tracker.stop().await.unwrap();
+    }
+
+    /// Интеграционный тест: смена окна закрывает предыдущую сессию
+    #[tokio::test]
+    async fn test_window_session_closed_on_switch() {
+        use std::sync::Mutex;
+
+        struct MutableMockWindowControl {
+            active_window: Arc<Mutex<Option<WindowData>>>,
+        }
+
+        impl MutableMockWindowControl {
+            fn new(active_window: Arc<Mutex<Option<WindowData>>>) -> Self {
+                Self { active_window }
+            }
+        }
+
+        impl WindowControl for MutableMockWindowControl {
+            fn active_window(&self) -> Result<Option<WindowData>, tt_platform::PlatformError> {
+                Ok(self.active_window.lock().unwrap().clone())
+            }
+
+            fn all_windows(&self) -> Result<Vec<WindowData>, tt_platform::PlatformError> {
+                Ok(Vec::new())
+            }
+
+            fn idle_seconds(&self) -> Result<u64, tt_platform::PlatformError> {
+                Ok(0)
+            }
+        }
+
+        let event_bus = Arc::new(EventBus::new(10));
+        let pool = create_test_pool().await;
+        setup_test_db(&pool).await;
+        let session_repository = Arc::new(SessionRepository::new(pool));
+
+        let active_window_arc = Arc::new(Mutex::new(None::<WindowData>));
+        let mock_window_control =
+            Box::new(MutableMockWindowControl::new(active_window_arc.clone()));
+
+        let mut tracker = WindowTracker::new(
+            event_bus.clone(),
+            session_repository.clone(),
+            mock_window_control,
+        );
+
+        tracker.start().await.unwrap();
+
+        // Устанавливаем первое окно
+        let window1 = WindowData {
+            executable_name: "code".to_string(),
+            window_title: Some("VS Code - project".to_string()),
+            executable_path: Some("/usr/bin/code".to_string()),
+            pid: Some(1234),
+        };
+        active_window_arc.lock().unwrap().replace(window1.clone());
+
+        // Ждём создания первой сессии
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+        // Переключаемся на другое окно
+        let window2 = WindowData {
+            executable_name: "firefox".to_string(),
+            window_title: Some("Google".to_string()),
+            executable_path: Some("/usr/bin/firefox".to_string()),
+            pid: Some(5678),
+        };
+        active_window_arc.lock().unwrap().replace(window2.clone());
+
+        // Ждём создания второй сессии
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+        // Проверяем сессии в БД
+        let sessions = sqlx::query_as::<_, WindowSession>(
+            "SELECT id, start_ts, end_ts, duration, executable_name, executable_path, window_title FROM window_session ORDER BY start_ts"
+        )
+        .fetch_all(session_repository.pool())
+        .await
+        .unwrap();
+
+        assert_eq!(sessions.len(), 2, "Должны быть две сессии");
+
+        // Первая сессия должна быть закрыта
+        let first_session = &sessions[0];
+        assert_eq!(first_session.executable_name, "code");
+        assert!(
+            first_session.end_ts.is_some(),
+            "Первая сессия должна быть закрыта"
+        );
+        assert!(first_session.duration > 0, "duration должен быть > 0");
+
+        // Вторая сессия должна быть активной (ещё не закрыта)
+        let second_session = &sessions[1];
+        assert_eq!(second_session.executable_name, "firefox");
+        assert!(
+            second_session.end_ts.is_none(),
+            "Вторая сессия должна быть активной"
+        );
+
+        tracker.stop().await.unwrap();
+    }
+
+    /// Интеграционный тест: остановка трекера закрывает открытую сессию
+    #[tokio::test]
+    async fn test_window_session_closed_on_stop() {
+        use std::sync::Mutex;
+
+        struct MutableMockWindowControl {
+            active_window: Arc<Mutex<Option<WindowData>>>,
+        }
+
+        impl MutableMockWindowControl {
+            fn new(active_window: Arc<Mutex<Option<WindowData>>>) -> Self {
+                Self { active_window }
+            }
+        }
+
+        impl WindowControl for MutableMockWindowControl {
+            fn active_window(&self) -> Result<Option<WindowData>, tt_platform::PlatformError> {
+                Ok(self.active_window.lock().unwrap().clone())
+            }
+
+            fn all_windows(&self) -> Result<Vec<WindowData>, tt_platform::PlatformError> {
+                Ok(Vec::new())
+            }
+
+            fn idle_seconds(&self) -> Result<u64, tt_platform::PlatformError> {
+                Ok(0)
+            }
+        }
+
+        let event_bus = Arc::new(EventBus::new(10));
+        let pool = create_test_pool().await;
+        setup_test_db(&pool).await;
+        let session_repository = Arc::new(SessionRepository::new(pool));
+
+        let active_window_arc = Arc::new(Mutex::new(None::<WindowData>));
+        let mock_window_control =
+            Box::new(MutableMockWindowControl::new(active_window_arc.clone()));
+
+        let mut tracker = WindowTracker::new(
+            event_bus.clone(),
+            session_repository.clone(),
+            mock_window_control,
+        );
+
+        tracker.start().await.unwrap();
+
+        // Устанавливаем активное окно
+        let window = WindowData {
+            executable_name: "terminal".to_string(),
+            window_title: Some("bash - zsh".to_string()),
+            executable_path: Some("/usr/bin/zsh".to_string()),
+            pid: Some(9999),
+        };
+        active_window_arc.lock().unwrap().replace(window.clone());
+
+        // Ждём создания сессии
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+        // Останавливаем трекер
+        tracker.stop().await.unwrap();
+
+        // Ждём, пока задача остановки завершится
+        tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+
+        // Проверяем, что сессия закрыта
+        let sessions = sqlx::query_as::<_, WindowSession>(
+            "SELECT id, start_ts, end_ts, duration, executable_name, executable_path, window_title FROM window_session"
+        )
+        .fetch_all(session_repository.pool())
+        .await
+        .unwrap();
+
+        assert_eq!(sessions.len(), 1, "Должна быть одна сессия");
+        let session = &sessions[0];
+
+        assert_eq!(session.executable_name, "terminal");
+        assert!(
+            session.end_ts.is_some(),
+            "Сессия должна быть закрыта при остановке"
+        );
+        assert!(session.duration > 0, "duration должен быть > 0");
     }
 }
