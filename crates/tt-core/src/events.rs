@@ -126,7 +126,7 @@ pub enum SystemEvent {
     WindowTrackerChangeOpenedWindows { active_windows: Vec<WindowData> },
 
     // ------------------------------------------------------------------------
-    // Pomodoro tracker events (1 событие)
+    // Pomodoro tracker events (2 события)
     // ------------------------------------------------------------------------
     /// Изменение статуса помодоро-таймера
     PomodoroTrackerChangeStatus {
@@ -134,8 +134,11 @@ pub enum SystemEvent {
         new_status: PomodoroStatus,
     },
 
+    /// Тик таймера помодоро (каждую секунду)
+    PomodoroTick { remaining: i16 },
+
     // ------------------------------------------------------------------------
-    // Tasks events (3 события)
+    // Tasks events (4 события)
     // ------------------------------------------------------------------------
     /// Добавление задачи
     TasksAdd { task: String },
@@ -145,6 +148,9 @@ pub enum SystemEvent {
 
     /// Удаление задачи
     TasksDelete { task: String },
+
+    /// Задача с истёкшим дедлайном
+    TasksExpired { task_id: i64, task_title: String },
 
     // ------------------------------------------------------------------------
     // Error events (3 события)

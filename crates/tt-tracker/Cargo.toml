@@ -7,3 +7,22 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
+tt-core = { path = "../tt-core" }
+tt-db = { path = "../tt-db" }
+tt-platform = { path = "../tt-platform" }
+tt-audio = { path = "../tt-audio" }
+
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { version = "0.7", features = ["rt"] }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-appender = "0.2"
+dirs = "5"
+
+[dev-dependencies]
+tempfile = "3"
+sqlx = { workspace = true, features = ["sqlite", "runtime-tokio"] }

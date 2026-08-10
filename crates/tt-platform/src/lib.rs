@@ -43,7 +43,7 @@ pub use platform::macos::MacosWindowControl;
 /// - получения активного окна
 /// - получения списка всех окон
 /// - отслеживания времени бездействия пользователя
-pub trait WindowControl {
+pub trait WindowControl: Send + Sync {
     /// Возвращает данные об активном окне
     ///
     /// # Returns
