@@ -19,3 +19,10 @@ tray-icon = "0.21"
 # single-instance: последний стабильный релиз 0.3.3 (обновлений с 2021 нет).
 single-instance = "0.3"
 tokio = { workspace = true }
+tt-core = { path = "../tt-core" }
+tt-db = { path = "../tt-db" }
+tt-tracker = { path = "../tt-tracker" }
+serde = { workspace = true }
+tracing = { workspace = true }
+tracing-appender = "0.2"
+tracing-subscriber = { workspace = true }

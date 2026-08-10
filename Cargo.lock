@@ -6412,9 +6412,16 @@ name = "tt-app"
 version = "0.1.0"
 dependencies = [
  "dioxus",
+ "serde",
  "single-instance",
  "tokio",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
  "tray-icon",
+ "tt-core",
+ "tt-db",
+ "tt-tracker",
 ]
 
 [[package]]
