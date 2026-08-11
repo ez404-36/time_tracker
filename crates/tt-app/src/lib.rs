@@ -1,11 +1,15 @@
 //! tt-app: приложение TimeTracker на Dioxus (библиотека)
 
 pub mod components;
+pub mod init;
+pub mod services;
 pub mod state;
 pub mod theme;
 
-pub use state::{AppState, NavSection, Theme};
-pub use theme::ThemeProvider;
+pub use init::{get_db_path, init_logging};
+pub use services::{AppServices, ServicesInitError};
+pub use state::{theme_to_string, AppState, NavSection, Theme};
+pub use theme::get_theme_css;
 
 #[cfg(test)]
 mod tests {

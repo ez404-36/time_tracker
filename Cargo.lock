@@ -6414,6 +6414,7 @@ dependencies = [
  "dioxus",
  "serde",
  "single-instance",
+ "sqlx",
  "tokio",
  "tracing",
  "tracing-appender",
@@ -6421,6 +6422,7 @@ dependencies = [
  "tray-icon",
  "tt-core",
  "tt-db",
+ "tt-platform",
  "tt-tracker",
 ]
 

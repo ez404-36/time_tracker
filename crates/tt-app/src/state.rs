@@ -1,89 +1,42 @@
 //! Управление состоянием приложения
 
 use dioxus::prelude::*;
-use std::sync::Arc;
-use tt_core::{EventBus, PomodoroStatus, SystemEvent};
-use tt_db::Settings;
-use tt_tracker::MainTracker;
 
 /// Раздел навигации
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NavSection {
     Tasks,
     Tracker,
-    Statistics,
     Settings,
 }
 
 /// Состояние приложения
 ///
-/// Заменяет Python SessionStore. Все данные хранятся в сигналах Dioxus,
-/// которые автоматически обновляют UI при изменении.
+/// Хранит только те данные, которые нужны для UI-рендеринга.
+#[derive(Clone)]
 pub struct AppState {
-    pub event_bus: Arc<EventBus>,
-    pub settings: Settings,
-    pub main_tracker: MainTracker,
     pub theme: Signal<Theme>,
-    pub pomodoro_status: Signal<PomodoroStatus>,
-    pub pomodoro_remaining: Signal<i16>,
+    pub current_section: Signal<NavSection>,
+    pub sidebar_visible: Signal<bool>,
+    pub snackbar_visible: Signal<bool>,
+    pub snackbar_message: Signal<String>,
+    pub modal_visible: Signal<bool>,
+    pub modal_title: Signal<String>,
+    pub modal_message: Signal<String>,
 }
 
 impl AppState {
-    pub fn new(
-        event_bus: Arc<EventBus>,
-        settings: Settings,
-        main_tracker: MainTracker,
-        initial_theme: Theme,
-    ) -> Self {
-        let theme = Signal::new(initial_theme);
-        let pomodoro_status = Signal::new(PomodoroStatus::Disabled);
-        let pomodoro_remaining = Signal::new(0);
-
+    pub fn new(initial_theme: Theme) -> Self {
         Self {
-            event_bus,
-            settings,
-            main_tracker,
-            theme,
-            pomodoro_status,
-            pomodoro_remaining,
+            theme: Signal::new(initial_theme),
+            current_section: Signal::new(NavSection::Tracker),
+            sidebar_visible: Signal::new(true),
+            snackbar_visible: Signal::new(false),
+            snackbar_message: Signal::new(String::new()),
+            modal_visible: Signal::new(false),
+            modal_title: Signal::new(String::new()),
+            modal_message: Signal::new(String::new()),
         }
-    }
-
-    /// Запускает фоновую задачу для чтения событий из шины
-    ///
-    /// Примечание: сигналы Dioxus не Send, поэтому прямой доступ к ним из tokio::spawn невозможен.
-    /// Для полной интеграции требуется использование каналов (mpsc/broadcast) для коммуникации
-    /// между фоновыми задачами и UI-потоком. Это будет реализовано при необходимости.
-    pub fn start_event_listener(&self) {
-        let event_bus = self.event_bus.clone();
-
-        tokio::spawn(async move {
-            let mut rx = event_bus.subscribe();
-
-            loop {
-                match rx.recv().await {
-                    Ok(event) => match event {
-                        SystemEvent::ErrorSystem { source, error } => {
-                            tracing::error!("System error [{}]: {}", source, error);
-                        }
-                        SystemEvent::ErrorWrongConfig { field, error } => {
-                            tracing::error!("Config error [{}]: {}", field, error);
-                        }
-                        SystemEvent::ErrorFileNotFound { filename } => {
-                            tracing::warn!("File not found: {}", filename);
-                        }
-                        _ => {}
-                    },
-                    Err(tokio::sync::broadcast::error::RecvError::Lagged(n)) => {
-                        tracing::warn!("Event bus lagged by {} messages", n);
-                    }
-                    Err(tokio::sync::broadcast::error::RecvError::Closed) => {
-                        tracing::info!("Event bus closed, stopping listener");
-                        break;
-                    }
-                }
-            }
-        });
     }
 }
 
@@ -108,4 +61,9 @@ impl Theme {
             Theme::Dark => "dark",
         }
     }
+}
+
+/// Создаёт строковое представление темы для сохранения в БД
+pub fn theme_to_string(theme: Theme) -> String {
+    theme.as_str().to_string()
 }

@@ -22,7 +22,9 @@ tokio = { workspace = true }
 tt-core = { path = "../tt-core" }
 tt-db = { path = "../tt-db" }
 tt-tracker = { path = "../tt-tracker" }
+tt-platform = { path = "../tt-platform" }
 serde = { workspace = true }
 tracing = { workspace = true }
 tracing-appender = "0.2"
 tracing-subscriber = { workspace = true }
+sqlx = { workspace = true }
